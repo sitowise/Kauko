@@ -1,0 +1,2 @@
+class SpatialNotFoundException(Exception):
+    pass

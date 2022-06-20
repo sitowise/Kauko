@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{72d0d888-38b7-4b17-bd31-da98eb15d9b6}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>constants.py</StartupFile>
+    <SearchPath>..\..\..\OSGEO4~1\apps\qgis\python;..\..\..\OSGEO4~1\apps\Python37;..\..\..\OSGEO4~1\apps\Python37\Scripts;..\..\..\OSGeo4W64\bin;..\..\..\OSGeo4W64\apps\qgis-ltr\bin;..\..\..\OSGeo4W64\apps\Qt5\bin</SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>Global|VisualStudio|Python37</InterpreterId>
+    <Name>KaavaO</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="database\sql_scripts\project_hex.txt" />
+    <Content Include="icon.png" />
+    <Content Include="logo.png" />
+    <Content Include="metadata.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="constants.py" />
+    <Compile Include="database\database.py" />
+    <Compile Include="database\database_handler.py" />
+    <Compile Include="database\db_initializer.py" />
+    <Compile Include="database\db_tools.py" />
+    <Compile Include="database\layer_initializer.py" />
+    <Compile Include="database\project_for_web.py" />
+    <Compile Include="database\query_builder.py" />
+    <Compile Include="data\csv_handler.py" />
+    <Compile Include="data\regulations_format.py" />
+    <Compile Include="data\regulations_writer.py" />
+    <Compile Include="data\tools.py" />
+    <Compile Include="errors.py" />
+    <Compile Include="exceptions.py" />
+    <Compile Include="filter_layer.py" />
+    <Compile Include="help\source\conf.py" />
+    <Compile Include="kaavao.py" />
+    <Compile Include="plugin_upload.py" />
+    <Compile Include="project_handler.py" />
+    <Compile Include="resources.py" />
+    <Compile Include="ui\change_to_unfinished.py" />
+    <Compile Include="ui\db_login_form.py" />
+    <Compile Include="ui\delete_project_dialog.py" />
+    <Compile Include="ui\get_regulations_dialog.py" />
+    <Compile Include="ui\move_plan_dialog.py" />
+    <Compile Include="ui\open_project_dialog.py" />
+    <Compile Include="ui\save_for_g3wsuite_dialog.py" />
+    <Compile Include="ui\schema_creator_dialog.py" />
+    <Compile Include="ui\select_plan_name_dialog.py" />
+    <Compile Include="ui\update_web_views.py" />
+    <Compile Include="__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="data" />
+    <Folder Include="database" />
+    <Folder Include="database\sql_scripts" />
+    <Folder Include="help\" />
+    <Folder Include="help\source" />
+    <Folder Include="ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|VisualStudio|Python37" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
