@@ -14,6 +14,7 @@
     <None Remove="Scripts\004_create_qgis_project_table.sql" />
     <None Remove="Scripts\005_create_schemaInformation_table.sql" />
     <None Remove="Scripts\006_update_schema_information_table.sql" />
+    <None Remove="Scripts\007_add_viewer_role.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
     <EmbeddedResource Include="Scripts\004_create_qgis_project_table.sql" />
     <EmbeddedResource Include="Scripts\005_create_schemaInformation_table.sql" />
     <EmbeddedResource Include="Scripts\006_update_schema_information_table.sql" />
+    <EmbeddedResource Include="Scripts\007_add_viewer_role.sql" />
   </ItemGroup>
 
   <ItemGroup>
