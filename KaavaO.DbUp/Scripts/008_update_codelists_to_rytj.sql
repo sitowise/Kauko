@@ -201,78 +201,78 @@ BEGIN
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Maanalainen yleinen pysäköintilaitos.', description_fi)
-    WHERE type = 8;
+    WHERE type = 9;
     UPDATE regulative_text
     SET type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa lasten päiväkodin.', description_fi)
-    WHERE type = 8;
+    WHERE type = 11;
     UPDATE regulative_text
     SET type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa myymälän.', description_fi)
-    WHERE type = 8;
+    WHERE type = 12;
     UPDATE regulative_text
     SET type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa maatilan talouskeskuksen.', description_fi)
-    WHERE type = 8;
+    WHERE type = 13;
     UPDATE regulative_text
     SET type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa talousrakennuksen.', description_fi)
-    WHERE type = 8;
+    WHERE type = 14;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Alue, jolle saa sijoittaa polttoaineen jakeluaseman.', description_fi)
-    WHERE type = 8;
+    WHERE type = 15;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Uloke.', description_fi)
-    WHERE type = 8;
+    WHERE type = 16;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Valokatteinen tila.', description_fi)
-    WHERE type = 8;
+    WHERE type = 17;
     UPDATE regulative_text
     SET type = 68,
       description_fi = concat_ws(' ', 'Yleiseen tiehen kuuluva jalankulku- ja polkupyörätie.', description_fi)
-    WHERE type = 8;
+    WHERE type = 22;
     UPDATE regulative_text
     SET type = 37,
       description_fi = concat_ws(' ', 'Maanalaista johtoa varten varattu alueen osa.', description_fi)
-    WHERE type = 8;
+    WHERE type = 28;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Alue on varattu kunnan tarpeisiin.', description_fi)
-    WHERE type = 8;
+    WHERE type = 29;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Alue on varattu valtion tarpeisiin.', description_fi)
-    WHERE type = 8;
+    WHERE type = 30;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Yhteiskäyttöalue.', description_fi)
-    WHERE type = 8;
+    WHERE type = 31;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Suojeltava alueen osa.', description_fi)
-    WHERE type = 8;
+    WHERE type = 32;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Alueen osa, jolla sijaitsee luonnonsuojelulain mukainen luonnonsuojelualue tai -kohde.', description_fi)
-    WHERE type = 8;
+    WHERE type = 33;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Suojeltava rakennus.', description_fi)
-    WHERE type = 8;
+    WHERE type = 34;
     UPDATE regulative_text
     SET type = 1,
       description_fi = concat_ws(' ', 'Rakennussuojelulain nojalla suojeltu rakennus.', description_fi)
-    WHERE type = 8;
+    WHERE type = 35;
     UPDATE regulative_text
     SET type = 37,
       description_fi = concat_ws(' ', 'Maan päällistä johtoa varten varattu alueen osa.', description_fi)
-    WHERE type = 8;
+    WHERE type = 36;
 
     DECLARE
-      _regulative_text regulative_text%ROWTYPE;
+      _regulative_text RECORD;
       _uuid uuid;
       _new_regulative_ids uuid[];
       _new_uuid uuid;
@@ -466,6 +466,9 @@ BEGIN
   END LOOP;
 END;
 $$ LANGUAGE plpgsql;
+
+DELETE FROM code_lists.finnish_regulative_text_type
+WHERE value in (5, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36);
 
 UPDATE code_lists.finnish_regulative_text_type
 SET uri = CONCAT('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/', codevalue);
