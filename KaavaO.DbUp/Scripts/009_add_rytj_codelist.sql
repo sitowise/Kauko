@@ -1174,3 +1174,8 @@ BEGIN
 END;
 $$;
 
+DROP TABLE IF EXISTS code_list.finnish_spatial_plan_level;
+DROP TABLE IF EXISTS code_list.finnish_spatial_plan_origin;
+DROP TABLE IF EXISTS code_list.finnish_spatial_plan_status;
+DROP TABLE IF EXISTS code_list.finnish_spatial_plan_type;
+DROP TABLE IF EXISTS code_list.finnish_land_use_kind;

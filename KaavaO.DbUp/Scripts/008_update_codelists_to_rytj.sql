@@ -542,4 +542,3 @@ WHERE value = 20;
 UPDATE code_lists.finnish_numeric_value
 SET codevalue = '0401'
 WHERE value = 21;
-
