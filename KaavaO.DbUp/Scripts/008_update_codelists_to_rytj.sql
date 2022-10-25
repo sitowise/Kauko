@@ -46,96 +46,88 @@ ADD COLUMN codevalue varchar;
 ALTER TABLE code_lists.finnish_regulative_text_type
 ADD COLUMN uri varchar;
 
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (38, 'Leikkialue', '020202');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (39, 'Oleskelualue', '020203');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (40, 'Varattu huoltoajolle', '020317');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (41, 'Varattu jalankululle', '020318');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (42, 'Varattu polkypyöräilylle', '020320');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (43, 'Tontille ajo sallittu', '020312');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (44, 'Sähkölinja', '020102');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (45, 'Kaasulinja', '020103');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (46, 'Vesi- tai jätevesitunneli', '020104');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (47, 'Vesijohto tai siirtoviemäri', '020105');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (48, 'Kaukolämpölinja', '020106');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (49, 'Kaukokylmälinja', '020107');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (50, 'Tulvapenger', '020108');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (51, 'Tulvareitti', '020109');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (52, 'Pumppaamo', '020110');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (53, 'Muuntamo', '020111');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (54, 'Suojavyöhyke', '020112');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (55, 'Hulevesijärjestelmä', '020113');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (56, 'Hulevesien viivytysallas', '020114');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (57, 'Avo-oja', '020115');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (58, 'Muu yhdyskuntatekniseen huoltoon liittyvä käyttö', '020116');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (59, 'Kadun tai liikennealueen alittava kevyen liikenteen yhteys', '020303');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (60, 'Eritasoristeys', '020305');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (61, 'Hidaskatu', '020306');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (62, 'Katuaukio/Tori', '020307');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (63, 'Pelastustie', '020309');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (64, 'Pihakatu', '020310');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (65, 'Kadun tai liikennealueen ylittävä kevyen liikenteen yhteys', '020323');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (66, 'Varattu alueen sisäiselle jalankululle', '020315');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (67, 'Varattu alueen sisäiselle polkupyöräilylle', '020316');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (68, 'Muu liikennejärjestelmään liittyvä käyttö', '020324');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (69, 'Asuntovaunualue', '020401');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (70, 'Frisbeegolf', '020402');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (71, 'Golf-väylä', '020403');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (72, 'Kenttä', '020404');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (73, 'Koirapuisto', '020405');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (74, 'Mäenlaskupaikka', '020406');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (75, 'Ratsastuskenttä', '020407');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (76, 'Telttailu', '020408');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (77, 'Muu virkistyskäyttö', '020409');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (78, 'Laidun', '020501');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (79, 'Muu maatalouskäyttö', '020502');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (80, 'Rakennusalan käyttötarkoitus. Rakennusluokitus 2018 -koodiston avulla tai tekstiarvona.', '0206');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (81, 'Muu tontinkäyttöön liittyvä käyttö', '020207');
-INSERT INTO code_lists.finnish_regulative_text_type (value, description, codevalue)
-VALUES (82, 'Pengerrys', '020206');
+
+INSERT INTO
+  code_lists.finnish_regulative_text_type (value, description, codevalue)
+VALUES
+  (38, 'Leikkialue', '020202'),
+  (39, 'Oleskelualue', '020203'),
+  (40, 'Varattu huoltoajolle', '020317'),
+  (41, 'Varattu jalankululle', '020318'),
+  (42, 'Varattu polkypyöräilylle', '020320'),
+  (43, 'Tontille ajo sallittu', '020312'),
+  (44, 'Sähkölinja', '020102'),
+  (45, 'Kaasulinja', '020103'),
+  (46, 'Vesi- tai jätevesitunneli', '020104'),
+  (47, 'Vesijohto tai siirtoviemäri', '020105'),
+  (48, 'Kaukolämpölinja', '020106'),
+  (49, 'Kaukokylmälinja', '020107'),
+  (50, 'Tulvapenger', '020108'),
+  (51, 'Tulvareitti', '020109'),
+  (52, 'Pumppaamo', '020110'),
+  (53, 'Muuntamo', '020111'),
+  (54, 'Suojavyöhyke', '020112'),
+  (55, 'Hulevesijärjestelmä', '020113'),
+  (56, 'Hulevesien viivytysallas', '020114'),
+  (57, 'Avo-oja', '020115'),
+  (58, 'Muu yhdyskuntatekniseen huoltoon liittyvä käyttö', '020116'),
+  (59, 'Kadun tai liikennealueen alittava kevyen liikenteen yhteys', '020303'),
+  (60, 'Eritasoristeys', '020305'),
+  (61, 'Hidaskatu', '020306'),
+  (62, 'Katuaukio/Tori', '020307'),
+  (63, 'Pelastustie', '020309'),
+  (64, 'Pihakatu', '020310'),
+  (65, 'Kadun tai liikennealueen ylittävä kevyen liikenteen yhteys', '020323'),
+  (66, 'Varattu alueen sisäiselle jalankululle', '020315'),
+  (67, 'Varattu alueen sisäiselle polkupyöräilylle', '020316'),
+  (68, 'Muu liikennejärjestelmään liittyvä käyttö', '020324'),
+  (69, 'Asuntovaunualue', '020401'),
+  (70, 'Frisbeegolf', '020402'),
+  (71, 'Golf-väylä', '020403'),
+  (72, 'Kenttä', '020404'),
+  (73, 'Koirapuisto', '020405'),
+  (74, 'Mäenlaskupaikka', '020406'),
+  (75, 'Ratsastuskenttä', '020407'),
+  (76, 'Telttailu', '020408'),
+  (77, 'Muu virkistyskäyttö', '020409'),
+  (78, 'Laidun', '020501'),
+  (79, 'Muu maatalouskäyttö', '020502'),
+  (80, 'Rakennusalan käyttötarkoitus. Rakennusluokitus 2018 -koodiston avulla tai tekstiarvona.', '0206'),
+  (81, 'Muu tontinkäyttöön liittyvä käyttö', '020207'),
+  (82, 'Pengerrys', '020206'),
+
+  (83, 'Rakennettava kiinni rajaan', '0404'),
+  (84, 'Muu rakennusten sijoitukseen liittyvä määräys', '0406'),
+  (85, 'Rakennuksen sivu, jolla tulee olla suora uloskäynti porrashuoneista', '0506'),
+  (86, 'Rakennusalan sivu, jonka puoleiseen rakennuksen seinään ei saa sijoittaa ikkunoita', '0507'),
+  (87, 'Parvekkeet sijoitettava rungon sisään', '0509'),
+  (88, 'Hissi', '0510'),
+  (89, 'Viherkatto', '0511'),
+  (90, 'Kelluvat asuinrakennukset', '0512'),
+  (91, 'Muu rakentamistapaan liittyvä määräys', '0513'),
+  (92, 'Puusto tai kasvillisuus säilytettävä tai korvattava', '0702'),
+  (93, 'Olemassa oleva puusto säilytettävä', '0703'),
+  (94, 'Maisema säilytettävä avoimena', '0704'),
+  (95, 'Suojeltava rakennelma', '090103'),
+  (96, 'Kiinteä suojeltava kohde', '090104'),
+  (97, 'Alue tai alueen osa, jolla sijaitsee muinaismuistolailla rauhoitettu kiinteä muinaisjäännös', '090105'),
+  (98, 'Suojeltava vesistö tai vesialue', '090203'),
+  (99, 'Luonnon monimuotoisuuden kannalta tärkeä alue', '090204'),
+  (100, 'Ekologinen yhteys', '090205'),
+  (101, 'Alue, jolla ympäristö säilytetään', '0903'),
+  (102, 'Alue, jolla on erityistä ulkoilun ohjaamistarvetta', '0904'),
+  (103, 'Yleismääräys', '1101'),
+  (104, 'Vaatimus hulevesisuunnitelman laatimisesta', '1203'),
+  (105, 'Liitettävä kaukolämpöverkkoon', '1204'),
+  (106, 'Hulevesien imeyttämisen periaate tai vaatimus', '1205'),
+  (107, 'Muu yhdyskuntatekniseen huoltoon liittyvä määräys', '1206'),
+  (108, 'Pilaantunut maa-alue', '1301'),
+  (109, 'Meluaita', '1302'),
+  (110, 'Meluvalli', '1303'),
+  (111, 'Melualue', '1304'),
+  (112, 'Radonhaitta huomioitava', '1305'),
+  (112, 'Muu ympäristönsuojeluun liittyvä määräys', '1306');
+
 
 UPDATE code_lists.finnish_regulative_text_type
 SET codevalue = '0207', description = 'Muu alueen osan käyttötarkoitus'
@@ -173,6 +165,21 @@ WHERE value = 27;
 UPDATE code_lists.finnish_regulative_text_type
 SET codevalue = '020101', description = 'Maan alaista tai maan päällistä johtoa, putkea tai linjaa varten varattu alue.'
 WHERE value = 37;
+UPDATE code_lists.finnish_regulative_text_type
+SET codevalue = '0504'
+WHERE value = 5;
+UPDATE code_lists.finnish_regulative_text_type
+SET codevalue = '0502'
+WHERE value = 16;
+UPDATE code_lists.finnish_regulative_text_type
+SET codevalue = '0505'
+WHERE value = 17;
+UPDATE code_lists.finnish_regulative_text_type
+SET codevalue = '090101'
+WHERE value = 32;
+UPDATE code_lists.finnish_regulative_text_type
+SET codevalue = '090102'
+WHERE value = 34;
 
 
 -- Remove deprecated codes
@@ -187,87 +194,83 @@ BEGIN
   LOOP
     EXECUTE FORMAT('SET search_path to %s, public;', _schema);
     UPDATE regulative_text
-    SET type = 1,
-      description_fi = concat_ws(' ', 'Rakennukseen jätettävä kulkuaukko.', description_fi)
-    WHERE type = 5;
-    UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Maanalainen tila.', description_fi)
     WHERE type = 7;
     UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Maanalainen väestönsuojaksi tarkoitettu tila.', description_fi)
     WHERE type = 8;
     UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Maanalainen yleinen pysäköintilaitos.', description_fi)
     WHERE type = 9;
     UPDATE regulative_text
-    SET type = 80,
+    SET
+      type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa lasten päiväkodin.', description_fi)
     WHERE type = 11;
     UPDATE regulative_text
-    SET type = 80,
+    SET
+      type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa myymälän.', description_fi)
     WHERE type = 12;
     UPDATE regulative_text
-    SET type = 80,
+    SET
+      type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa maatilan talouskeskuksen.', description_fi)
     WHERE type = 13;
     UPDATE regulative_text
-    SET type = 80,
+    SET
+      type = 80,
       description_fi = concat_ws(' ', 'Rakennusala, jolle saa sijoittaa talousrakennuksen.', description_fi)
     WHERE type = 14;
     UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Alue, jolle saa sijoittaa polttoaineen jakeluaseman.', description_fi)
     WHERE type = 15;
     UPDATE regulative_text
-    SET type = 1,
-      description_fi = concat_ws(' ', 'Uloke.', description_fi)
-    WHERE type = 16;
-    UPDATE regulative_text
-    SET type = 1,
-      description_fi = concat_ws(' ', 'Valokatteinen tila.', description_fi)
-    WHERE type = 17;
-    UPDATE regulative_text
-    SET type = 68,
+    SET
+      type = 68,
       description_fi = concat_ws(' ', 'Yleiseen tiehen kuuluva jalankulku- ja polkupyörätie.', description_fi)
     WHERE type = 22;
     UPDATE regulative_text
-    SET type = 37,
+    SET
+      type = 37,
       description_fi = concat_ws(' ', 'Maanalaista johtoa varten varattu alueen osa.', description_fi)
     WHERE type = 28;
     UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Alue on varattu kunnan tarpeisiin.', description_fi)
     WHERE type = 29;
     UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Alue on varattu valtion tarpeisiin.', description_fi)
     WHERE type = 30;
     UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Yhteiskäyttöalue.', description_fi)
     WHERE type = 31;
     UPDATE regulative_text
-    SET type = 1,
-      description_fi = concat_ws(' ', 'Suojeltava alueen osa.', description_fi)
-    WHERE type = 32;
-    UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 1,
       description_fi = concat_ws(' ', 'Alueen osa, jolla sijaitsee luonnonsuojelulain mukainen luonnonsuojelualue tai -kohde.', description_fi)
     WHERE type = 33;
     UPDATE regulative_text
-    SET type = 1,
-      description_fi = concat_ws(' ', 'Suojeltava rakennus.', description_fi)
-    WHERE type = 34;
-    UPDATE regulative_text
-    SET type = 1,
+    SET
+      type = 34,
       description_fi = concat_ws(' ', 'Rakennussuojelulain nojalla suojeltu rakennus.', description_fi)
     WHERE type = 35;
     UPDATE regulative_text
-    SET type = 37,
+    SET
+      type = 37,
       description_fi = concat_ws(' ', 'Maan päällistä johtoa varten varattu alueen osa.', description_fi)
     WHERE type = 36;
 
@@ -468,7 +471,75 @@ END;
 $$ LANGUAGE plpgsql;
 
 DELETE FROM code_lists.finnish_regulative_text_type
-WHERE value in (5, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 28, 29, 30, 31, 32, 33, 34, 35, 36);
+WHERE value in (7, 8, 9, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 28, 29, 30, 31, 33, 35, 36);
 
 UPDATE code_lists.finnish_regulative_text_type
 SET uri = CONCAT('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/', codevalue);
+
+-- NEW CODES FOR NUMERIC TYPES
+ALTER TABLE code_lists.finnish_numeric_value
+ADD COLUMN codevalue varchar;
+
+ALTER TABLE code_lists.finnish_numeric_value
+ADD COLUMN uri varchar;
+
+INSERT INTO code_lists.finnish_numeric_value(value, codevalue, description)
+VALUES
+  (22, '03', 'Rakentamisen määrä')
+  (23, '0301', 'Sallittu kerrosala')
+  (24, '0302', 'Sallittu rakennustilavuus')
+  (25, '0305', 'Maanalainen kerrosluku')
+  (26, '0308', 'Rakennuspaikkojen määrä')
+  (27, '0402', 'Etäisyys naapuritontin rajasta')
+  (28, '0403', 'Rakennusala')
+  (29, '06', 'Korkeusasema')
+  (30, '0606', 'Maanalaisen kohteen korkeusasema')
+  (31, '0607', 'Muu korkeusasemaan liittyvä määräys')
+  (32, '0701', 'Vihertehokkuus')
+  (33, '0803', 'Autopaikkojen määrä')
+  (34, '0804', 'Polkupyöräpysäköinnin määrä')
+  (35, '1102', 'Ajanmukaisuuden arvioinnin aikaraja')
+  (36, '1201', 'Alin painovoimainen viemäröintitaso')
+  (37, '1202', 'Aurinkokennojen alin sijoittumistaso')
+  (38, '0805', 'Muu liikenteeseen liittyvä määräys');
+
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0301'
+WHERE value = 1;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0303'
+WHERE value = 3;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0304'
+WHERE value = 4;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0501'
+WHERE value = 5;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0306'
+WHERE value = 8;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0307'
+WHERE value = 9;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0601'
+WHERE value = 12;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0602'
+WHERE value = 13;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0603'
+WHERE value = 14;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0604'
+WHERE value = 15;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0605'
+WHERE value = 16;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0309'
+WHERE value = 20;
+UPDATE code_lists.finnish_numeric_value
+SET codevalue = '0401'
+WHERE value = 21;
+
