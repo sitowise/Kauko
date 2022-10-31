@@ -16,6 +16,7 @@
     <None Remove="Scripts\006_update_schema_information_table.sql" />
     <None Remove="Scripts\007_add_viewer_role.sql" />
     <None Remove="Scripts\008_update_codelists_to_rytj.sql" />
+    <None Remove="Scripts\009_add_rytj_codelist.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
     <EmbeddedResource Include="Scripts\006_update_schema_information_table.sql" />
     <EmbeddedResource Include="Scripts\007_add_viewer_role.sql" />
     <EmbeddedResource Include="Scripts\008_update_codelists_to_rytj.sql" />
+    <EmbeddedResource Include="Scripts\009_add_rytj_codelist.sql" />
   </ItemGroup>
 
   <ItemGroup>

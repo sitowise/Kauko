@@ -126,7 +126,7 @@ VALUES
   (110, 'Meluvalli', '1303'),
   (111, 'Melualue', '1304'),
   (112, 'Radonhaitta huomioitava', '1305'),
-  (112, 'Muu ympäristönsuojeluun liittyvä määräys', '1306');
+  (113, 'Muu ympäristönsuojeluun liittyvä määräys', '1306');
 
 
 UPDATE code_lists.finnish_regulative_text_type
@@ -191,8 +191,9 @@ BEGIN
     SELECT DISTINCT quote_ident(schemaname)
     FROM pg_tables
     WHERE schemaname LIKE '%gk%' OR schemaname LIKE '%kkj%'
-  LOOP
+  LOOP --LOOPING TROUGH EVERY KAAVAO SCHEMA
     EXECUTE FORMAT('SET search_path to %s, public;', _schema);
+    -- UPDATE regulative_text TABLES TO NEW CODES
     UPDATE regulative_text
     SET
       type = 1,
@@ -202,7 +203,7 @@ BEGIN
     SET
       type = 1,
       description_fi = concat_ws(' ', 'Maanalainen väestönsuojaksi tarkoitettu tila.', description_fi)
-    WHERE type = 8;
+      WHERE type = 8;
     UPDATE regulative_text
     SET
       type = 1,
@@ -289,7 +290,7 @@ BEGIN
         EXECUTE FORMAT('INSERT INTO regulative_text(type, description_fi, validity) VALUES (39, %L, %L)', _regulative_text.description_fi, _regulative_text.validity);
         SELECT array_agg(regulative_id) INTO _new_regulative_ids
         FROM regulative_text
-        WHERE type = 38 OR type = 39;
+        WHERE type in(38, 39);
         FOR _uuid IN
           SELECT spatial_plan_id
           FROM spatial_plan_regulation
@@ -467,8 +468,7 @@ BEGIN
       EXECUTE FORMAT('DELETE FROM regulative_text WHERE type = %L', 21);
     END;
   END LOOP;
-END;
-$$ LANGUAGE plpgsql;
+END$$ LANGUAGE plpgsql;
 
 DELETE FROM code_lists.finnish_regulative_text_type
 WHERE value in (7, 8, 9, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 28, 29, 30, 31, 33, 35, 36);
@@ -485,22 +485,22 @@ ADD COLUMN uri varchar;
 
 INSERT INTO code_lists.finnish_numeric_value(value, codevalue, description)
 VALUES
-  (22, '03', 'Rakentamisen määrä')
-  (23, '0301', 'Sallittu kerrosala')
-  (24, '0302', 'Sallittu rakennustilavuus')
-  (25, '0305', 'Maanalainen kerrosluku')
-  (26, '0308', 'Rakennuspaikkojen määrä')
-  (27, '0402', 'Etäisyys naapuritontin rajasta')
-  (28, '0403', 'Rakennusala')
-  (29, '06', 'Korkeusasema')
-  (30, '0606', 'Maanalaisen kohteen korkeusasema')
-  (31, '0607', 'Muu korkeusasemaan liittyvä määräys')
-  (32, '0701', 'Vihertehokkuus')
-  (33, '0803', 'Autopaikkojen määrä')
-  (34, '0804', 'Polkupyöräpysäköinnin määrä')
-  (35, '1102', 'Ajanmukaisuuden arvioinnin aikaraja')
-  (36, '1201', 'Alin painovoimainen viemäröintitaso')
-  (37, '1202', 'Aurinkokennojen alin sijoittumistaso')
+  (22, '03', 'Rakentamisen määrä'),
+  (23, '0301', 'Sallittu kerrosala'),
+  (24, '0302', 'Sallittu rakennustilavuus'),
+  (25, '0305', 'Maanalainen kerrosluku'),
+  (26, '0308', 'Rakennuspaikkojen määrä'),
+  (27, '0402', 'Etäisyys naapuritontin rajasta'),
+  (28, '0403', 'Rakennusala'),
+  (29, '06', 'Korkeusasema'),
+  (30, '0606', 'Maanalaisen kohteen korkeusasema'),
+  (31, '0607', 'Muu korkeusasemaan liittyvä määräys'),
+  (32, '0701', 'Vihertehokkuus'),
+  (33, '0803', 'Autopaikkojen määrä'),
+  (34, '0804', 'Polkupyöräpysäköinnin määrä'),
+  (35, '1102', 'Ajanmukaisuuden arvioinnin aikaraja'),
+  (36, '1201', 'Alin painovoimainen viemäröintitaso'),
+  (37, '1202', 'Aurinkokennojen alin sijoittumistaso'),
   (38, '0805', 'Muu liikenteeseen liittyvä määräys');
 
 UPDATE code_lists.finnish_numeric_value

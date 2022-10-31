@@ -1,7 +1,7 @@
 CREATE TABLE code_lists.iso_639_language(
     id serial PRIMARY KEY,
-    code character varying(3) NOT NULL UNIQUE,
-    name character varying(100) NOT NULL,
+    code VARCHAR(3) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL
 );
 
 INSERT INTO code_lists.iso_639_language(code, name)
@@ -496,7 +496,7 @@ VALUES
 CREATE OR REPLACE FUNCTION code_lists.code_url_trigger() RETURNS TRIGGER AS $$
   BEGIN
     IF TG_NARGS > 1 THEN
-      RAISE EXCEPTION 'Too many arguments on code_urL_trigger';
+      RAISE EXCEPTION 'Too many arguments on code_url_trigger';
     END IF;
     NEW.uri := TG_ARGV[0] || NEW.codevalue;
     RETURN NEW;
@@ -512,10 +512,10 @@ CREATE TABLE code_lists.detail_plan_addition_information_kind (
   definition_fi VARCHAR,
   definition_sv VARCHAR,
   description_fi VARCHAR,
-  description_sv VARCHAR,
+  description_sv VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_detail_plan_addition_information_kind
+CREATE TRIGGER upsert_url_detail_plan_addition_information_kind
   BEFORE INSERT OR UPDATE ON code_lists.detail_plan_addition_information_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_LisatiedonLaji_AK/code/');
 
@@ -528,7 +528,7 @@ VALUES
   ('05', 'Kulttuurihistoriallinen merkittävyys', 'kulturhistorisk betydelse', 'kohteesta muodostettu käsitys, joka perustuu kohteen kulttuurihistoriallisten arvojen ja kulttuuristen merkitysten analysointiin sekä sen suhteuttamiseen muihin vastaaviin kohteisiin', 'Kulttuurihistoriallinen merkittävyys voi olla kansainvälinen, valtakunnallinen, maakunnallinen, paikallinen tai vähäinen.'),
   ('06', 'Kulttuurihistoriallinen arvotyyppi', NULL, 'Kohteelle määritetyt kulttuurihistorialliset ominaisuudet', 'Kulttuurihistoriallisia ominaisuuksia ovat esimerkiksi rakennustaiteellinen, rakennustekninen, arkkitehtoninen ja maisemallinen.'),
   ('07', 'Kulttuurihistoriallinen tyyppi', NULL, 'Kuvaa kohteen kulttuurihistoriallista käyttötarkoitusta', NULL),
-  ('08', 'Kulttuurihistoriallisen merkittävyyden kriteerit', NULL, 'Kuvaa kulttuurihistoriallisen merkittävyyden kriteerejä, joita kohde edustaa.;Merkittävyys voi liittyä edustavuuteen, alkuperäisyyteen, harvinaisuuteen, tyypillisyyteen tai historialliseen merkittävyyteen.'),
+  ('08', 'Kulttuurihistoriallisen merkittävyyden kriteerit', NULL, 'Kuvaa kulttuurihistoriallisen merkittävyyden kriteerejä, joita kohde edustaa.', 'Merkittävyys voi liittyä edustavuuteen, alkuperäisyyteen, harvinaisuuteen, tyypillisyyteen tai historialliseen merkittävyyteen.'),
   ('09', 'Ympäristöarvon peruste', NULL, NULL, NULL),
   ('10', 'Ympäristö- tai luontoarvon merkittävyys', NULL, NULL, NULL),
   ('11', 'Muu lisätiedon laji', NULL, NULL, NULL),
@@ -542,10 +542,10 @@ CREATE TABLE code_lists.detail_plan_theme (
   preflabel_fi VARCHAR NOT NULL,
   preflabel_sv VARCHAR,
   definition_fi VARCHAR,
-  definition_sv VARCHAR,
+  definition_sv VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_detail_plan_theme
+CREATE TRIGGER upsert_url_detail_plan_theme
   BEFORE INSERT OR UPDATE ON code_lists.detail_plan_theme
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavoitusteema_AK/code/');
 
@@ -573,10 +573,10 @@ CREATE TABLE code_lists.spatial_plan_lifecycle_status (
   definition_fi VARCHAR,
   definition_sv VARCHAR,
   description_fi VARCHAR,
-  description_sv VARCHAR,
+  description_sv VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_spatial_plan_lifecycle_status
+CREATE TRIGGER upsert_url_spatial_plan_lifecycle_status
   BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_lifecycle_status
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/');
 
@@ -601,20 +601,20 @@ VALUES
 
 CREATE TABLE code_lists.spatial_plan_kind (
   id SERIAL PRIMARY KEY,
-  group VARCHAR,
+  kind_group VARCHAR,
   codevalue VARCHAR(3) NOT NULL UNIQUE,
   uri VARCHAR(255) NOT NULL UNIQUE,
   preflabel_fi VARCHAR NOT NULL,
   preflabel_sv VARCHAR,
   description_fi VARCHAR,
-  description_sv VARCHAR,
+  description_sv VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_spatial_plan_kind
+CREATE TRIGGER upsert_url_spatial_plan_kind
   BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavalaji/code/');
 
-INSERT INTO code_lists.spatial_plan_kind (codevalue, group, preflabel_fi, preflabel_sv, description_fi)
+INSERT INTO code_lists.spatial_plan_kind (codevalue, kind_group, preflabel_fi, preflabel_sv, description_fi)
 VALUES
   ('21', 'Yleiskaava', 'Yleiskaava', 'Generalplan', 'Koko kuntaa tai kunnan osa-aluetta koskeva rajattuja teemoja käsittelevä yleiskaava.'),
   ('22', 'Yleiskaava', 'Vaiheyleiskaava', 'Etappgeneralplan', 'Koko kuntaa tai kunnan osa-aluetta koskeva rajattuja teemoja käsittelevä yleiskaava.'),
@@ -635,7 +635,7 @@ CREATE TABLE code_lists.digital_origin_kind (
   preflabel_fi VARCHAR NOT NULL
 );
 
-CREATE TRIGGER code_lists.upsert_url_digital_origin_kind
+CREATE TRIGGER upsert_url_digital_origin_kind
   BEFORE INSERT OR UPDATE ON code_lists.digital_origin_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/');
 
@@ -653,7 +653,7 @@ CREATE TABLE code_lists.ground_relativeness_kind (
   preflabel_fi VARCHAR NOT NULL
 );
 
-CREATE TRIGGER code_lists.upsert_url_ground_relativeness_kind
+CREATE TRIGGER upsert_url_ground_relativeness_kind
   BEFORE INSERT OR UPDATE ON code_lists.ground_relativeness_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_MaanalaisuudenLaji/code/');
 
@@ -670,7 +670,7 @@ CREATE TABLE code_lists.bindingness_kind (
   description_fi VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_bindingness_kind
+CREATE TRIGGER upsert_url_bindingness_kind
   BEFORE INSERT OR UPDATE ON code_lists.bindingness_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Sitovuuslaji/code/');
 
@@ -679,7 +679,7 @@ VALUES
   ('01', 'Sitova', 'Kaavamääräyskohteen sijainti on oikeudellisesti sitova.'),
   ('02', 'Ohjeellinen', 'Kaavamääräyskohteen sijainti ei ole oikeudellisesti sitova.');
 
-CREATE TABLE code_list.legal_effectiveness_kind (
+CREATE TABLE code_lists.legal_effectiveness_kind (
   id SERIAL PRIMARY KEY,
   codevalue VARCHAR(3) NOT NULL UNIQUE,
   uri VARCHAR(255) NOT NULL UNIQUE,
@@ -687,7 +687,7 @@ CREATE TABLE code_list.legal_effectiveness_kind (
   definition_fi VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_legal_effectiveness_kind
+CREATE TRIGGER upsert_url_legal_effectiveness_kind
   BEFORE INSERT OR UPDATE ON code_lists.legal_effectiveness_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_OikeusvaikutteisuudenLaji/code/');
 
@@ -707,7 +707,7 @@ CREATE TABLE code_lists.detail_plan_regulation_kind(
   sub_class VARCHAR
 );
 
-CREATE TRIGGER code_lists.upsert_url_detail_plan_regulation_kind
+CREATE TRIGGER upsert_url_detail_plan_regulation_kind
   BEFORE INSERT OR UPDATE ON code_lists.detail_plan_regulation_kind
   FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/');
 
@@ -856,7 +856,7 @@ VALUES
   ('020206', 'Pengerrys', NULL, 'Alueen osan käyttötarkoitus', 'Ulkoalueiden käyttö'),
   ('020207', 'Muu tontinkäyttöön liittyvä käyttö', NULL, 'Alueen osan käyttötarkoitus', 'Ulkoalueiden käyttö'),
   ('0203', 'Liikennekäyttö', NULL, 'Alueen osan käyttötarkoitus', 'Liikennekäyttö'),
-  ('020301', 'Ajoluiska', 'Maanalaisiin tiloihin johtava ajoluiska'),
+  ('020301', 'Ajoluiska', NULL, 'Maanalaisiin tiloihin johtava ajoluiska', 'Liikennekäyttö'),
   ('020302', 'Ajoyhteys', NULL, 'Alueen osan käyttötarkoitus', 'Liikennekäyttö'),
   ('020303', 'Alikulku', 'Kadun tai liikennealueen alittava kevyen liikenteen yhteys', 'Alueen osan käyttötarkoitus', 'Liikennekäyttö'),
   ('020304', 'Auton säilytyspaikka', NULL, 'Alueen osan käyttötarkoitus', 'Liikennekäyttö'),
@@ -1057,7 +1057,7 @@ BEGIN
         (8, '14'),
         (9, '05'),
         (10, '09'),
-        (11 '08'),
+        (11, '08'),
         (12, '10'),
         (13, '12'),
         (14, '15')
@@ -1115,7 +1115,9 @@ BEGIN
       ground_relative_position = '02';
 
     UPDATE zoning_element SET
-      land_use_kind = SELECT codevalue FROM code_lists.finnish_land_use_kind WHERE code = zoning_element.finnish_land_use_kind;
+      land_use_kind = land_use_kind_codes.codevalue
+      FROM (SELECT codevalue, code FROM code_lists.finnish_land_use_kind) AS land_use_kind_codes
+      WHERE land_use_kind_codes.code = zoning_element.finnish_land_use_kind;
 
     ALTER TABLE zoning_element
       ALTER COLUMN bindingness_of_location SET NOT NULL,
@@ -1171,11 +1173,11 @@ BEGIN
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED;
   END LOOP;
-END;
+END
 $$;
 
-DROP TABLE IF EXISTS code_list.finnish_spatial_plan_level;
-DROP TABLE IF EXISTS code_list.finnish_spatial_plan_origin;
-DROP TABLE IF EXISTS code_list.finnish_spatial_plan_status;
-DROP TABLE IF EXISTS code_list.finnish_spatial_plan_type;
-DROP TABLE IF EXISTS code_list.finnish_land_use_kind;
+DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_level;
+DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_origin;
+DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_status;
+DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_type;
+DROP TABLE IF EXISTS code_lists.finnish_land_use_kind;
