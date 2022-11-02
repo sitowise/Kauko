@@ -1176,6 +1176,46 @@ BEGIN
 END
 $$;
 
+CREATE TABLE code_lists.document_kind (
+  id SERIAL PRIMARY KEY,
+  codevalue VARCHAR(2) NOT NULL UNIQUE,
+  uri VARCHAR(255) NOT NULL UNIQUE,
+  preflabel_fi VARCHAR NOT NULL,
+  preflabel_sv VARCHAR,
+  definition_fi VARCHAR,
+  description_fi VARCHAR
+);
+
+CREATE TRIGGER upsert_url_document_kind_kind
+  BEFORE INSERT OR UPDATE ON code_lists.document_kind
+  FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_AsiakirjanLaji_YKAK/code/');
+
+INSERT INTO code_lists.document_kind (codevalue, preflabel_fi, preflabel_sv, definition_fi, description_fi)
+  VALUES
+    ('01', 'Hakemus', NULL, NULL, 'Kaava-asiaan liittyvä hakemus, esimerkiksi kaavoitusaloite tai -hakemus.'),
+    ('02', 'Havainnekuva', NULL, 'Kaavaa havainnollistava visualisointi', NULL),
+    ('03', 'Kaavakartta', NULL, NULL, 'Juridisen kaavakartan sähköinen versio. Esimerkiksi vanhan, digitoidun kaavakartan skannattu versio.'),
+    ('04', 'Kaavamääräykset', NULL, NULL, NULL),
+    ('05', 'Kaavaselostus', NULL, NULL, NULL),
+    ('06', 'Karttaliite', NULL, NULL, 'Kaavaan liitetty karttaa esittävä dokumentti.'),
+    ('07', 'Kirje', NULL, NULL, NULL),
+    ('08', 'Kuulutus', NULL, NULL, NULL),
+    ('09', 'Lausunto', NULL, 'Asiakirja tai asiakirjojen muodostama kokonaisuus, jolla lausuntopyynnön saanut toimija esittää näkemyksensä tarkastelun kohteesta asiankäsittelyn aikana', NULL),
+    ('10', 'Mielipide', 'Åsikt', 'Osallisen tai yhteisön jäsenen esittämä kannanotto viranomaisen valmisteluaineistoon', NULL),
+    ('11', 'Muistio', NULL, NULL, NULL),
+    ('12', 'Muistutus', 'Anmärkning', 'Asianosaisen esittämä kannanotto kaavaehdotukseen', NULL),
+    ('13', 'Osallistumis- ja arviointisuunnitelma', NULL, NULL, NULL),
+    ('14', 'Päätös', NULL, NULL, NULL),
+    ('15', 'Pöytäkirja', NULL, NULL, NULL),
+    ('16', 'Raportti', NULL, 'Raportti voi olla esimerkiksi yhteenveto vuorovaikutustapahtumasta tai -tapahtumien kokonaisuudesta.', 'Asiakirja, joka sisältää yhteenvedon kaavan valmisteluun liittyvästä asiasta'),
+    ('17', 'Selvitys', NULL, 'Kaavan laadinnassa hyödynnetyt selvitykset. Selvityksiä voivat olla esimerkiksi luonto-, maisema-, kulttuuriperintö-, liikenne- tai palveluverkkoselvitykset.', NULL),
+    ('18', 'Sopimus', NULL, NULL, NULL),
+    ('19', 'Suunnitelma', NULL, 'Kaavatyöhön liittyvä erillinen suunnitelma, esimerkiksi katujen tai yleisten alueiden suunnitelma', NULL),
+    ('20', 'Suunnitteluohje', NULL, 'Suunnitteluohje voi olla esimerkiksi rakentamistapaohje tai lähiympäristön suunnitteluohje.', 'Kaavan suunnitteluratkaisuja täydentävä ohjeistus jatkosuunnittelua varten.'),
+    ('21', 'Valitus', NULL, NULL, NULL),
+    ('22', 'Vastine', NULL, NULL, NULL),
+    ('99', 'Muu asiakirja', NULL, NULL, NULL);
+
 DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_level;
 DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_origin;
 DROP TABLE IF EXISTS code_lists.finnish_spatial_plan_status;
