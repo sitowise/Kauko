@@ -95,7 +95,7 @@ ALTER TABLE SCHEMANAME.spatial_plan
     DEFERRABLE INITIALLY DEFERRED,
   ALTER COLUMN legal_effectiveness SET NOT NULL,
   ADD CONSTRAINT spatial_plan_legal_effectiveness_fkey FOREIGN KEY (legal_effectiveness)
-    REFERENCES code_lists.spatial_plan_legal_effectiveness (codevalue)
+    REFERENCES code_lists.legal_effectiveness_kind(codevalue)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
     DEFERRABLE INITIALLY DEFERRED;
@@ -116,7 +116,7 @@ UPDATE SCHEMANAME.zoning_element SET
 ALTER TABLE SCHEMANAME.zoning_element
   ALTER COLUMN bindingness_of_location SET NOT NULL,
   ADD CONSTRAINT zoning_element_bindingness_of_location_fkey FOREIGN KEY (bindingness_of_location)
-    REFERENCES code_lists.bindingness_of_location_kind (codevalue)
+    REFERENCES code_lists.bindingness_kind(codevalue)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
     DEFERRABLE INITIALLY DEFERRED,
@@ -140,13 +140,13 @@ ALTER TABLE SCHEMANAME.planned_space
 
 
 UPDATE SCHEMANAME.planned_space as s SET
-  bindingness_of_location = s2.bindingness
+  bindingness_of_location = s2.code
 FROM(
   VALUES
     (true, '01'),
     (false, '02')
-) as s2("type", bindingness)
-WHERE s2."type" = s."type";
+) as s2(bindingness, code)
+WHERE s2.bindingness = s.obligatory;
 
 UPDATE SCHEMANAME.planned_space SET
   ground_relative_position = '02';
