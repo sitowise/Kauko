@@ -1,17 +1,21 @@
 -- Disable triggers before they are fixed to new keys.
-ALTER TABLE SCHEMANAME.spatial_plan DISABLE TRIGGER ALL;
-ALTER TABLE SCHEMANAME.zoning_element DISABLE TRIGGER ALL;
-ALTER TABLE SCHEMANAME.planned_space DISABLE TRIGGER ALL;
-ALTER TABLE SCHEMANAME.planning_detail_point DISABLE TRIGGER ALL;
-ALTER TABLE SCHEMANAME.planning_detail_line DISABLE TRIGGER ALL;
+ALTER TABLE SCHEMANAME.spatial_plan DISABLE TRIGGER USER;
+ALTER TABLE SCHEMANAME.zoning_element DISABLE TRIGGER USER;
+ALTER TABLE SCHEMANAME.planned_space DISABLE TRIGGER USER;
+ALTER TABLE SCHEMANAME.planning_detail_point DISABLE TRIGGER USER;
+ALTER TABLE SCHEMANAME.planning_detail_line DISABLE TRIGGER USER;
 
 ALTER TABLE SCHEMANAME.spatial_plan
   ADD COLUMN identity_id UUID DEFAULT uuid_generate_v4() NOT NULL UNIQUE,
   ADD COLUMN local_id VARCHAR UNIQUE,
   ADD COLUMN namespace VARCHAR,
   ADD COLUMN reference_id VARCHAR,
-  ADD COLUMN latest_change TIMESTAMP DEFAULT now() NOT NULL,
-  RENAME COLUMN planning_object_identifier TO producer_specific_id,
+  ADD COLUMN latest_change TIMESTAMP DEFAULT now() NOT NULL;
+
+ALTER TABLE SCHEMANAME.spatial_plan
+  RENAME COLUMN planning_object_identifier TO producer_specific_id;
+
+ALTER TABLE SCHEMANAME.spatial_plan
   RENAME COLUMN created to storage_time;
 
 
@@ -19,7 +23,7 @@ CREATE TRIGGER spatial_plan_modified_trigger
   BEFORE INSERT OR UPDATE ON SCHEMANAME.spatial_plan
   FOR EACH ROW EXECUTE PROCEDURE versioned_object_modified_trigger();
 
-UPDATE TABLE SCHEMANAME.spatial_plan
+UPDATE SCHEMANAME.spatial_plan
   SET local_id = identity_id || '.' || uuid_generate_v4();
 
 CREATE TRIGGER create_spatial_plan_local_id_trigger
@@ -37,8 +41,6 @@ ALTER TABLE SCHEMANAME.zoning_element
   ADD COLUMN reference_id VARCHAR,
   ADD COLUMN latest_change TIMESTAMP DEFAULT now() NOT NULL,
   ADD COLUMN spatial_plan VARCHAR,
-  RENAME COLUMN planning_object_identifier TO producer_specific_id,
-  RENAME COLUMN created to storage_time,
   ADD CONSTRAINT fk_spatial_plan
     FOREIGN KEY (spatial_plan)
     REFERENCES SCHEMANAME.spatial_plan (local_id)
@@ -46,11 +48,16 @@ ALTER TABLE SCHEMANAME.zoning_element
     ON UPDATE CASCADE
     DEFERRABLE INITIALLY DEFERRED;
 
+ALTER TABLE SCHEMANAME.zoning_element
+  RENAME COLUMN planning_object_identifier TO producer_specific_id;
+ALTER TABLE SCHEMANAME.zoning_element
+  RENAME COLUMN created to storage_time;
+
 CREATE TRIGGER zoning_element_modified_trigger
   BEFORE INSERT OR UPDATE ON SCHEMANAME.zoning_element
   FOR EACH ROW EXECUTE PROCEDURE versioned_object_modified_trigger();
 
-UPDATE TABLE SCHEMANAME.spatial_plan
+UPDATE SCHEMANAME.spatial_plan
   SET local_id = identity_id || '.' || uuid_generate_v4();
 
 CREATE TRIGGER create_zoning_element_local_id_trigger
@@ -58,7 +65,9 @@ CREATE TRIGGER create_zoning_element_local_id_trigger
   FOR EACH ROW EXECUTE PROCEDURE create_local_id_trigger();
 
 UPDATE SCHEMANAME.zoning_element
-  SET spatial_plan = SELECT local_id FROM SCHEMANAME.spatial_plan WHERE producer_specific_id = zoning_element.fk_spatial_plan;
+  SET spatial_plan = subquery.local_id
+  FROM (SELECT local_id, producer_specific_id FROM SCHEMANAME.spatial_plan) AS subquery
+  WHERE zoning_element.fk_spatial_plan = subquery.producer_specific_id;
 
 ALTER TABLE SCHEMANAME.zoning_element
   DROP COLUMN fk_spatial_plan,
@@ -70,15 +79,18 @@ ALTER TABLE SCHEMANAME.planned_space
   ADD COLUMN local_id VARCHAR UNIQUE,
   ADD COLUMN namespace VARCHAR,
   ADD COLUMN reference_id VARCHAR,
-  ADD COLUMN latest_change TIMESTAMP DEFAULT now() NOT NULL,
-  RENAME COLUMN planning_object_identifier TO producer_specific_id,
+  ADD COLUMN latest_change TIMESTAMP DEFAULT now() NOT NULL;
+
+ALTER TABLE SCHEMANAME.planned_space
+  RENAME COLUMN planning_object_identifier TO producer_specific_id;
+ALTER TABLE SCHEMANAME.planned_space
   RENAME COLUMN created to storage_time;
 
 CREATE TRIGGER planned_space_modified_trigger
   BEFORE INSERT OR UPDATE ON SCHEMANAME.planned_space
   FOR EACH ROW EXECUTE PROCEDURE versioned_object_modified_trigger();
 
-UPDATE TABLE SCHEMANAME.planned_space
+UPDATE SCHEMANAME.planned_space
   SET local_id = identity_id || '.' || uuid_generate_v4();
 
 CREATE TRIGGER create_planend_space_local_id_trigger
@@ -189,7 +201,7 @@ CREATE TABLE SCHEMANAME.document(
   reference_id VARCHAR,
   latest_change TIMESTAMP DEFAULT now() NOT NULL,
   document_identifier VARCHAR[],
-  name VARCHAR, -- TO BE CHANGED TO LANGUAGE STRING, IN NEXT SCRIPTS
+  name VARCHAR -- TO BE CHANGED TO LANGUAGE STRING, IN NEXT SCRIPTS
 );
 
 
@@ -201,7 +213,7 @@ CREATE TRIGGER create_document_local_id_trigger
   BEFORE INSERT ON SCHEMANAME.document
   FOR EACH ROW EXECUTE PROCEDURE create_local_id_trigger();
 
-CREATE TABLE SCHEMANAME.referenced_document (
+CREATE TABLE SCHEMANAME.document_document (
   id SERIAL PRIMARY KEY,
   referencing_document_local_id VARCHAR NOT NULL,
   referenced_document_local_id VARCHAR NOT NULL,
@@ -218,7 +230,7 @@ CREATE TABLE SCHEMANAME.referenced_document (
     ON DELETE CASCADE
     ON UPDATE CASCADE
     DEFERRABLE INITIALLY DEFERRED,
-  CONSTRAINT CHECK (referencing_document_local_id <> referenced_document_local_id)
+  CONSTRAINT local_id_check CHECK (referencing_document_local_id <> referenced_document_local_id)
 );
 
 CREATE TABLE SCHEMANAME.spatial_plan_commentary_document(
