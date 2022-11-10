@@ -26,11 +26,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 ALTER TABLE SCHEMANAME.spatial_plan
-  ALTER COLUMN name SET NOT NULL;
+  ALTER COLUMN name SET NOT NULL,
   DROP COLUMN name_fi,
   DROP COLUMN name_sv;
 
 ALTER TABLE SCHEMANAME.contact
   RENAME TO planner;
-  ADD COLUMN professional_title JSONB CHECK(check_language_string(professional_title));
+
+ALTER TABLE SCHEMANAME.planner
+  ADD COLUMN professional_title JSONB CHECK(check_language_string(professional_title)),
   ADD COLUMN "role" JSONB CHECK(check_language_string("role"));
