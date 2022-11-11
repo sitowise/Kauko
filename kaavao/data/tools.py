@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QMessageBox
-
+from qgis.PyQt.QtWidgets import QMessageBox
+from typing import List
 from ..database.db_tools import get_active_db_and_schema
 
 
@@ -15,7 +15,7 @@ def parse_value(value):
     return val
 
 
-def query_results_to_str_list(result: list) -> [list]:
+def query_results_to_str_list(result: list) -> List[list]:
     """Parses sql query results to list of strings. One row per item.
 
     :param result: list of tuples containing results for sql query.

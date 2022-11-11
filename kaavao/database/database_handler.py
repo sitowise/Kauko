@@ -1,22 +1,22 @@
 from typing import List
+
 import psycopg2
-from PyQt5.QtWidgets import QMessageBox
-from qgis.core import QgsProject, Qgis, QgsApplication, \
-    QgsExpressionContextUtils
+from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.core import (Qgis, QgsApplication, QgsExpressionContextUtils,
+                       QgsProject)
 from qgis.utils import iface
 
-from ..database.project_updater.project_updater import ProjectUpdater
-from ..data.schema import Schema
-from ..errors import SchemaError
-from ..constants import ADD_GEOM_CHECK_SQL, \
-    DROP_GEOM_CHECK_SQL, REFRESH_MATERIALIZED_VIEWS
+from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
+                         REFRESH_MATERIALIZED_VIEWS)
 from ..data.csv_handler import get_csv_code
-from ..data.tools import parse_value, save_alert_msg, parse_filter_ids
+from ..data.schema import Schema
+from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import get_new_schema_name, get_connection_params, \
-    get_active_db_and_schema
+from ..database.db_tools import (get_active_db_and_schema,
+                                 get_connection_params, get_new_schema_name)
+from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
-
+from ..errors import SchemaError
 
 
 def create_new_schema_and_project(projection, municipality, db) -> None:
@@ -79,12 +79,12 @@ def delete_schema_and_project(db: Database, project_name=None) -> bool:
                                        level=Qgis.Warning, duration=5)
     if project_name[-1] == 'y':
         combination_project_name = project_name
-        project_name = project_name[0:-2]
+        project_name = project_name[:-2]
     else:
-        combination_project_name = project_name + "_y"
+        combination_project_name = f"{project_name}_y"
     msg = QMessageBox()
-    msg.setText(
-        "Haluatko varmasti poistaa työtilat " + project_name + " ja " + combination_project_name + "?")
+    msg.setText(f"Haluatko varmasti poistaa työtilat {project_name} ja {combination_project_name}?")
+
     msg.setIcon(QMessageBox.Warning)
     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     is_deleted = msg.exec_()
@@ -94,7 +94,7 @@ def delete_schema_and_project(db: Database, project_name=None) -> bool:
     for name in [project_name, combination_project_name]:
         project_query = "DELETE FROM public.qgis_projects WHERE name LIKE '" + \
                         name + "'"
-        schema_query = "DROP SCHEMA " + name + " CASCADE"
+        schema_query = f"DROP SCHEMA {name} CASCADE"
         information_query = "DELETE FROM public.schema_information WHERE name LIKE '" + name + "'"
         try:
             db.insert(project_query)
@@ -113,9 +113,8 @@ def delete_schema_and_project(db: Database, project_name=None) -> bool:
                                            "yhteyttä ylläpitäjään.",
                                            level=Qgis.Critical, duration=5)
             return False
-    iface.messageBar().pushMessage(
-        "Työtilat " + project_name + " ja " + combination_project_name +
-        " poistettu onnistuneesti.", level=Qgis.Success, duration=5)
+    iface.messageBar().pushMessage(f"Työtilat {project_name} ja {combination_project_name} poistettu onnistuneesti.", level=Qgis.Success, duration=5)
+
     return True
 
 
@@ -151,11 +150,7 @@ def drop_geom_checks(schema, db):
 
 def get_projects(db, only_web=False) -> list:
     projects = []
-    if not only_web:
-        query = "SELECT name FROM public.qgis_projects ORDER BY name;"
-    else:
-        query = "SELECT name FROM public.qgis_projects " \
-                "WHERE name LIKE '%web' ORDER BY name;"
+    query = "SELECT name FROM public.qgis_projects WHERE name LIKE '%web' ORDER BY name;" if only_web else "SELECT name FROM public.qgis_projects ORDER BY name;"
     try:
         raw_projects = db.select(query)
         for project in raw_projects:
@@ -171,24 +166,21 @@ def get_spatial_plan_names(db: Database, schema=None) -> list:
         return
     try:
         names = []
-        query = "Select " + schema + ".spatial_plan.name From " + schema + \
-                ".spatial_plan ORDER BY name"
+        query = f"Select {schema}.spatial_plan.name FROM {schema}.spatial_plan ORDER BY name"
         raw_names = db.select(query)
         for name in raw_names:
             name = ''.join(name)
             names.append(name)
         return names
     except psycopg2.errors.UndefinedColumn:
-        iface.messageBar().pushMessage("Virhe!", "Skeemassa " + schema +
-                                       " ei ole saraketta 'nimi'",
-                                       level=Qgis.Warning,
-                                       duration=5)
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemassa {schema} ei ole saraketta 'nimi'",
+                                       level=Qgis.Warning, duration=5)
+
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
-                                       "Skeemaa " + schema + " ei löytynyt tietokannasta " +
-                                       db.get_database_name() + ".",
-                                       level=Qgis.Warning,
-                                       duration=5)
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
 
 
 def get_identifiers_for_plan(project: QgsProject, plan_name: str, db: Database,
@@ -203,7 +195,7 @@ def get_identifiers_for_plan(project: QgsProject, plan_name: str, db: Database,
     if project_name != schema:
         raise SchemaError()
 
-    query = "SELECT * FROM " + schema + ".all_spatial_plan_items Where \"Kaavan nimi\" = '" + plan_name + "'"
+    query = f"SELECT * FROM {schema}.all_spatial_plan_items WHERE \"Kaavan nimi\" = '{plan_name}'"
     raw_results = db.select(query)
     results = {
         "Kaava": [],
@@ -270,8 +262,7 @@ def get_regulations(db: Database, view: str, spatial_plan_name: str,
 
 
 def move_plan_to_combination(db, schema, plan_name):
-    query = "SELECT planning_object_identifier from " + schema + \
-            ".spatial_plan WHERE name = '" + plan_name + "'"
+    query = f"SELECT planning_object_identifier from {schema}.spatial_plan WHERE name = '{plan_name}'"
     spatial_plan = db.select(query)[0][0]
     results = {
         "spatial_plan": [],

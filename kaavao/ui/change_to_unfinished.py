@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.gui import QgisInterface
@@ -18,7 +19,7 @@ class ChangeToUnfinished(QtWidgets.QDialog, FROM_CLASS):
         self.spatialPlanNameComboBox.currentTextChanged.connect(
             self.enable_accept_button)
 
-    def add_spatial_plan_names(self, names: [str]) -> None:
+    def add_spatial_plan_names(self, names: List[str]) -> None:
         """Add spatial plans names to combobox
 
         :param names: list of spatial plan names

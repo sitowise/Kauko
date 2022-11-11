@@ -21,39 +21,37 @@
  *                                                                         *
  ***************************************************************************/
 """
-# Initialize Qt resources from file resources.py
-from kaavao.database.project_updater.project_template_writer import write_template
 import os.path
 from typing import Callable
 
 import psycopg2
+from qgis.core import (Qgis, QgsApplication, QgsCoordinateReferenceSystem,
+                       QgsProject)
+from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox, QWidget
-from qgis.core import QgsApplication, QgsProject, Qgis, \
-    QgsCoordinateReferenceSystem
 
-from qgis.gui import QgisInterface
-
-from .ui.update_project_dialog import InitiateUpdateProjectDialog
-from .ui.save_for_g3wsuite_dialog import SaveForWebDialog
-from .database.query_builder import get_query
-from .ui.change_to_unfinished import ChangeToUnfinished
-from .constants import NUMBER_OF_GEOM_CHECKS_SQL, REFRESH_MATERIALIZED_VIEWS
+from .constants import NUMBER_OF_GEOM_CHECKS_SQL
 from .data.tools import parse_value
-from .database.database_handler import get_projects, get_spatial_plan_names, \
-    drop_geom_checks, add_geom_checks
+from .database.database_handler import (add_geom_checks, drop_geom_checks,
+                                        get_projects, get_spatial_plan_names)
 from .database.db_initializer import DatabaseInitializer
 from .database.db_tools import get_active_db_and_schema
+# Initialize Qt resources from file resources.py
+from .database.project_updater.project_template_writer import write_template
+from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
 from .project_handler import open_project
+from .resources import *
+from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
 from .ui.get_regulations_dialog import InitiateRegulationsDialog
 from .ui.move_plan_dialog import MovePlanDialog
 from .ui.open_project_dialog import InitiateOpenProjectDialog
 from .ui.schema_creator_dialog import InitiateSchemaDialog
 from .ui.select_plan_name_dialog import InitiateSelectPlanNameDialog
-from .resources import *
+from .ui.update_project_dialog import InitiateUpdateProjectDialog
 
 
 def is_admin():
@@ -230,20 +228,6 @@ class KaavaO:
         if is_admin():
             self.add_action(
                 icon_path,
-                text="Tallenna projekti g3wsuitea varten",
-                callback=self.save_for_web,
-                parent=self.iface.mainWindow(),
-                add_to_toolbar=False
-            )
-            self.add_action(
-                icon_path,
-                text="Päivitä projektit g3wsuiteen",
-                callback=self.refresh_web,
-                parent=self.iface.mainWindow(),
-                add_to_toolbar=False
-            )
-            self.add_action(
-                icon_path,
                 text="Tallenna malliksi",
                 callback=self.save_template,
                 parent=self.iface.mainWindow(),
@@ -384,9 +368,8 @@ class KaavaO:
         dlg.show()
 
         # Run the dialog event loop
-        result = dlg.exec_()
         # See if OK was pressed
-        if result:
+        if dlg.exec_():
             dlg.write_regulations(db, schema)
 
     def show_selected_plan(self):
@@ -416,9 +399,8 @@ class KaavaO:
         dlg.show()
 
         # Run the dialog event loop
-        result = dlg.exec_()
         # See if OK was pressed
-        if result:
+        if dlg.exec_():
             clear_layer_filters()
             dlg.write_spatial_plan_name_filters(db, QgsProject().instance(),
                                                 schema)
@@ -445,13 +427,11 @@ class KaavaO:
         msg.setIcon(QMessageBox.Question)
         if checks == 0:
             msg.setText("Haluatko laittaa muokkauksen päälle?")
-            turn_on = msg.exec_()
-            if turn_on:
+            if msg.exec_():
                 drop_geom_checks(schema, db)
         else:
             msg.setText("Haluatko lopettaa muokkauksen?")
-            turn_off = msg.exec_()
-            if turn_off:
+            if msg.exec_():
                 add_geom_checks(schema, db)
 
     def move_plan(self):
@@ -468,7 +448,7 @@ class KaavaO:
             return
 
         self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
+                DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
                                 schema)
         dlg = MovePlanDialog(self.iface)
         if not self.database_initializer.initialize_database(dbname):
@@ -477,14 +457,12 @@ class KaavaO:
         spatial_plans = get_spatial_plan_names(db, schema)
         dlg.add_spatial_plan_names(spatial_plans)
         dlg.show()
-        result = dlg.exec_()
-        if result:
-            if not drop_geom_checks(schema + "_y", db):
+        if dlg.exec_():
+            if not drop_geom_checks(f"{schema}_y", db):
                 return
             dlg.move_plan(db, schema)
-            srid = self.iface.mapCanvas().mapSettings().destinationCrs().authid()[
-                   5:]
-            if open_project(schema + "_y"):
+            srid = self.iface.mapCanvas().mapSettings().destinationCrs().authid()[5:]
+            if open_project(f"{schema}_y"):
                 QgsProject().instance().setCrs(
                     QgsCoordinateReferenceSystem(int(srid)))
 
@@ -496,7 +474,7 @@ class KaavaO:
                                                 level=Qgis.Warning, duration=5)
             return
         self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
+                DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
                                 schema)
         dlg = ChangeToUnfinished(self.iface)
         if not self.database_initializer.initialize_database(dbname):
@@ -505,16 +483,12 @@ class KaavaO:
         spatial_plans = get_spatial_plan_names(db, schema)
         dlg.add_spatial_plan_names(spatial_plans)
         dlg.show()
-        result = dlg.exec_()
-        if result:
+        if dlg.exec_():
             plan_name = dlg.get_spatial_plan_name()
             query = get_query(schema, "/sql_scripts/change_to_unfinished.sql",
-                              plan_name=plan_name)
+                            plan_name=plan_name)
             db.insert(query)
-            self.iface.messageBar().pushMessage(
-                "Kaava " + plan_name + " muutettu keskeneräiseksi",
-                level=Qgis.Success,
-                duration=5)
+            self.iface.messageBar().pushMessage(f"Kaava {plan_name} muutettu keskeneräiseksi", level=Qgis.Success, duration=5)
 
     def fix_topology(self):
         dbname, schema = get_active_db_and_schema()
@@ -531,55 +505,6 @@ class KaavaO:
         db.insert(query)
         self.iface.messageBar().pushMessage("Kaavan topologia korjattu.",
                                             level=Qgis.Success, duration=5)
-
-    def save_for_web(self):
-        dbname, schema = get_active_db_and_schema()
-        if not dbname and not schema:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
-                                schema)
-
-        dlg = SaveForWebDialog(self.iface)
-        dlg.show()
-        result = dlg.exec_()
-        if result:
-            dlg.change_sources()
-            QgsProject.instance().write()
-            open_project(schema)
-        else:
-            return
-
-    def refresh_web(self):
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance())
-
-        dlg = InitiateUpdateProjectDialog(self.iface)
-
-        self.database_initializer.initialize_database(dlg.get_db())
-        db = self.database_initializer.database
-        dlg.db_changed.connect(
-            lambda: self.database_initializer.initialize_database(
-                dlg.get_db()))
-        dlg.db_changed.connect(
-            lambda: dlg.add_projects(get_projects(db, True)))
-        dlg.add_projects(get_projects(db, True))
-
-        dlg.show()
-        # Run the dialog event loop
-        result = dlg.exec_()
-
-        # See if OK was pressed
-        if result:
-            dlg.update_views(db)
-            self.iface.messageBar().pushMessage(
-                "Projektit päivitetty g3wsuiteen.",
-                level=Qgis.Success, duration=5)
-        else:
-            return
 
     def update_projects(self):
         self.database_initializer = \

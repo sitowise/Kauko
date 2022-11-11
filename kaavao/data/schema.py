@@ -10,7 +10,7 @@ class Schema:
     @property
     def name(self):
         return self.__name
-  
+
     @property
     def srid(self):
         return self.__srid

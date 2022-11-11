@@ -1,13 +1,13 @@
 import csv
 import os
 
-from qgis.core import QgsMessageLog, Qgis
+from typing import List
 
 from ..exceptions import SpatialNotFoundException
 from ..constants import SPATIALREFSYS
 
 
-def read_csv(filename: str) -> [dict]:
+def read_csv(filename: str) -> List[dict]:
     """Used to read csv file and convert it to list of dicts
 
     :param filename: str
