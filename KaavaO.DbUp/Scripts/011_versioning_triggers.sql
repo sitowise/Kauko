@@ -5,8 +5,8 @@ CREATE OR REPLACE FUNCTION versioned_object_modified_trigger() RETURNS TRIGGER A
       NEW.storage_time := now();
     ELSIF TG_OP = 'UPDATE' THEN
       NEW.storage_time = OLD.storage_time;
-    RETURN NEW;
     END IF;
+    RETURN NEW;
   END;
 $$ LANGUAGE plpgsql;
 
