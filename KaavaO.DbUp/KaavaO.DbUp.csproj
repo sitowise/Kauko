@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Scripts\001_init_database.sql" />
+    <None Remove="Scripts\002_create_code_lists_tables.sql" />
+    <None Remove="Scripts\003_insert_code_lists_data.sql" />
+    <None Remove="Scripts\004_create_qgis_project_table.sql" />
+    <None Remove="Scripts\005_create_schemaInformation_table.sql" />
+    <None Remove="Scripts\006_update_schema_information_table.sql" />
+    <None Remove="Scripts\007_add_viewer_role.sql" />
+    <None Remove="Scripts\008_update_codelists_to_rytj.sql" />
+    <None Remove="Scripts\009_add_rytj_codelist.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\001_init_database.sql" />
+    <EmbeddedResource Include="Scripts\002_create_code_lists_tables.sql" />
+    <EmbeddedResource Include="Scripts\003_insert_code_lists_data.sql" />
+    <EmbeddedResource Include="Scripts\004_create_qgis_project_table.sql" />
+    <EmbeddedResource Include="Scripts\005_create_schemaInformation_table.sql" />
+    <EmbeddedResource Include="Scripts\006_update_schema_information_table.sql" />
+    <EmbeddedResource Include="Scripts\007_add_viewer_role.sql" />
+    <EmbeddedResource Include="Scripts\008_update_codelists_to_rytj.sql" />
+    <EmbeddedResource Include="Scripts\009_add_rytj_codelist.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dbup-core" Version="4.6.3" />
+    <PackageReference Include="dbup-postgresql" Version="4.6.3" />
+    <PackageReference Include="Npgsql" Version="6.0.6" />
+  </ItemGroup>
+
+</Project>

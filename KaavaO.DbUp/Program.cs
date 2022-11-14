@@ -1,7 +1,5 @@
 ﻿using DbUp;
 using DbUp.Engine;
-using System;
-using System.Linq;
 using System.Reflection;
 
 namespace KaavaO.DbUpdater
