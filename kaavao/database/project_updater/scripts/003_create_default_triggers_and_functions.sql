@@ -884,8 +884,7 @@ execute procedure SCHEMANAME.update_validity();
 
 -- FUNCTION: SCHEMANAME.refresh_validity()
 
-CREATE OR REPLACE FUNCTION "SCHEMANAME".refresh_validity(
-	)
+CREATE OR REPLACE FUNCTION "SCHEMANAME".refresh_validity()
     RETURNS void
     LANGUAGE 'sql'
     COST 100
