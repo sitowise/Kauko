@@ -1,17 +1,18 @@
-from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtWidgets import QMessageBox
 from qgis.core import Qgis
 from qgis.gui import QgisInterface
+from qgis.PyQt.QtCore import QCoreApplication
+from qgis.PyQt.QtWidgets import QMessageBox
 
-from .database import Database
-from .db_tools import get_active_db_and_schema, set_connection, get_connection_params
 from ..ui.db_login_form import DbLoginForm
+from .database import Database
+from .db_tools import (get_active_db_and_schema, get_connection_params,
+                       set_connection)
 
 
 def save_alert_msg():
-    db, project = get_active_db_and_schema()
+    _, project = get_active_db_and_schema()
     msg = QMessageBox()
-    msg.setText("Haluatko tallentaa työtilan " + project + "?")
+    msg.setText(f"Haluatko tallentaa työtilan {project}?")
     msg.setIcon(QMessageBox.Warning)
     msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
     return msg.exec_()
@@ -52,8 +53,7 @@ class DatabaseInitializer:
         if parameters["user"] is None or parameters["password"] is None:
             login_form = DbLoginForm(parameters["user"],
                                      parameters["password"])
-            result = login_form.exec_()
-            if result:
+            if login_form.exec_():
                 parameters["user"] = login_form.usernameLineEdit.text()
                 parameters["password"] = login_form.passwordLineEdit.text()
             else:

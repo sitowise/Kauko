@@ -5,7 +5,7 @@ import io
 import zipfile
 from zipfile import ZipFile
 
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsProject, QgsApplication, QgsMessageLog, Qgis
 
 from .data.csv_handler import format_spatial_ref

@@ -1,6 +1,8 @@
 from qgis.core import Qgis
 from qgis.utils import iface
 
+from typing import List
+
 from .regulations_format import REGULATION_FORMATS
 from ..data.tools import query_results_to_str_list
 from ..database.database_handler import get_regulations
@@ -17,7 +19,7 @@ def write_regulations_file(db, spatial_plan_name, schema, file_path) -> None:
             empty_line = ";;;;;\n"
             empty_line = empty_line.encode('utf-8-sig')
 
-            def write_regulations(regulations_to_write: [tuple]):
+            def write_regulations(regulations_to_write: List[tuple]):
                 """Used to write sql results to output csv file.
 
                 :param regulations_to_write: Sql results in list of tuples

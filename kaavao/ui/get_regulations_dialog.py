@@ -1,6 +1,7 @@
 import os
+from typing import List
 
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.PyQt import QtWidgets, uic
 from qgis.gui import QgisInterface
 
@@ -21,7 +22,7 @@ class InitiateRegulationsDialog(QtWidgets.QDialog, FROM_CLASS):
         self.filePathLineEdit.clear()
         self.fileDialogPushButton.clicked.connect(self.select_output_file)
 
-    def add_spatial_plan_names(self, items: [str]) -> None:
+    def add_spatial_plan_names(self, items: List[str]) -> None:
         """Adds names of given spatial plans to combobox
 
         :param items: list of spatial plan names

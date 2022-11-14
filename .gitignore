@@ -215,4 +215,5 @@ __pycache__/
 *.code-workspace
 launch.json
 settings.json
+kaavao/.env
 kaavao/.venv

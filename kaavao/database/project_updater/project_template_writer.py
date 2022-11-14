@@ -6,16 +6,16 @@ from os.path import isfile, join
 from qgis.core import QgsProject
 
 
-PROJECT_TEMPALATE_PATH = os.path.dirname(os.path.abspath(__file__)) + '/projects/'
+PROJECT_TEMPALATE_PATH = f'{os.path.dirname(os.path.abspath(__file__))}/projects/'
 
 def write_template():
     current_schema = get_current_schema()
     create_temp_project()
-    project_tree = ET.parse(PROJECT_TEMPALATE_PATH + '000_temp.qgs')
+    project_tree = ET.parse(f'{PROJECT_TEMPALATE_PATH}000_temp.qgs')
     project_root = project_tree.getroot()
     parse_project(project_root, current_schema)
     project_tree.write(PROJECT_TEMPALATE_PATH + get_template_name())
-    os.remove(PROJECT_TEMPALATE_PATH + '000_temp.qgs')
+    os.remove(f'{PROJECT_TEMPALATE_PATH}000_temp.qgs')
 
 
 def parse_project(root, current_schema):
@@ -26,7 +26,7 @@ def parse_project(root, current_schema):
         ]
 
     for spatialref in projections_to_overwrite:
-        to_remove = [elem for elem in spatialref]
+        to_remove = list(spatialref)
         for elem in to_remove:
             spatialref.remove(elem)
         spatialref.text = "SPATIALREFSYS"
@@ -79,7 +79,7 @@ def replace_with_const(source: str, start: str, end:str, const: str) -> str:
 
 def create_temp_project() -> None:
     project = QgsProject.instance()
-    project.write(PROJECT_TEMPALATE_PATH + '000_temp.qgs')
+    project.write(f'{PROJECT_TEMPALATE_PATH}000_temp.qgs')
 
 
 def get_current_schema() -> str:
@@ -94,7 +94,7 @@ def get_template_name() -> str:
     projects.sort()
     newest_project = projects[-1]
     new_index = int(newest_project[:3]) + 1
-    return str(new_index).zfill(3) + "_project_template.qgs"
+    return f"{str(new_index).zfill(3)}_project_template.qgs"
 
 
 

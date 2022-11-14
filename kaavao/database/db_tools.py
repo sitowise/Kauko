@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from PyQt5.QtCore import QSettings, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsAuthMethodConfig, QgsProject
 
 from .database import Database
@@ -27,11 +27,8 @@ def get_new_schema_name(municipality: str, projection: str, is_combination: bool
     :param is_combination: bool
     :return: str
     """
-    schema_name = municipality.lower() + '_' + projection[5:].lower()
-    if is_combination:
-        return (schema_name + '_y').lower()
-    else:
-        return schema_name.lower()
+    schema_name = f'{municipality.lower()}_{projection[5:].lower()}'
+    return f'{schema_name}_y'.lower() if is_combination else schema_name.lower()
 
 
 def set_connection(db_name: str) -> None:

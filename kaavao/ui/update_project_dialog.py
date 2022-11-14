@@ -1,7 +1,7 @@
 from ..database.project_updater.project_updater import ProjectUpdater
 import os
 
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt
@@ -9,7 +9,6 @@ from qgis.gui import QgisInterface
 
 from ..database.database_handler import create_schema_objects, update_materialized_views
 from ..database.db_tools import get_database_connections
-from ..project_handler import open_project
 from typing import List
 
 FROM_CLASS, _ = uic.loadUiType(os.path.join(
