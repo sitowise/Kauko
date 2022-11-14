@@ -1,7 +1,7 @@
 from ..database.project_updater.project_updater import ProjectUpdater
 import os
 
-from qgis.PyQt import QStandardItemModel, QStandardItem
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt
