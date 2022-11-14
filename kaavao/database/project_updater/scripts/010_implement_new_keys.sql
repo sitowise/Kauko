@@ -201,7 +201,7 @@ CREATE TABLE SCHEMANAME.document(
   reference_id VARCHAR,
   latest_change TIMESTAMP DEFAULT now() NOT NULL,
   document_identifier VARCHAR[],
-  name VARCHAR -- TO BE CHANGED TO LANGUAGE STRING, IN NEXT SCRIPTS
+  name JSONB CHECK(check_language_string(name))
 );
 
 
@@ -217,7 +217,7 @@ CREATE TABLE SCHEMANAME.document_document (
   id SERIAL PRIMARY KEY,
   referencing_document_local_id VARCHAR NOT NULL,
   referenced_document_local_id VARCHAR NOT NULL,
-  role VARCHAR, -- TO BE CHANGED TO LANGUAGE STRING, IN NEXT SCRIPTS
+  role JSONB CHECK(check_language_string(name)),
   CONSTRAINT fk_referencing_document
     FOREIGN KEY (referencing_document_local_id)
     REFERENCES SCHEMANAME.document (local_id)
@@ -237,6 +237,7 @@ CREATE TABLE SCHEMANAME.spatial_plan_commentary_document(
   id SERIAL PRIMARY KEY,
   spatial_plan_commentary_local_id VARCHAR NOT NULL,
   document_local_id VARCHAR NOT NULL,
+  role JSONB CHECK(check_language_string(name)),
   CONSTRAINT fk_spatial_plan_commentary
     FOREIGN KEY (spatial_plan_commentary_local_id)
     REFERENCES SCHEMANAME.spatial_plan_commentary (local_id)
@@ -255,6 +256,7 @@ CREATE TABLE SCHEMANAME.patricipation_evalution_plan_document(
   id SERIAL PRIMARY KEY,
   participation_and_evalution_plan_local_id VARCHAR NOT NULL,
   document_local_id VARCHAR NOT NULL,
+  role JSONB CHECK(check_language_string(name)),
   CONSTRAINT fk_participation_and_evalution_plan
     FOREIGN KEY (participation_and_evalution_plan_local_id)
     REFERENCES SCHEMANAME.participation_and_evalution_plan (local_id)
