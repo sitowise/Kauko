@@ -18,6 +18,7 @@
     <None Remove="Scripts\008_update_codelists_to_rytj.sql" />
     <None Remove="Scripts\009_add_rytj_codelist.sql" />
     <None Remove="Scripts\010_check_for_language_string.sql" />
+    <None Remove="Scripts\011_versioning_triggers.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,7 @@
     <EmbeddedResource Include="Scripts\008_update_codelists_to_rytj.sql" />
     <EmbeddedResource Include="Scripts\009_add_rytj_codelist.sql" />
     <EmbeddedResource Include="Scripts\010_check_for_language_string.sql" />
+    <EmbeddedResource Include="Scripts\011_versioning_triggers.sql" />
   </ItemGroup>
 
   <ItemGroup>
