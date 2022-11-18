@@ -822,7 +822,8 @@ CREATE TABLE SCHEMANAME.supplementary_information_identifier_value(
 CREATE TABLE SCHEMANAME.geometry_point_value(
   id SERIAL PRIMARY KEY,
   geometry_point_value_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
-  value GEOMETRY(POINT, PROJECTSRID) NOT NULL
+  value GEOMETRY(POINT, PROJECTSRID) NOT NULL,
+  obligatory BOOLEAN NOT NULL
 );
 
 CREATE INDEX sidx_geometry_point_value_geom
@@ -890,7 +891,8 @@ CREATE TABLE SCHEMANAME.supplementary_information_geometry_point_value(
 CREATE TABLE SCHEMANAME.geometry_line_value(
   id SERIAL PRIMARY KEY,
   geometry_line_value_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
-  value GEOMETRY(MultiLineString, PROJECTSRID) NOT NULL
+  value GEOMETRY(MultiLineString, PROJECTSRID) NOT NULL,
+  obligatory BOOLEAN NOT NULL
 );
 
 CREATE INDEX sidx_geometry_line_value_geom
@@ -958,7 +960,8 @@ CREATE TABLE SCHEMANAME.supplementary_information_geometry_line_value(
 CREATE TABLE SCHEMANAME.geometry_area_value(
   id SERIAL PRIMARY KEY,
   geometry_area_value_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
-  value GEOMETRY(MultiPolygon, PROJECTSRID) NOT NULL
+  value GEOMETRY(MultiPolygon, PROJECTSRID) NOT NULL,
+  obligatory BOOLEAN NOT NULL
 );
 
 CREATE INDEX sidx_geometry_area_value_geom
