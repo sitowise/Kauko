@@ -18,8 +18,8 @@ Select Distinct
     planned_space.valid_to
 From
     porvoo_gk26.spatial_plan Inner Join
-    porvoo_gk26.zoning_element On porvoo_gk26.zoning_element.fk_spatial_plan =
-            porvoo_gk26.spatial_plan.planning_object_identifier Inner Join
+    porvoo_gk26.zoning_element On porvoo_gk26.zoning_element.spatial_plan =
+            porvoo_gk26.spatial_plan.local_id Inner Join
     porvoo_gk26.zoning_element_planned_space On
             porvoo_gk26.zoning_element_planned_space.zoning_element_id =
             porvoo_gk26.zoning_element.planning_object_identifier Inner Join

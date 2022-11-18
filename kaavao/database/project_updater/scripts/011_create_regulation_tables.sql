@@ -1,6 +1,6 @@
 CREATE TABLE SCHEMANAME.plan_regulation_group (
   id SERIAL PRIMARY KEY,
-  local_id VARCHAR NOT NULL,
+  local_id VARCHAR NOT NULL UNIQUE,
   identity_id UUID DEFAULT uuid_generate_v4() NOT NULL,
   namespace VARCHAR,
   reference_id VARCHAR,
@@ -59,7 +59,7 @@ CREATE TABLE SCHEMANAME.planned_space_plan_regulation_group(
 
 CREATE TABLE SCHEMANAME.plan_regulation (
   id SERIAL PRIMARY KEY,
-  local_id VARCHAR NOT NULL,
+  local_id VARCHAR NOT NULL UNIQUE,
   identity_id UUID DEFAULT uuid_generate_v4() NOT NULL,
   namespace VARCHAR,
   reference_id VARCHAR,
@@ -95,7 +95,7 @@ CREATE TRIGGER create_plan_regulation_local_id_trigger
 CREATE TABLE SCHEMANAME.plan_regulation_theme(
   id SERIAL PRIMARY KEY,
   plan_regulation_local_id VARCHAR NOT NULL,
-  theme_code VARCHAR NOT NULL
+  theme_code VARCHAR NOT NULL,
   UNIQUE (plan_regulation_local_id, theme_code),
   CONSTRAINT fk_theme
     FOREIGN KEY (theme_code)
@@ -114,11 +114,11 @@ CREATE TABLE SCHEMANAME.plan_regulation_theme(
 CREATE TABLE SCHEMANAME.plan_regulation_document(
   id SERIAL PRIMARY KEY,
   plan_regulation_local_id VARCHAR NOT NULL,
-  document_local_id UUID NOT NULL,
+  document_local_id VARCHAR NOT NULL,
   role JSONB CHECK(check_language_string(role)),
   UNIQUE (plan_regulation_local_id, document_local_id),
   CONSTRAINT fk_document
-    FOREIGN KEY (local_id)
+    FOREIGN KEY (document_local_id)
       REFERENCES SCHEMANAME.document (local_id)
       ON UPDATE CASCADE
       ON DELETE CASCADE
@@ -209,7 +209,7 @@ CREATE TABLE SCHEMANAME.planned_space_plan_regulation(
 
 CREATE TABLE SCHEMANAME.plan_guidance(
   id SERIAL PRIMARY KEY,
-  local_id VARCHAR NOT NULL,
+  local_id VARCHAR NOT NULL UNIQUE,
   identity_id UUID DEFAULT uuid_generate_v4() NOT NULL,
   namespace VARCHAR,
   reference_id VARCHAR,
@@ -238,7 +238,7 @@ CREATE TRIGGER create_plan_guidance_local_id_trigger
 CREATE TABLE SCHEMANAME.plan_guidance_theme(
   id SERIAL PRIMARY KEY,
   plan_guidance_local_id VARCHAR NOT NULL,
-  theme_code VARCHAR NOT NULL
+  theme_code VARCHAR NOT NULL,
   UNIQUE (plan_guidance_local_id, theme_code),
   CONSTRAINT fk_theme
     FOREIGN KEY (theme_code)
@@ -257,11 +257,11 @@ CREATE TABLE SCHEMANAME.plan_guidance_theme(
 CREATE TABLE SCHEMANAME.plan_guidance_document(
   id SERIAL PRIMARY KEY,
   plan_guidance_local_id VARCHAR NOT NULL,
-  document_local_id UUID NOT NULL,
+  document_local_id VARCHAR NOT NULL,
   role JSONB CHECK(check_language_string(role)),
   UNIQUE (plan_guidance_local_id, document_local_id),
   CONSTRAINT fk_document
-    FOREIGN KEY (local_id)
+    FOREIGN KEY (document_local_id)
       REFERENCES SCHEMANAME.document (local_id)
       ON UPDATE CASCADE
       ON DELETE CASCADE
@@ -333,7 +333,7 @@ CREATE TABLE SCHEMANAME.planned_space_plan_guidance(
 
 CREATE TABLE SCHEMANAME.supplementary_information (
   id SERIAL PRIMARY KEY,
-  producer_specific_id UUID DEFAULT uuid_generate_v4(),
+  producer_specific_id UUID DEFAULT uuid_generate_v4() UNIQUE,
   type VARCHAR NOT NULL,
   name JSONB CHECK(check_language_string(name)),
   fk_plan_regulation VARCHAR NOT NULL,
@@ -373,7 +373,7 @@ CREATE TABLE SCHEMANAME.numeric_double_value (
   id SERIAL PRIMARY KEY,
   numeric_double_value_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
   value DOUBLE PRECISION NOT NULL,
-  unit_of_measure VARCHAR,
+  unit_of_measure VARCHAR
 );
 
 CREATE TABLE SCHEMANAME.plan_regulation_numeric_double_value(
@@ -499,13 +499,13 @@ CREATE TABLE SCHEMANAME.supplementary_information_numeric_range(
       DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE TABLE SCEHMANAME.time_instant_value (
+CREATE TABLE SCHEMANAME.time_instant_value (
   id SERIAL PRIMARY KEY,
   time_instant_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
   value TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE TABLE SCEHMANAME.plan_regulation_time_instant_value(
+CREATE TABLE SCHEMANAME.plan_regulation_time_instant_value(
   id SERIAL PRIMARY KEY,
   fk_plan_regulation VARCHAR NOT NULL,
   fk_time_instant_value UUID NOT NULL,
@@ -524,7 +524,7 @@ CREATE TABLE SCEHMANAME.plan_regulation_time_instant_value(
       DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE TABLE SCEHMANAME.plan_guidance_time_instant_value(
+CREATE TABLE SCHEMANAME.plan_guidance_time_instant_value(
   id SERIAL PRIMARY KEY,
   fk_plan_guidance VARCHAR NOT NULL,
   fk_time_instant_value UUID NOT NULL,
@@ -543,7 +543,7 @@ CREATE TABLE SCEHMANAME.plan_guidance_time_instant_value(
       DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE TABLE SCEHMANAME.supplementary_information_time_instant_value(
+CREATE TABLE SCHEMANAME.supplementary_information_time_instant_value(
   id SERIAL PRIMARY KEY,
   fk_supplementary_information UUID NOT NULL,
   fk_time_instant_value UUID NOT NULL,
@@ -562,7 +562,7 @@ CREATE TABLE SCEHMANAME.supplementary_information_time_instant_value(
       DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE TABLE SCEHMANAME.time_period_value (
+CREATE TABLE SCHEMANAME.time_period_value (
   id SERIAL PRIMARY KEY,
   time_period_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
   value TSRANGE NOT NULL

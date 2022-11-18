@@ -18,8 +18,8 @@ CREATE VIEW SCHEMANAME.planning_detail_point_view AS (
     planning_detail_point.type_description
 From
     SCHEMANAME.spatial_plan Inner Join
-    SCHEMANAME.zoning_element On SCHEMANAME.zoning_element.fk_spatial_plan =
-            SCHEMANAME.spatial_plan.planning_object_identifier Inner Join
+    SCHEMANAME.zoning_element On SCHEMANAME.zoning_element.spatial_plan =
+            SCHEMANAME.spatial_plan.local_id Inner Join
     SCHEMANAME.zoning_element_plan_detail_point On
             SCHEMANAME.zoning_element_plan_detail_point.zoning_id =
             SCHEMANAME.zoning_element.planning_object_identifier Inner Join
