@@ -373,7 +373,8 @@ CREATE TABLE SCHEMANAME.numeric_double_value (
   id SERIAL PRIMARY KEY,
   numeric_double_value_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
   value DOUBLE PRECISION NOT NULL,
-  unit_of_measure VARCHAR
+  unit_of_measure VARCHAR,
+  obligatory BOOLEAN NOT NULL,
 );
 
 CREATE TABLE SCHEMANAME.plan_regulation_numeric_double_value(
@@ -823,7 +824,8 @@ CREATE TABLE SCHEMANAME.geometry_point_value(
   id SERIAL PRIMARY KEY,
   geometry_point_value_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
   value GEOMETRY(POINT, PROJECTSRID) NOT NULL,
-  obligatory BOOLEAN NOT NULL
+  obligatory BOOLEAN NOT NULL,
+  point_rotation FLOAT
 );
 
 CREATE INDEX sidx_geometry_point_value_geom
