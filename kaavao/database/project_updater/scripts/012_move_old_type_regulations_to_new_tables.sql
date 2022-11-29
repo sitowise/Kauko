@@ -30,6 +30,7 @@ BEGIN
         RETURNING * INTO _inserted_text;
       INSERT INTO SCHEMANAME.plan_regulation_text_value(fk_plan_regulation, fk_text_value)
         VALUES(_inserted_secondary_regulation.local_id, _inserted_text.text_value_uuid);
+    END IF;
     FOR _zoning_element IN
       SELECT ze.local_id
         FROM SCHEMANAME.zoning_element AS ze
