@@ -117,9 +117,9 @@ UPDATE SCHEMANAME.zoning_element_plan_detail_line
 
 ALTER TABLE SCHEMANAME.zoning_element_plan_detail_line
   ALTER COLUMN zoning_element_local_id SET NOT NULL,
-  ALTER COLUMN planned_space_local_id SET NOT NULL,
-  DROP COLUMN zoning_element_id,
-  DROP COLUMN planned_space_id,
+  ALTER COLUMN planning_detail_line_local_id SET NOT NULL,
+  DROP COLUMN zoning_id,
+  DROP COLUMN plan_detail_line_id,
   ADD CONSTRAINT fk_zoning_element
     FOREIGN KEY (zoning_element_local_id)
     REFERENCES SCHEMANAME.zoning_element (local_id)
