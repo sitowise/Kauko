@@ -67,6 +67,8 @@ BEGIN
   END LOOP;
 END $$;
 
+DROP TABLE SCHEMANAME.zoning_element_plan_detail_point CASCADE;
+DROP TABLE SCHEMANAME.planned_space_plan_detail_point CASCADE;
 DROP TABLE SCHEMANAME.planning_detail_point CASCADE;
 
 ALTER TABLE SCHEMANAME.planning_detail_line
