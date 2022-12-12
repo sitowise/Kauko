@@ -1,4 +1,6 @@
--- ADD missing dates to spatial_plan
+SELECT 1;
+
+/* -- ADD missing dates to spatial_plan
 
 ALTER TABLE SCHEMANAME.spatial_plan
   DROP COLUMN valid_from,
@@ -728,4 +730,4 @@ $BODY$;
 
 grant execute on function SCHEMANAME.refresh_validity() to qgis_admin;
 
-grant execute on function SCHEMANAME.refresh_validity() to qgis_editor;
+grant execute on function SCHEMANAME.refresh_validity() to qgis_editor; */

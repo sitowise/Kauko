@@ -38,8 +38,9 @@ ALTER TABLE SCHEMANAME.zoning_element_describing_text
 
 -- CREATE delete_geom_relations TRIGGER
 
-CREATE OR REPLACE FUNCTION "SCHEMANAME".delete_geom_relations() RETURNS trigger
-    LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION "SCHEMANAME".delete_geom_relations()
+RETURNS TRIGGER
+LANGUAGE plpgsql
 AS
 $$
 BEGIN
@@ -107,51 +108,57 @@ $$;
 
 COMMENT ON FUNCTION "SCHEMANAME".delete_geom_relations() IS 'Deletes old relations when updating item geom column before calculating new ones using geom_relations() trigger';
 
-CREATE OR REPLACE TRIGGER delete_geom_relations
-    BEFORE UPDATE OF geom
+DROP TRIGGER IF EXISTS delete_geom_relations ON SCHEMANAME.spatial_plan;
+CREATE TRIGGER delete_geom_relations
+  BEFORE UPDATE OF geom
     ON SCHEMANAME.spatial_plan
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
+  FOR EACH ROW
+  WHEN (OLD.geom IS DISTINCT FROM NEW.geom)
+  EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
 
-CREATE OR REPLACE TRIGGER delete_geom_relations
-    BEFORE UPDATE OF geom
-    ON SCHEMANAME.zoning_element
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
+DROP TRIGGER IF EXISTS delete_geom_relations ON SCHEMANAME.zoning_element;
+CREATE TRIGGER delete_geom_relations
+  BEFORE UPDATE OF geom
+  ON SCHEMANAME.zoning_element
+  FOR EACH ROW
+  WHEN (old.geom IS DISTINCT FROM new.geom)
+  EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
 
-CREATE OR REPLACE TRIGGER delete_geom_relations
-    BEFORE UPDATE OF geom
-    ON SCHEMANAME.planned_space
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
+DROP TRIGGER IF EXISTS delete_geom_relations ON SCHEMANAME.planned_space;
+CREATE TRIGGER delete_geom_relations
+  BEFORE UPDATE OF geom
+  ON SCHEMANAME.planned_space
+  FOR EACH ROW
+  WHEN (old.geom IS DISTINCT FROM new.geom)
+  EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
 
-CREATE OR REPLACE TRIGGER delete_geom_relations
-    BEFORE UPDATE OF geom
-    ON SCHEMANAME.planning_detail_line
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
+DROP TRIGGER IF EXISTS delete_geom_relations ON SCHEMANAME.planning_detail_line;
+CREATE TRIGGER delete_geom_relations
+  BEFORE UPDATE OF geom
+  ON SCHEMANAME.planning_detail_line
+  FOR EACH ROW
+  WHEN (old.geom IS DISTINCT FROM new.geom)
+  EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
 
-CREATE OR REPLACE TRIGGER delete_geom_relations
-    BEFORE UPDATE OF geom
-    ON SCHEMANAME.describing_line
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
+DROP TRIGGER IF EXISTS delete_geom_relations ON SCHEMANAME.describing_line;
+CREATE TRIGGER delete_geom_relations
+  BEFORE UPDATE OF geom
+  ON SCHEMANAME.describing_line
+  FOR EACH ROW
+  WHEN (old.geom IS DISTINCT FROM new.geom)
+  EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
 
-CREATE OR REPLACE TRIGGER delete_geom_relations
-    BEFORE UPDATE OF geom
-    ON SCHEMANAME.describing_text
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
+DROP TRIGGER IF EXISTS delete_geom_relations ON SCHEMANAME.describing_text;
+CREATE TRIGGER delete_geom_relations
+  BEFORE UPDATE OF geom
+  ON SCHEMANAME.describing_text
+  FOR EACH ROW
+  WHEN (old.geom IS DISTINCT FROM new.geom)
+  EXECUTE PROCEDURE SCHEMANAME.delete_geom_relations();
 
 -- CREATE geom_relations TRIGGER
 
-CREATE FUNCTION "SCHEMANAME".geom_relations() RETURNS trigger
+CREATE OR REPLACE FUNCTION "SCHEMANAME".geom_relations() RETURNS trigger
     LANGUAGE plpgsql
 AS $BODY$
 BEGIN
@@ -286,42 +293,42 @@ GRANT EXECUTE ON FUNCTION SCHEMANAME.geom_relations() TO qgis_editor;
 
 GRANT EXECUTE ON FUNCTION SCHEMANAME.geom_relations() TO qgis_admin;
 
+DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.spatial_plan;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.spatial_plan
     FOR EACH STATEMENT
     EXECUTE PROCEDURE SCHEMANAME.geom_relations();
 
+DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.zoning_element;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.zoning_element
     FOR EACH STATEMENT
     EXECUTE PROCEDURE SCHEMANAME.geom_relations();
 
+DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.planned_space;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.planned_space
     FOR EACH STATEMENT
     EXECUTE PROCEDURE SCHEMANAME.geom_relations();
 
+DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.planning_detail_line;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.planning_detail_line
     FOR EACH STATEMENT
     EXECUTE PROCEDURE SCHEMANAME.geom_relations();
 
-CREATE TRIGGER geom_relations
-    AFTER INSERT OR UPDATE OF geom
-    ON SCHEMANAME.planning_detail_point
-    FOR EACH STATEMENT
-    EXECUTE PROCEDURE SCHEMANAME.geom_relations();
-
+DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.describing_line;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.describing_line
     FOR EACH STATEMENT
     EXECUTE PROCEDURE SCHEMANAME.geom_relations();
 
+DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.describing_text;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.describing_text
