@@ -1,3 +1,61 @@
+-- ADD missing dates to spatial_plan
+
+ALTER TABLE SCHEMANAME.spatial_plan
+  DROP COLUMN valid_from,
+  DROP COLUMN valid_to,
+  ADD COLUMN initiation_time DATE,
+  RENAME COLUMN approval_date TO approval_time;
+
+-- FIX zoning_element date columns
+ALTER TABLE SCHEMANAME.zoning_element
+  ADD COLUMN validity_time DATERANGE;
+
+UPDATE SCHEMANAME.zoning_element
+  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
+
+ALTER TABLE SCHEMANAME.zoning_element
+  DROP COLUMN valid_from,
+  DROP COLUMN valid_to;
+
+-- FIX planned_space date columns
+ALTER TABLE SCHEMANAME.planned_space
+  ADD COLUMN validity_time DATERANGE;
+
+UPDATE SCHEMANAME.planned_space
+  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
+
+ALTER TABLE SCHEMANAME.planned_space
+  DROP COLUMN valid_from,
+  DROP COLUMN valid_to;
+
+-- FIX planning_detail_line date columns
+ALTER TABLE SCHEMANAME.planning_detail_line
+  ADD COLUMN validity_time DATERANGE;
+
+UPDATE SCHEMANAME.planning_detail_line
+  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
+
+ALTER TABLE SCHEMANAME.planning_detail_line
+  DROP COLUMN valid_from,
+  DROP COLUMN valid_to;
+
+CREATE OR REPLACE FUNCTION validate_lifcycle_status()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.lifecycle_status = '02' AND NEW.initiation_time IS NULL THEN
+    RAISE EXCEPTION 'Vireilletulo aikaa ei ole annettu';
+  ELSIF NEW.lifecycle_status = '06' AND NEW.approval_time IS NULL THEN
+    RAISE EXCEPTION 'Hyväksymisaikaa ei ole annettu';
+  ELSIF NEW.lifecycle_status IN ('10', '11') AND NEW.validity_time.lower IS NULL THEN
+    RAISE EXCEPTION 'Voimassaoloajan alkua ei ole annettu';
+  ELSIF NEW.lifecycle_status IN ('12', '13') AND NEW.validity_time.upper IS NULL THEN
+    RAISE EXCEPTION 'Voimassaoloajan päättymistä ei ole annettu';
+  END IF;
+
+
+
 -- CREATE INHERIT VALIDITY TRIGGER
 
 -- FUNCTION: SCHEMANAME.inherit_validity()
