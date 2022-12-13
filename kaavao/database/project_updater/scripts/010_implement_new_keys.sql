@@ -200,7 +200,7 @@ CREATE TABLE SCHEMANAME.document(
   namespace VARCHAR,
   reference_id VARCHAR,
   latest_change TIMESTAMP DEFAULT now() NOT NULL,
-  document_identifier VARCHAR[],
+  document_identifier VARCHAR,
   name JSONB CHECK(check_language_string(name))
 );
 
