@@ -1,62 +1,73 @@
-SELECT 1;
-
-/* -- ADD missing dates to spatial_plan
-
-ALTER TABLE SCHEMANAME.spatial_plan
-  DROP COLUMN valid_from,
-  DROP COLUMN valid_to,
-  ADD COLUMN initiation_time DATE,
-  RENAME COLUMN approval_date TO approval_time;
-
--- FIX zoning_element date columns
-ALTER TABLE SCHEMANAME.zoning_element
-  ADD COLUMN validity_time DATERANGE;
-
-UPDATE SCHEMANAME.zoning_element
-  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
-
-ALTER TABLE SCHEMANAME.zoning_element
-  DROP COLUMN valid_from,
-  DROP COLUMN valid_to;
-
--- FIX planned_space date columns
-ALTER TABLE SCHEMANAME.planned_space
-  ADD COLUMN validity_time DATERANGE;
-
-UPDATE SCHEMANAME.planned_space
-  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
-
-ALTER TABLE SCHEMANAME.planned_space
-  DROP COLUMN valid_from,
-  DROP COLUMN valid_to;
-
--- FIX planning_detail_line date columns
-ALTER TABLE SCHEMANAME.planning_detail_line
-  ADD COLUMN validity_time DATERANGE;
-
-UPDATE SCHEMANAME.planning_detail_line
-  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
-
-ALTER TABLE SCHEMANAME.planning_detail_line
-  DROP COLUMN valid_from,
-  DROP COLUMN valid_to;
 
 CREATE OR REPLACE FUNCTION validate_lifcycle_status()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  IF NEW.lifecycle_status = '02' AND NEW.initiation_time IS NULL THEN
-    RAISE EXCEPTION 'Vireilletulo aikaa ei ole annettu';
-  ELSIF NEW.lifecycle_status = '06' AND NEW.approval_time IS NULL THEN
-    RAISE EXCEPTION 'Hyväksymisaikaa ei ole annettu';
-  ELSIF NEW.lifecycle_status IN ('10', '11') AND NEW.validity_time.lower IS NULL THEN
-    RAISE EXCEPTION 'Voimassaoloajan alkua ei ole annettu';
-  ELSIF NEW.lifecycle_status IN ('12', '13') AND NEW.validity_time.upper IS NULL THEN
-    RAISE EXCEPTION 'Voimassaoloajan päättymistä ei ole annettu';
+  IF OLD.lifecycle_status IS NOT NULL OR OLD.lifecycle_status <> NEW.lifecycle_status THEN
+    CASE OLD.lifecycle_status
+      WHEN '01' THEN
+        IF NEW.lifecycle_status NOT IN ('02', '03', '04', '05', '06', '15') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '02' THEN
+        IF NEW.lifecycle_status NOT IN ('03', '04', '05', '06', '14') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '03' THEN
+        IF NEW.lifecycle_status NOT IN ('04', '05', '06', '14') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '04' THEN
+        IF NEW.lifecycle_status NOT IN ('05', '06', '14') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '05' THEN
+        IF NEW.lifecycle_status NOT IN ('06', '14') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '06' THEN
+        IF NEW.lifecycle_status NOT IN ('08', '09', '10', '11', '13') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '06' THEN
+        IF NEW.lifecycle_status NOT IN ('07', '08', '09', '10', '11', '13') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '07' THEN
+        IF NEW.lifecycle_status NOT IN ('08', '09', '10', '11', '13') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '08' THEN
+        IF NEW.lifecycle_status NOT IN ('07', '09', '10', '11', '13') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '09' THEN
+        IF NEW.lifecycle_status NOT IN ('07', '08', '10', '11', '13') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '10' THEN
+        IF NEW.lifecycle_status NOT IN ('12') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      WHEN '11' THEN
+        IF NEW.lifecycle_status NOT IN ('12') THEN
+          RAISE EXCEPTION 'Invalid state transition';
+        END IF;
+      ELSE
+        RAISE EXCEPTION 'Invalid state transition';
+    END CASE;
   END IF;
 
-
+  IF NEW.lifecycle_status = '06' AND NEW.initiation_time IS NULL THEN
+    RAISE EXCEPTION 'Initiation time is not set';
+  ELSIF NEW.lifecycle_status = '06' AND NEW.approval_time IS NULL THEN
+    RAISE EXCEPTION 'Approval time is not set';
+  ELSIF NEW.lifecycle_status IN ('10', '11') AND NEW.validity_time.lower IS NULL THEN
+    RAISE EXCEPTION 'Valid from is not set';
+  ELSIF NEW.lifecycle_status IN ('12') AND NEW.validity_time.upper IS NULL THEN
+    RAISE EXCEPTION 'Valid to is not set';
+  END IF;
 
 -- CREATE INHERIT VALIDITY TRIGGER
 
@@ -730,4 +741,4 @@ $BODY$;
 
 grant execute on function SCHEMANAME.refresh_validity() to qgis_admin;
 
-grant execute on function SCHEMANAME.refresh_validity() to qgis_editor; */
+grant execute on function SCHEMANAME.refresh_validity() to qgis_editor;

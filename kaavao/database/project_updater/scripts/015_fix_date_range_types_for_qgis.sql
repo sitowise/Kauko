@@ -5,6 +5,13 @@ BEGIN
   IF NEW.validity_time IS NOT NULL AND NEW.validity_time <> OLD.validity_time THEN
     RAISE EXCEPTION 'Cannot change validity_time';
   END IF;
+  IF NEW.valid_from IS NULL THEN
+    IF NEW.valid_to IS NOT NULL THEN
+      RAISE EXCEPTION 'valid_from cannot be NULL if valid_to is not NULL';
+    END IF;
+    NEW.validity_time = NULL;
+    RETURN NEW;
+  END IF;
   NEW.validity_time = DATERANGE(NEW.valid_from, NEW.valid_to, '[)');
   RETURN NEW;
 END;
@@ -17,7 +24,8 @@ ALTER TABLE SCHEMANAME.spatial_plan
   RENAME COLUMN approval_date TO approval_time;
 
 UPDATE SCHEMANAME.spatial_plan
-  SET validity_time = DATERANGE(valid_from, valid_to, '[)');
+  SET validity_time = DATERANGE(valid_from, valid_to, '[)')
+  WHERE valid_from IS NOT NULL;
 
 CREATE TRIGGER spatial_plan_validity_time
   BEFORE INSERT OR UPDATE ON SCHEMANAME.spatial_plan
@@ -28,7 +36,8 @@ ALTER TABLE SCHEMANAME.zoning_element
   ADD COLUMN validity_time DATERANGE;
 
 UPDATE SCHEMANAME.zoning_element
-  SET validity_time = DATERANGE(valid_from, valid_to, '[)');
+  SET validity_time = DATERANGE(valid_from, valid_to, '[)')
+  WHERE valid_from IS NOT NULL;
 
 CREATE TRIGGER zoning_element_validity_time
   BEFORE INSERT OR UPDATE ON SCHEMANAME.zoning_element
@@ -39,7 +48,8 @@ ALTER TABLE SCHEMANAME.planned_space
   ADD COLUMN validity_time DATERANGE;
 
 UPDATE SCHEMANAME.planned_space
-  SET validity_time = DATERANGE(valid_from, valid_to, '[)');
+  SET validity_time = DATERANGE(valid_from, valid_to, '[)')
+  WHERE valid_from IS NOT NULL;
 
 CREATE TRIGGER planned_space_validity_time
   BEFORE INSERT OR UPDATE ON SCHEMANAME.planned_space
