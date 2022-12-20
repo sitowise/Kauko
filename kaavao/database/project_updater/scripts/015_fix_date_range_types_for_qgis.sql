@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION SCHEMANAME.validity_to_daterange()
 RETURNS TRIGGER
 AS $$
 BEGIN
-  IF NEW.validity_time IS NOT NULL OR NEW.validity_time <> OLD.validity_time THEN
+  IF NEW.validity_time IS NOT NULL AND NEW.validity_time <> OLD.validity_time THEN
     RAISE EXCEPTION 'Cannot change validity_time';
   END IF;
   NEW.validity_time = DATERANGE(NEW.valid_from, NEW.valid_to, '[)');
@@ -84,7 +84,7 @@ CREATE OR REPLACE FUNCTION convert_to_timerange()
 RETURNS TRIGGER
 AS $$
 BEGIN
-  IF NEW."value" IS NOT NULL OR NEW."value" <> OLD."value" THEN
+  IF NEW."value" IS NOT NULL AND NEW."value" <> OLD."value" THEN
     RAISE EXCEPTION 'Cannot change time_period_value';
   END IF;
   NEW."value" = TSRANGE(NEW.time_period_from, NEW.time_period_to, '[)');
