@@ -1,4 +1,38 @@
-CREATE OR REPLACE FUNCTION validate_lifcycle_status()
+CREATE OR REPLACE FUNCTION SCHEMANAME.validate_zoning_element_validity_dates(
+  valid_from DATE,
+  valid_to DATE,
+  spatial_plan VARCHAR
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  sp_valid_from DATE;
+  sp_valid_to DATE;
+  is_valid BOOLEAN := TRUE;
+BEGIN
+  SELECT valid_from, valid_to
+  INTO sp_valid_from, sp_valid_to
+  FROM SCHEMANAME.spatial_plan
+  WHERE local_id = spatial_plan;
+
+  IF valid_from IS NOT NULL AND valid_to IS NOT NULL AND valid_from > valid_to THEN
+    is_valid := FALSE;
+  ELSIF valid_from IS NOT NULL AND sp_valid_from IS NOT NULL AND valid_from < sp_valid_from THEN
+    is_valid := FALSE;
+  ELSIF valid_to IS NOT NULL AND sp_valid_to IS NOT NULL AND valid_to > sp_valid_to THEN
+    is_valid := FALSE;
+  END IF;
+
+  RETURN is_valid;
+END;
+$$;
+
+ALTER TABLE SCHEMANAME.zoning_element
+ADD CONSTRAINT validate_validity_dates
+CHECK (validate_zoning_element_validity_dates(valid_from, valid_to, spatial_plan));
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.validate_lifcycle_status()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -191,145 +225,87 @@ $$;
 CREATE FUNCTION "SCHEMANAME".inherit_validity()
     RETURNS trigger
     LANGUAGE 'plpgsql'
-    COST 100
-    VOLATILE NOT LEAKPROOF
 AS $BODY$
 BEGIN
-    CREATE TEMPORARY TABLE temp_s_plan_z_element_valid_from AS
+  WITH sp_inherited_validity AS (
     SELECT
-      ze.local_id AS zoning_id,
-      sp.valid_from
+      sp.valid_from AS valid_from,
+      sp.valid_to AS valid_to,
+      ze.local_id AS local_id
     FROM SCHEMANAME.spatial_plan sp
-      INNER JOIN
-        SCHEMANAME.zoning_element ze ON sp.local_id = ze.spatial_plan
-    WHERE ze.valid_from IS NULL
-      AND sp.valid_from IS NOT NULL
-      AND sp.validity = 1
-      AND ze.validity <> 2
-      AND (sp.valid_to > Current_Date OR sp.valid_to IS NULL);
-    IF EXISTS(SELECT * FROM temp_s_plan_z_element_valid_from) THEN
-        UPDATE SCHEMANAME.zoning_element
-        SET valid_from = temp_s_plan_z_element_valid_from.valid_from
-        FROM temp_s_plan_z_element_valid_from
-        WHERE planning_object_identifier = temp_s_plan_z_element_valid_from.zoning_id;
-    END IF;
-    DROP TABLE temp_s_plan_z_element_valid_from;
+    INNER JOIN SCHEMANAME.zoning_element ze
+      ON sp.local_id = ze.spatial_plan
+    WHERE (
+      sp.valid_from IS NOT NULL
+      AND (
+        ze.valid_from IS NULL
+        OR ze.valid_from < sp.valid_from
+      )
+    ) OR (
+      sp.valid_to IS NOT NULL
+      AND (
+        ze.valid_to IS NULL
+        OR ze.valid_to > sp.valid_to
+      )
+    )
+  )
+  UPDATE SCHEMANAME.zoning_element ze
+  SET valid_from = spiv.valid_from,
+      valid_to = spiv.valid_to
+  FROM sp_inherited_validity spiv
+  WHERE spiv.local_id = ze.local_id;
 
-    CREATE TEMPORARY TABLE temp_s_plan_z_element_valid_to AS
-    SELECT sp.valid_to,
-           ze.planning_object_identifier AS zoning_id
-    FROM SCHEMANAME.spatial_plan sp
-             INNER JOIN
-         SCHEMANAME.zoning_element ze ON sp.planning_object_identifier = ze.fk_spatial_plan
-    WHERE (ze.valid_to IS NULL OR ze.valid_to > sp.valid_to)
-      AND sp.valid_to IS NOT NULL
-      AND sp.validity = 1;
-
-    IF EXISTS(SELECT * FROM temp_s_plan_z_element_valid_to) THEN
-        UPDATE SCHEMANAME.zoning_element
-        SET valid_to = temp_s_plan_z_element_valid_to.valid_to
-        FROM temp_s_plan_z_element_valid_to
-        WHERE planning_object_identifier = temp_s_plan_z_element_valid_to.zoning_id;
-    END IF;
-    DROP TABLE temp_s_plan_z_element_valid_to;
-
-    CREATE TEMPORARY TABLE temp_z_element_s_plan_valid_from AS
-    SELECT sp.planning_object_identifier AS spatial_id,
-           ze.valid_from
-    FROM SCHEMANAME.spatial_plan sp
-             INNER JOIN
-         SCHEMANAME.zoning_element ze ON sp.planning_object_identifier = ze.fk_spatial_plan
-    WHERE sp.valid_from IS NULL
-      AND ze.valid_from IS NOT NULL
-      AND ze.validity = 1
-      AND sp.validity <> 2
-      AND (ze.valid_to > Current_Date OR ze.valid_to IS NULL);
-    IF EXISTS(SELECT * FROM temp_z_element_s_plan_valid_from) THEN
-        UPDATE SCHEMANAME.spatial_plan
-        SET valid_from = temp_z_element_s_plan_valid_from.valid_from
-        FROM temp_z_element_s_plan_valid_from
-        WHERE planning_object_identifier = temp_z_element_s_plan_valid_from.spatial_id;
-    END IF;
-    DROP TABLE temp_z_element_s_plan_valid_from;
-
-    CREATE TEMPORARY TABLE temp_z_element_s_plan_valid_to AS
-    SELECT ze.valid_to,
-           sp.planning_object_identifier AS spatial_id
-    FROM SCHEMANAME.spatial_plan sp
-             INNER JOIN
-         SCHEMANAME.zoning_element ze ON sp.planning_object_identifier = ze.fk_spatial_plan
-    WHERE (sp.valid_to IS NULL OR sp.valid_to > ze.valid_to)
-      AND ze.valid_to IS NOT NULL
-      AND ze.validity = 1;
-    IF EXISTS(SELECT * FROM temp_z_element_s_plan_valid_to) THEN
-        UPDATE SCHEMANAME.spatial_plan
-        SET valid_to = temp_z_element_s_plan_valid_to.valid_to
-        FROM temp_z_element_s_plan_valid_to
-        WHERE planning_object_identifier = temp_z_element_s_plan_valid_to.spatial_id;
-    END IF;
-    DROP TABLE temp_z_element_s_plan_valid_to;
-
-    CREATE TEMPORARY TABLE temp_z_element_p_space_valid_from AS
-    SELECT ps.planning_object_identifier,
-           ze.valid_from
+  WITH ze_inherited_validity AS (
+    SELECT
+      MIN(ze.valid_from) AS valid_from,
+      MAX(ze.valid_to) AS valid_to,
+      ps.local_id AS local_id
     FROM SCHEMANAME.zoning_element ze
-             INNER JOIN
-         SCHEMANAME.zoning_element_planned_space ze_ps ON ze_ps.zoning_element_id = ze.planning_object_identifier
-             INNER JOIN
-         SCHEMANAME.planned_space ps ON ze_ps.planned_space_id = ps.planning_object_identifier
-    WHERE ze.valid_from IS NOT NULL
-      AND ze.validity = 1
-      AND ps.valid_from IS NULL
-      AND ps.validity <> 2;
-    IF exists(SELECT * FROM temp_z_element_p_space_valid_from) THEN
-        UPDATE SCHEMANAME.planned_space ps
-        SET valid_from = temp_z_element_p_space_valid_from.valid_from
-        FROM temp_z_element_p_space_valid_from
-        WHERE ps.planning_object_identifier =
-              temp_z_element_p_space_valid_from.planning_object_identifier;
-    END IF;
-    DROP TABLE temp_z_element_p_space_valid_from;
+      INNER JOIN SCHEMANAME.zoning_element_planned_space ze_ps
+        ON ze_ps.zoning_element_local_id = ze.local_id
+      INNER JOIN SCHEMANAME.planned_space ps
+        ON ps.local_id = ze_ps.planned_space_local_id
+    WHERE (
+      ze.valid_from IS NOT NULL
+      AND (
+        ps.valid_from IS NULL
+        OR ps.valid_from < ze.valid_from
+      )
+    ) OR (
+      ze.valid_to IS NOT NULL
+      AND (
+        ps.valid_to IS NULL
+        OR ps.valid_to > ze.valid_to
+      )
+    )
+  )
+  UPDATE SCHEMANAME.planned_space ps
+  SET valid_from = zeiv.valid_from,
+      valid_to = zeiv.valid_to
+  FROM ze_inherited_validity zeiv
+  WHERE zeiv.local_id = ps.local_id;
 
-    CREATE TEMPORARY TABLE temp_z_element_p_space_valid_to AS
-    SELECT ps.planning_object_identifier,
-           ze.valid_to
-    FROM SCHEMANAME.zoning_element ze
-             INNER JOIN
-         SCHEMANAME.zoning_element_planned_space ze_ps ON ze_ps.zoning_element_id = ze.planning_object_identifier
-             INNER JOIN
-         SCHEMANAME.planned_space ps ON ze_ps.planned_space_id = ps.planning_object_identifier
-    WHERE ze.valid_to IS NOT NULL
-      AND (ps.valid_to IS NULL OR ps.valid_to > ze.valid_to)
-      AND ze.validity = 1;
-    IF exists(SELECT * FROM temp_z_element_p_space_valid_to) THEN
-        UPDATE SCHEMANAME.planned_space
-        SET valid_to = temp_z_element_p_space_valid_to.valid_to
-        FROM temp_z_element_p_space_valid_to
-        WHERE planning_object_identifier =
-              temp_z_element_p_space_valid_to.planning_object_identifier;
-    END IF;
-    DROP TABLE temp_z_element_p_space_valid_to;
-    RETURN NULL;
+  RETURN NULL;
 END;
 $BODY$;
 
 
-create trigger inherit_validity
-    after insert or update
-        of valid_from, valid_to
-    on SCHEMANAME.spatial_plan
-    when (pg_trigger_depth() < 1)
-execute procedure SCHEMANAME.inherit_validity();
+CREATE TRIGGER inherit_validity
+  AFTER INSERT OR UPDATE
+    OF valid_from, valid_to
+  ON SCHEMANAME.spatial_plan
+  WHEN (pg_trigger_depth() < 1)
+EXECUTE PROCEDURE SCHEMANAME.inherit_validity();
 
-create trigger inherit_validity
-    after insert
-    on SCHEMANAME.zoning_element
-execute procedure SCHEMANAME.inherit_validity();
+CREATE TRIGGER inherit_validity
+  AFTER INSERT
+  ON SCHEMANAME.zoning_element
+EXECUTE PROCEDURE SCHEMANAME.inherit_validity();
 
-create trigger inherit_validity
-    after insert
-    on SCHEMANAME.planned_space
-execute procedure SCHEMANAME.inherit_validity();
+CREATE TRIGGER inherit_validity
+  AFTER INSERT
+  ON SCHEMANAME.planned_space
+EXECUTE PROCEDURE SCHEMANAME.inherit_validity();
 
 GRANT EXECUTE ON FUNCTION SCHEMANAME.inherit_validity() TO qgis_editor;
 
