@@ -1,61 +1,174 @@
-
 CREATE OR REPLACE FUNCTION validate_lifcycle_status()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  old_status text;
+  valid_statuses text;
 BEGIN
   IF OLD.lifecycle_status IS NOT NULL OR OLD.lifecycle_status <> NEW.lifecycle_status THEN
     CASE OLD.lifecycle_status
       WHEN '01' THEN
         IF NEW.lifecycle_status NOT IN ('02', '03', '04', '05', '06', '15') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('02', '03', '04', '05', '06', '15')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '02' THEN
         IF NEW.lifecycle_status NOT IN ('03', '04', '05', '06', '14') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('03', '04', '05', '06', '14')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '03' THEN
         IF NEW.lifecycle_status NOT IN ('04', '05', '06', '14') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('04', '05', '06', '14')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '04' THEN
         IF NEW.lifecycle_status NOT IN ('05', '06', '14') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('05', '06', '14')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '05' THEN
         IF NEW.lifecycle_status NOT IN ('06', '14') THEN
-          RAISE EXCEPTION 'Invalid state transition';
-        END IF;
-      WHEN '06' THEN
-        IF NEW.lifecycle_status NOT IN ('08', '09', '10', '11', '13') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('06', '14')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '06' THEN
         IF NEW.lifecycle_status NOT IN ('07', '08', '09', '10', '11', '13') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('07', '08', '09', '10', '11', '13')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '07' THEN
         IF NEW.lifecycle_status NOT IN ('08', '09', '10', '11', '13') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('08', '09', '10', '11', '13')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '08' THEN
         IF NEW.lifecycle_status NOT IN ('07', '09', '10', '11', '13') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('07', '09', '10', '11', '13')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '09' THEN
         IF NEW.lifecycle_status NOT IN ('07', '08', '10', '11', '13') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('07', '08', '10', '11', '13')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '10' THEN
         IF NEW.lifecycle_status NOT IN ('12') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('12')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       WHEN '11' THEN
         IF NEW.lifecycle_status NOT IN ('12') THEN
-          RAISE EXCEPTION 'Invalid state transition';
+          old_status := (
+            SELECT preflabel_fi
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue = OLD.lifecycle_status
+          );
+          valid_statuses := (
+            SELECT string_agg(preflabel_fi, ', ')
+            FROM code_lists.spatial_plan_lifecycle_status
+            WHERE codevalue IN ('12')
+          );
+          RAISE EXCEPTION 'Invalid status transition. Valid transitions from % are %', old_status, valid_statuses;
         END IF;
       ELSE
-        RAISE EXCEPTION 'Invalid state transition';
+        old_status := (
+          SELECT preflabel_fi
+          FROM code_lists.spatial_plan_lifecycle_status
+          WHERE codevalue = OLD.lifecycle_status
+          );
+        RAISE EXCEPTION 'Invalid status transition. Status cannot change from %', old_status;
     END CASE;
   END IF;
 
@@ -68,6 +181,8 @@ BEGIN
   ELSIF NEW.lifecycle_status IN ('12') AND NEW.validity_time.upper IS NULL THEN
     RAISE EXCEPTION 'Valid to is not set';
   END IF;
+END;
+$$;
 
 -- CREATE INHERIT VALIDITY TRIGGER
 
