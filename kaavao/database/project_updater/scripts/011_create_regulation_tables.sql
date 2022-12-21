@@ -437,8 +437,8 @@ CREATE TABLE SCHEMANAME.supplementary_information_numeric_double_value(
 CREATE TABLE SCHEMANAME.numeric_range (
   id SERIAL PRIMARY KEY,
   numeric_range_uuid UUID DEFAULT uuid_generate_v4() UNIQUE NOT NULL,
-  minimum_value DOUBLE PRECISION DEFAULT '-inf',
-  maximum_value DOUBLE PRECISION DEFAULT 'inf',
+  minimum_value DOUBLE PRECISION,
+  maximum_value DOUBLE PRECISION,
   unit_of_measure VARCHAR,
   CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value)
 );
