@@ -70,7 +70,7 @@ UPDATE SCHEMANAME.zoning_element
   WHERE zoning_element.fk_spatial_plan = subquery.producer_specific_id;
 
 ALTER TABLE SCHEMANAME.zoning_element
-  DROP COLUMN fk_spatial_plan,
+  DROP COLUMN fk_spatial_plan CASCADE,
   ALTER COLUMN spatial_plan SET NOT NULL,
   ALTER COLUMN local_id SET NOT NULL;
 
@@ -217,7 +217,7 @@ CREATE TABLE SCHEMANAME.document_document (
   id SERIAL PRIMARY KEY,
   referencing_document_local_id VARCHAR NOT NULL,
   referenced_document_local_id VARCHAR NOT NULL,
-  role JSONB CHECK(check_language_string(name)),
+  role JSONB CHECK(check_language_string(role)),
   CONSTRAINT fk_referencing_document
     FOREIGN KEY (referencing_document_local_id)
     REFERENCES SCHEMANAME.document (local_id)
@@ -237,7 +237,7 @@ CREATE TABLE SCHEMANAME.spatial_plan_commentary_document(
   id SERIAL PRIMARY KEY,
   spatial_plan_commentary_local_id VARCHAR NOT NULL,
   document_local_id VARCHAR NOT NULL,
-  role JSONB CHECK(check_language_string(name)),
+  role JSONB CHECK(check_language_string(role)),
   CONSTRAINT fk_spatial_plan_commentary
     FOREIGN KEY (spatial_plan_commentary_local_id)
     REFERENCES SCHEMANAME.spatial_plan_commentary (local_id)
@@ -256,7 +256,7 @@ CREATE TABLE SCHEMANAME.patricipation_evalution_plan_document(
   id SERIAL PRIMARY KEY,
   participation_and_evalution_plan_local_id VARCHAR NOT NULL,
   document_local_id VARCHAR NOT NULL,
-  role JSONB CHECK(check_language_string(name)),
+  role JSONB CHECK(check_language_string(role)),
   CONSTRAINT fk_participation_and_evalution_plan
     FOREIGN KEY (participation_and_evalution_plan_local_id)
     REFERENCES SCHEMANAME.participation_and_evalution_plan (local_id)

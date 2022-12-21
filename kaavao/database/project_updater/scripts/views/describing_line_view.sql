@@ -11,8 +11,8 @@ CREATE VIEW SCHEMANAME.describing_line_view AS (
         Null As validity_sv
     From
         SCHEMANAME.spatial_plan Inner Join
-        SCHEMANAME.zoning_element On SCHEMANAME.zoning_element.fk_spatial_plan =
-                SCHEMANAME.spatial_plan.planning_object_identifier Inner Join
+        SCHEMANAME.zoning_element On SCHEMANAME.zoning_element.spatial_plan =
+                SCHEMANAME.spatial_plan.local_id Inner Join
         SCHEMANAME.zoning_element_describing_line On SCHEMANAME.zoning_element_describing_line.zoning_id
                 = SCHEMANAME.zoning_element.planning_object_identifier Inner Join
         SCHEMANAME.describing_line On SCHEMANAME.zoning_element_describing_line.describing_line_id =

@@ -27,8 +27,8 @@ CREATE VIEW SCHEMANAME.zoning_element_view AS (
         Null As validity_sv
     From
         SCHEMANAME.spatial_plan Inner Join
-        SCHEMANAME.zoning_element On SCHEMANAME.zoning_element.fk_spatial_plan =
-                SCHEMANAME.spatial_plan.planning_object_identifier Inner Join
+        SCHEMANAME.zoning_element On SCHEMANAME.zoning_element.spatial_plan =
+                SCHEMANAME.spatial_plan.local_id Inner Join
         code_lists.finnish_zoning_element_type On code_lists.finnish_zoning_element_type.value =
                 SCHEMANAME.zoning_element.type Inner Join
         code_lists.finnish_up_to_dateness On code_lists.finnish_up_to_dateness.value =
