@@ -174,9 +174,6 @@ END;
 $$;
 
 
-grant execute on function SCHEMANAME.remove_expired() to qgis_admin;
-
-grant execute on function SCHEMANAME.remove_expired() to qgis_editor;
 
 create trigger z_remove_expired
     after insert or update

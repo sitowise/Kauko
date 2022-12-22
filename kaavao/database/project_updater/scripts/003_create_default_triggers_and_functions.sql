@@ -80,11 +80,6 @@ $$;
 COMMENT ON FUNCTION "SCHEMANAME".delete_geom_relations() IS 'Deletes old relations when updating item geom column before calculating new ones using geom_relations() trigger';
 
 
-
-GRANT EXECUTE ON FUNCTION SCHEMANAME.delete_geom_relations() TO qgis_editor;
-
-GRANT EXECUTE ON FUNCTION SCHEMANAME.delete_geom_relations() TO qgis_admin;
-
 CREATE TRIGGER delete_geom_relations
     BEFORE UPDATE OF geom
     ON SCHEMANAME.spatial_plan
@@ -357,10 +352,6 @@ END;
 $BODY$;
 
 
-GRANT EXECUTE ON FUNCTION SCHEMANAME.geom_relations() TO qgis_editor;
-
-GRANT EXECUTE ON FUNCTION SCHEMANAME.geom_relations() TO qgis_admin;
-
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom
     ON SCHEMANAME.spatial_plan
@@ -549,9 +540,6 @@ create trigger inherit_validity
     on SCHEMANAME.planned_space
 execute procedure SCHEMANAME.inherit_validity();
 
-GRANT EXECUTE ON FUNCTION SCHEMANAME.inherit_validity() TO qgis_editor;
-
-GRANT EXECUTE ON FUNCTION SCHEMANAME.inherit_validity() TO qgis_admin;
 
 -- CREATE update_validity TRIGGER
 
@@ -834,10 +822,6 @@ END;
 $BODY$;
 
 
-GRANT EXECUTE ON FUNCTION SCHEMANAME.update_validity() TO qgis_editor;
-
-GRANT EXECUTE ON FUNCTION SCHEMANAME.update_validity() TO qgis_admin;
-
 create trigger update_validity
     after insert or update
     on SCHEMANAME.spatial_plan
@@ -1071,7 +1055,3 @@ WHERE sp.planning_object_identifier = ze.fk_spatial_plan
   AND sp.validity = 1;
 $BODY$;
 
-
-grant execute on function SCHEMANAME.refresh_validity() to qgis_admin;
-
-grant execute on function SCHEMANAME.refresh_validity() to qgis_editor;
