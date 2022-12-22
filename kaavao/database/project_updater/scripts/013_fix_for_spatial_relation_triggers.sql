@@ -184,8 +184,8 @@ BEGIN
     AND NOT EXISTS (
       SELECT 1
       FROM SCHEMANAME.zoning_element_planned_space zeps
-      WHERE zeps.planned_space_id = ps.local_id AND
-            zeps.zoning_element_id = ze.local_id
+      WHERE zeps.planned_space_local_id = ps.local_id AND
+            zeps.zoning_element_local_id = ze.local_id
     );
   END IF;
 
@@ -202,8 +202,8 @@ BEGIN
       AND NOT EXISTS (
         SELECT 1
         FROM SCHEMANAME.zoning_element_plan_detail_line zepdl
-        WHERE zepdl.plan_detail_line_id = pdl.local_id AND
-              zepdl.zoning_element_id = ze.local_id
+        WHERE zepdl.plan_detail_line_local_id = pdl.local_id AND
+              zepdl.zoning_element_local_id = ze.local_id
       );
     END IF;
 
