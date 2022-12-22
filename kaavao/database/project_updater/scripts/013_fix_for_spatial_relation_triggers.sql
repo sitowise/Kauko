@@ -190,7 +190,7 @@ BEGIN
   END IF;
 
   IF (tg_table_name IN ('zoning_element', 'planning_detail_line')) THEN
-    INSERT INTO SCHEMANAME.zoning_element_plan_detail_line (zoning_element_local_id, plan_detail_line_local_id)
+    INSERT INTO SCHEMANAME.zoning_element_plan_detail_line (zoning_element_local_id, planning_detail_line_local_id)
     SELECT DISTINCT
       ze.local_id,
       pdl.local_id
@@ -202,7 +202,7 @@ BEGIN
       AND NOT EXISTS (
         SELECT 1
         FROM SCHEMANAME.zoning_element_plan_detail_line zepdl
-        WHERE zepdl.plan_detail_line_local_id = pdl.local_id AND
+        WHERE zepdl.planning_detail_line_local_id = pdl.local_id AND
               zepdl.zoning_element_local_id = ze.local_id
       );
     END IF;
@@ -244,7 +244,7 @@ BEGIN
       END IF;
 
       IF (tg_table_name IN ('planned_space', 'planning_detail_line')) THEN
-        INSERT INTO SCHEMANAME.planned_space_plan_detail_line (planned_space_local_id, plan_detail_line_local_id)
+        INSERT INTO SCHEMANAME.planned_space_plan_detail_line (planned_space_local_id, planning_detail_line_local_id)
         SELECT DISTINCT
           ps.local_id,
           pdl.local_id
@@ -256,7 +256,7 @@ BEGIN
           AND NOT EXISTS (
             SELECT 1
             FROM SCHEMANAME.planned_space_plan_detail_line ps_pdl
-            WHERE ps_pdl.plan_detail_line_local_id = pdl.local_id AND
+            WHERE ps_pdl.planning_detail_line_local_id = pdl.local_id AND
                   ps_pdl.planned_space_local_id = ps.local_id
           );
       END IF;

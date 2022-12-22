@@ -90,12 +90,19 @@ CREATE TRIGGER plan_guidance_validity_time
   FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.validity_to_daterange();
 
 -- FIX time_period_value
-CREATE OR REPLACE FUNCTION convert_to_timerange()
+CREATE OR REPLACE FUNCTION SCHEMANAME.convert_to_timerange()
 RETURNS TRIGGER
 AS $$
 BEGIN
   IF NEW."value" IS NOT NULL AND NEW."value" <> OLD."value" THEN
     RAISE EXCEPTION 'Cannot change time_period_value';
+  END IF;
+  IF NEW.time_period_from IS NULL THEN
+    IF NEW.time_period_to IS NOT NULL THEN
+      RAISE EXCEPTION 'time_period_from cannot be NULL if time_period_to is not NULL';
+    END IF;
+    NEW."value" = NULL;
+    RETURN NEW;
   END IF;
   NEW."value" = TSRANGE(NEW.time_period_from, NEW.time_period_to, '[)');
   RETURN NEW;
