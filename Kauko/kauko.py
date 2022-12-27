@@ -8,8 +8,8 @@
                               -------------------
         begin                : 2020-06-22
         git sha              : $Format:%H$
-        copyright            : (C) 2020 by Nosto Consulting Oy
-        email                : yhteys@nostoconsulting.fi
+        copyright            : (C) 2023 by Sitowise Oy
+        email                : tiketti@sitowise.com
  ***************************************************************************/
 
 /***************************************************************************
