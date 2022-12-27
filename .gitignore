@@ -218,3 +218,5 @@ launch.json
 settings.json
 *.env
 *.venv
+
+zip_build/
