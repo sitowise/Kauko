@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/plugins/kaavao" >
+    <qresource prefix="/plugins/Kauko" >
         <file>logo.png</file>
     </qresource>
 </RCC>

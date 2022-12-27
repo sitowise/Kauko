@@ -1,12 +1,12 @@
 [general]
-name=KaavaO työkalut
+name=Kauko työkalut
 qgisMinimumVersion=3.14
-description=KaavaO työkalut
+description=Kauko työkalut
 version=1.0
 author=Sitowise
 email=tiketti@sitowise.com
 
-about=KaavaO työkalut
+about=Kauko työkalut
 
 tracker=http://bugs
 repository=http://repo
