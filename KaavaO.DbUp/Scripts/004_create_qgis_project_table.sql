@@ -7,7 +7,3 @@
 )
 
 TABLESPACE pg_default;
-
-GRANT SELECT ON TABLE public.qgis_projects TO qgis_editor;
-
-GRANT INSERT, SELECT, DELETE, UPDATE ON TABLE public.qgis_projects TO qgis_admin;
