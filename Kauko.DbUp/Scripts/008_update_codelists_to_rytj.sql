@@ -191,7 +191,7 @@ BEGIN
     SELECT DISTINCT quote_ident(schemaname)
     FROM pg_tables
     WHERE schemaname LIKE '%gk%' OR schemaname LIKE '%kkj%'
-  LOOP --LOOPING TROUGH EVERY KAAVAO SCHEMA
+  LOOP --LOOPING TROUGH EVERY KAUKO SCHEMA
     EXECUTE FORMAT('SET search_path to %s, public;', _schema);
     -- UPDATE regulative_text TABLES TO NEW CODES
     UPDATE regulative_text

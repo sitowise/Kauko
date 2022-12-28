@@ -1,15 +1,15 @@
 [general]
-name=KaavaO työkalut
+name=Kauko työkalut
 qgisMinimumVersion=3.14
-description=KaavaO työkalut
-version=1.0
+description=Kauko työkalut
+version=0.1
 author=Sitowise
 email=tiketti@sitowise.com
 
-about=KaavaO työkalut
+about=Kauko työkalut
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/sitowise/Kauko/issues
+repository=https://github.com/sitowise/Kauko
 # End of mandatory metadata
 
 # Recommended items:
@@ -21,7 +21,6 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
 category=Database
 icon=logo.png
 # experimental flag

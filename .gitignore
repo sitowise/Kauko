@@ -6,6 +6,7 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.vscode
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -217,4 +218,5 @@ launch.json
 settings.json
 *.env
 *.venv
+
 zip_build/

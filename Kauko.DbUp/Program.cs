@@ -2,7 +2,7 @@
 using DbUp.Engine;
 using System.Reflection;
 
-namespace KaavaO.DbUpdater
+namespace Kauko.DbUpdater
 {
     class Program
     {
@@ -14,7 +14,7 @@ namespace KaavaO.DbUpdater
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("");
-                    Console.WriteLine("Usage: ./KaavaO.DbUpdater.exe [Operation] [ConnectionString]");
+                    Console.WriteLine("Usage: ./Kauko.DbUp.exe [Operation] [ConnectionString]");
                     Console.WriteLine("");
                     Console.WriteLine("Examples of [ConnectionString]:");
                     Console.WriteLine("\"Server=127.0.0.1;Port=5432;Database=myDataBase;Integrated Security=true;\"");
