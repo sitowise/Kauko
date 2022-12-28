@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KaavaO.DbUp", "KaavaO.DbUp\KaavaO.DbUp.csproj", "{F9630760-CF06-4D38-AB12-4670DC039783}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kauko.DbUp", "Kauko.DbUp\Kauko.DbUp.csproj", "{F9630760-CF06-4D38-AB12-4670DC039783}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

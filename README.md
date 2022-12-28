@@ -1,13 +1,13 @@
-# KaavaO
+# Kauko
 ## Asennus
-- Käännä Kaavao.DbUp projekti.
+- Käännä Kauko.DbUp projekti.
 - Avaa komentorivi ja siirry projektikansioon.
-- Alusta PostgreSQL kanta KaavaO:lle.
+- Alusta PostgreSQL kanta Kauko:lle.
 
-1. `cd KaavaO.DbUp\bin\Release`
-2. `KaavaO.DbUp.exe Update "Server=127.0.0.1;Port=5432;Database=KaavaO;User Id=myUsername;Password=myPassword;"`
+1. `cd Kauko.DbUp\bin\Release`
+2. `Kauko.DbUp.exe Update "Server=127.0.0.1;Port=5432;Database=Kauko;User Id=myUsername;Password=myPassword;"`
 
-- Siirrä kaavao kansio QGIS:n plugin kansioon.
+- Siirrä Kauko kansio QGIS:n plugin kansioon.
 - Lisää luotu kanta QGIS:n tietolähteeksi
-- Plugin löytyy yläpalkista Tietokanta &rarr; KaavaO
-- Uuden projektin saat luotua Tietokanta &rarr; KaavaO &rarr; Luo uusi työtila
+- Plugin löytyy yläpalkista Tietokanta &rarr; Kauko
+- Uuden projektin saat luotua Tietokanta &rarr; Kauko &rarr; Luo uusi työtila
