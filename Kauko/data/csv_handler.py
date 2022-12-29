@@ -3,9 +3,22 @@ import os
 
 from typing import List
 
+from qgis.core import Qgis, QgsMessageLog
+
 from ..exceptions import SpatialNotFoundException
 from ..constants import SPATIALREFSYS
 
+# Create function that takes a filename of a csv file and returns a list of dicts
+
+def logger(message: str, header:str, level=Qgis.Info) -> None:
+    """Used to log messages to QGIS log
+
+    :param message: str
+    :param header: str
+    :param level: int
+    :return: None
+    """
+    QgsMessageLog.logMessage(message, header, level)
 
 def read_csv(filename: str) -> List[dict]:
     """Used to read csv file and convert it to list of dicts
@@ -13,16 +26,25 @@ def read_csv(filename: str) -> List[dict]:
     :param filename: str
     :return: list of dicts
     """
+
     csv_file = []
     try:
         with open(os.path.dirname(os.path.abspath(__file__)) + filename,
-                  newline='') as csvfile:
+                 newline='') as csvfile:
             csv_reader = csv.DictReader(csvfile, delimiter=',')
-            for row in csv_reader:
-                csv_file.append({'code': row['code'], 'name': row['name']})
-    except OSError:
-        # TODO
-        pass
+            csv_file.extend(
+                {'code': row['code'], 'name': row['name']}
+                for row in csv_reader
+            )
+    except FileNotFoundError:
+        logger(f'File not found: {filename}', 'CSV Handler', Qgis.Critical)
+    except PermissionError:
+        logger(f'Permission denied: {filename}', 'CSV Handler', Qgis.Critical)
+    except csv.Error as e:
+        logger(f'Error reading csv file: {filename}', 'CSV Handler', Qgis.Critical)
+        logger(f'Error: {e}', 'CSV Handler', Qgis.Critical)
+    except Exception:
+        logger(f'Unknown error reading csv file: {filename}', 'CSV Handler', Qgis.Critical)
     return csv_file
 
 
@@ -32,11 +54,8 @@ def get_csv_names(filename: str) -> list:
     :param filename: str
     :return: list
     """
-    names = []
     csv_file = read_csv(filename)
-    for row in csv_file:
-        names.append(row['name'])
-    return names
+    return [row['name'] for row in csv_file]
 
 
 def get_csv_code(filename: str, name: str) -> str:

@@ -1,179 +1,190 @@
 import fnmatch
-import psycopg2
 import os
-from os import listdir
-from os.path import isfile, join
 from typing import Dict, List
-from qgis.core import QgsMessageLog, Qgis
-from ...project_handler import create_or_update_project
-from ...database.query_builder import get_query
-from ...data.schema import Schema
+
+import psycopg2
+from qgis.core import Qgis, QgsMessageLog
+
+from ...data.schema import PlanType, Schema
 from ...database.database import Database
+from ...database.query_builder import get_query
+from ...project_handler import create_or_update_project
+
 
 class ProjectUpdater:
 
     def __init__(self, db: Database, schemas: List[Schema]) -> None:
-        self.__db = db
-        self.__schemas = schemas
-        self.__schema_versions: Dict[Schema, str] = {
-            schema: '' for schema in self.__schemas
+        self.base_path = os.path.dirname(os.path.abspath(__file__))
+        self._db = db
+        self._schemas: Dict[str, Schema] = {schema.name: schema for schema in schemas}
+        self._schema_versions: Dict[Schema, str] = {
+            schema: '' for schema in self._schemas
             }
-        self.__project_versions: Dict[Schema, str] = {
-            schema: '' for schema in self.__schemas
+        self._project_versions: Dict[Schema, str] = {
+            schema: '' for schema in self._schemas
         }
-        self.__scripts_to_execute: Dict[Schema, List[str]] = {}
-        self.__projects_to_update: Dict[Schema, bool] = {}
-        self.__scripts: List[str] = []
-        self.__views: List[str] = []
-        self.__newest_project: str
+        self._scripts_to_execute: Dict[Schema, List[str]] = {}
+        self._projects_to_update: Dict[Schema, bool] = {}
+        self._scripts: Dict[PlanType, List[str]] = {}
+        self._view_scripts: Dict[PlanType, List[str]] = {}
+        self._newest_project: Dict[PlanType, str] = {}
 
     def execute(self):
         self.__get_scripts()
-        self.__get_executed_scripts()
+        self.__get_schema_and_project_versions()
         self.__initialize_projects()
-        self.__get_scripts_to_execute()
-        self.__get_view_scripts_to_execute()
+        self.__update_scripts_to_execute()
+        self.__get_view_scripts()
         self.__get_newest_project()
         self.__get_projects_to_update()
         self.update_schemas()
         self.update_projects()
 
-    def __get_executed_scripts(self) -> None:
-        query: str = \
-            "SELECT name, schema_version, project_version " + \
-            "FROM public.schema_information"
-        results = self.__db.select(query)
+    def __get_schema_and_project_versions(self) -> None:
+        query = "SELECT name, schema_version, project_version FROM public.schema_information"
+        results = self._db.select(query)
         for result in results:
-            for schema in self.__schemas:
-                if result[0] == schema.name:
-                    self.__schema_versions[schema] = result[1].strip()
-                    self.__project_versions[schema] = result[2].strip()
-                    break
+            name, schema_version, project_version = result
+            if name in self._schemas:
+                self._schemas[name].schema_version = schema_version.strip()
+                self._schemas[name].project_version = project_version.strip()
 
     def __get_scripts(self):
-        script_path = f'{os.path.dirname(os.path.abspath(__file__))}/scripts/'
-        self.__scripts = [f for f in listdir(script_path) if isfile(join(script_path, f)) ]
-        self.__scripts.sort()
+        script_paths = {
+            PlanType.detailed_plan: 'scripts/detailed_plan',
+            PlanType.master_plan: 'scripts/master_plan'
+        }
 
-    def __get_newest_project(self):
-        project_path = f'{os.path.dirname(os.path.abspath(__file__))}/projects/'
-        projects = [f for f in listdir(project_path) if isfile(join(project_path, f))]
-        projects.sort()
-        self.__newest_project = projects[-1]
+        for plan_type, path in script_paths.items():
+            full_path = os.path.join(self.base_path, path)
+            self._scripts[plan_type] = sorted([f for f in os.listdir(full_path) if os.path.isfile(os.path.join(full_path, f))])
 
-    def __initialize_projects(self):
-        for schema in self.__schema_versions:
-            if not self.__schema_versions[schema]:
+    def __get_newest_project(self) -> None:
+        project_paths: Dict[PlanType, str] = {
+            PlanType.detailed_plan: '/projects/detailed_plan',
+            PlanType.master_plan: '/projects/master_plan'
+        }
+
+        for plan_type, path in project_paths.items():
+            full_path = os.path.join(self.base_path, path)
+            scripts = [f for f in os.listdir(full_path) if os.path.isfile(os.path.join(full_path, f))]
+            self._newest_project[plan_type] = sorted(scripts)[-1]
+
+    def __initialize_projects(self) -> None:
+        for schema in self._schemas.values():
+            if schema.is_new:
                 query = self.__get_initialize_project_query(schema)
-                if self.__db.insert(query):
+                if self._db.insert(query):
                     self.__logger(f"Initialized project {schema.name}", Qgis.Info)
 
     def __get_initialize_project_query(self, schema: Schema) -> str:
-        combination = "TRUE" if schema.combination else "FALSE"
-        query = \
-        "INSERT INTO public.schema_information(" + \
-            "name, srid, municipality, combination) " + \
-            "VALUES ('"+ schema.name + "', " + schema.srid + ", '" + \
-                schema.municipality + "', " + combination + ");"
-        query += '\nCREATE SCHEMA ' + schema.name + ';'
-        query += '\nCREATE TABLE IF NOT EXISTS ' + schema.name + '.versions(' + \
-            'identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ' \
-            '( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999 ),' + \
-            'scriptname character varying NOT NULL,' + \
-            'applied timestamp(6) NOT NULL DEFAULT now(),' + \
-            'PRIMARY KEY (identifier),' + \
-            'CONSTRAINT scriptname_unique UNIQUE (scriptname));'
-        return query
-        
-    def __mark_script_as_executed(self, schema: Schema, scriptname: str):
+        is_master_plan = "TRUE" if schema.plan_type == PlanType.master_plan else "FALSE"
+        query = """
+        INSERT INTO public.schema_information(name, srid, municipality, master_plan)
+        VALUES ('{name}', {srid}, '{municipality}', {master_plan});
+        CREATE SCHEMA IF NOT EXIST {name};
+        CREATE TABLE IF NOT EXISTS {name}.versions(
+            identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY (INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999) PRIMARY KEY,
+            scriptname character varying NOT NULL UNIQUE,
+            applied timestamp(6) NOT NULL DEFAULT now());
+        """
+        return query.format(
+            name=schema.name,
+            srid=schema.srid,
+            municipality=schema.municipality_code,
+            master_plan=is_master_plan)
+
+    def __mark_script_as_executed(self, schema: Schema, scriptname: str) -> None:
         schema_version_index = scriptname[:scriptname.index('_')]
         query = (
             f"INSERT INTO {schema.name}.versions(scriptname) "
-            + "VALUES ('"
-            + schema_version_index
-            + "');"
+            f"VALUES ('{schema_version_index}');"
         )
-
-        query += "UPDATE public.schema_information SET schema_version = '" + schema_version_index + "'" \
-            " WHERE name = '" + schema.name + "';"
-        self.__db.insert(query)
+        query += (
+            "UPDATE public.schema_information "
+            f"SET schema_version = '{schema_version_index}'"
+            f" WHERE name = '{schema.name}';"
+        )
+        self._db.insert(query)
         self.__logger(
             f"Executed script {scriptname} for schema {schema.name}", Qgis.Info
         )
+        schema.schema_version = schema_version_index
 
-        self.__schema_versions[Schema] = schema_version_index
-
-
-    def __get_scripts_to_execute(self):
-        for schema in self.__schema_versions:
-            if self.__schema_versions[schema]:
-                pattern_str = f'{self.__schema_versions[schema]}*'
-                newest_script = fnmatch.filter(self.__scripts, pattern_str)[0]
-                if newest_script == self.__scripts[-1]:
-                    self.__scripts_to_execute[schema] = []
-                    return
-                index = self.__scripts.index(newest_script) + 1
-                if schema.combination:
-                    self.__scripts_to_execute[schema] = [
-                        script for script in self.__scripts[index:]
-                        if script[:script.index('_')][-1] != 'd'
-                    ]
-                else:
-                    self.__scripts_to_execute[schema] = [
-                        script for script in self.__scripts[index:] if
-                        script[:script.index('_')][-1] != 'y'
-                    ]
-                self.__scripts_to_execute[schema] = self.__scripts[index:]
-            elif schema.combination:
-                self.__scripts_to_execute[schema] = [
-                    script for script in self.__scripts if
-                    script[:script.index('_')][-1] != 'd'
-                ]
+    def __update_scripts_to_execute(self):
+        for schema in self._schemas.values():
+            plan_type = schema.plan_type
+            if schema.schema_version:
+                pattern_str = f'{schema.schema_version}*'
+                newest_script = fnmatch.filter(self._scripts[plan_type], pattern_str)[0]
+                if newest_script == self._scripts[plan_type][-1]:
+                    continue
+                script_index = self._scripts[plan_type].index(newest_script) + 1
+                scripts = self._scripts[plan_type][script_index:]
             else:
-                self.__scripts_to_execute[schema] = [
-                    script for script in self.__scripts if
-                    script[:script.index('_')][-1] != 'y'
-                ]
-            self.__scripts_to_execute[schema].sort()
-    
-    def __get_view_scripts_to_execute(self):
-        script_path = f'{os.path.dirname(os.path.abspath(__file__))}/scripts/views'
-        self.__views = [f for f in listdir(script_path) if isfile(join(script_path, f)) ]
-        
+                scripts = self._scripts[plan_type]
+
+            schema.scripts_to_execute = sorted(scripts)
+
+    def __get_view_scripts(self):
+        script_paths = {
+            PlanType.detailed_plan: 'scripts/detailed_plan/views',
+            PlanType.master_plan: 'scripts/master_plan/views'
+        }
+        for plan_type, path in script_paths.items():
+            full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+            self._view_scripts[plan_type] = [f for f in os.listdir(full_path) if os.path.isfile(os.path.join(full_path, f))]
+
 
     def __get_projects_to_update(self):
-        for schema in self.__project_versions:
-            if not self.__project_versions[schema]:
-                self.__projects_to_update[schema] = True
+        for schema in self._schemas.values():
+            if schema.is_new:
+                schema.update_project = True
+
+            elif not fnmatch.fnmatch(self._newest_project[schema.plan_type], f'{schema.project_version}*'):
+                schema.update_project = True
+
             else:
-                current_project = f'{self.__project_versions[schema]}*'
-                if not fnmatch.fnmatch(self.__newest_project, current_project):
-                    self.__projects_to_update[schema] = False                    
+                schema.update_project = False
 
     def update_schemas(self):
-        for schema in self.__scripts_to_execute:
-            for script in self.__scripts_to_execute[schema]:
-                filename = f'/project_updater/scripts/{script}'
+        script_paths = {
+            PlanType.master_plan: '/project_updater/scripts/master_plan/',
+            PlanType.detailed_plan: '/project_updater/scripts/detailed_plan/'
+        }
+
+        for schema in self._schemas.values():
+            for script in schema.scripts_to_execute:
+                filename = f'{script_paths[schema.plan_type]}{script}'
                 query = get_query(schema.name, filename,
-                schema.srid, schema.municipality)
-                if self.__db.insert(query):
+                schema.srid, schema.municipality_code)
+                if self._db.insert(query):
                     self.__mark_script_as_executed(schema, script)
-            for view in self.__views:
+            for view in schema.views_to_execute:
                 filename = f'/project_updater/scripts/views/{view}'
-                query = get_query(schema.name, filename, schema.srid, schema.municipality)
+                query = get_query(schema.name, filename, schema.srid, schema.municipality_code)
                 try:
-                    self.__db.insert(query)
+                    self._db.insert(query)
                 except psycopg2.Error as err:
                     self.__logger(f'Failed to execute script {view}; {err}', Qgis.Critical)
 
 
     def update_projects(self):
-        for schema in self.__projects_to_update:
-            is_new = self.__projects_to_update[schema]
+        for schema in self._schemas.values():
+            if not schema.update_project:
+                continue
             if create_or_update_project(
-                self.__db, schema.name, schema.srid, self.__newest_project, is_new, is_new):
-                self.__logger(f"Created project file for {schema.name}", Qgis.Info)
+                self._db,
+                schema.name,
+                schema.srid,
+                self._newest_project[schema.plan_type],
+                True,
+                schema.is_new
+            ):
+                if schema.is_new:
+                    self.__logger(f"Created project file for {schema.name}", Qgis.Info)
+                else:
+                    self.__logger(f"Updated project file for {schema.name}", Qgis.Info)
 
     def __logger(self, msg: str, level=Qgis.Info):
         QgsMessageLog.logMessage(msg, "Project updater", level)
-                

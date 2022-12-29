@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsAuthMethodConfig, QgsProject
@@ -19,7 +19,7 @@ def get_database_connections() -> set:
     return {key.split('/')[0] for key in keys if '/' in key}
 
 
-def get_new_schema_name(municipality: str, projection: str, is_combination: bool) -> str:
+def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool) -> str:
     """Return name for the schema in the right format
 
     :param municipality: str
@@ -28,7 +28,7 @@ def get_new_schema_name(municipality: str, projection: str, is_combination: bool
     :return: str
     """
     schema_name = f'{municipality.lower()}_{projection[5:].lower()}'
-    return f'{schema_name}_y'.lower() if is_combination else schema_name.lower()
+    return f'{schema_name}_y'.lower() if is_master_plan else schema_name.lower()
 
 
 def set_connection(db_name: str) -> None:
@@ -48,13 +48,18 @@ def get_connection_name() -> str:
     return QSettings().value('connection', "", str)
 
 
-def get_connection_params(qgs_app: QCoreApplication) -> dict:
-    """Returns database connection parameters
+def get_connection_params(qgs_app: QCoreApplication) -> Dict[str, Any]:
+    """Get database connection parameters from QGIS settings.
 
-    :param qgs_app
-    :return: dict
+    Args:
+        qgs_app (QCoreApplication): A QCoreApplication instance.
+
+    Returns:
+        Dict[str, Any]: A dictionary of connection parameters.
     """
     from ..data.tools import parse_value
+
+    # Read connection parameters from QGIS settings
     s = QSettings()
     s.beginGroup(f"{PG_CONNECTIONS}/{get_connection_name()}")
     auth_cfg_id = parse_value(s.value("authcfg"))
@@ -62,26 +67,25 @@ def get_connection_params(qgs_app: QCoreApplication) -> dict:
     password_saved = parse_value(s.value("savePassword"))
 
     params = {"authcfg": auth_cfg_id}
-
     for qgs_key, psyc_key in QGS_SETTINGS_PSYCOPG2_PARAM_MAP.items():
         params[psyc_key] = parse_value(s.value(qgs_key))
-
     s.endGroup()
 
+    # Clear username and password if not saved in settings
     if not username_saved:
         params["user"] = None
     if not password_saved:
         params["password"] = None
 
-    if auth_cfg_id is not None and auth_cfg_id != "":
+    # Check if an authcfg ID is specified and get username and password from auth config if valid
+    if auth_cfg_id:
         auth_config = QgsAuthMethodConfig()
         qgs_app.authManager().loadAuthenticationConfig(auth_cfg_id, auth_config, True)
-
         if auth_config.isValid():
             params["user"] = auth_config.configMap().get("username")
             params["password"] = auth_config.configMap().get("password")
         else:
-            # TODO
+            # TODO: Handle invalid auth config
             pass
 
     return params

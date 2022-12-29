@@ -9,7 +9,7 @@ from qgis.utils import iface
 from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
                          REFRESH_MATERIALIZED_VIEWS)
 from ..data.csv_handler import get_csv_code
-from ..data.schema import Schema
+from ..data.schema import Schema, PlanType
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
 from ..database.db_tools import (get_active_db_and_schema,
@@ -19,7 +19,12 @@ from ..database.query_builder import get_query
 from ..errors import SchemaError
 
 
-def create_new_schema_and_project(projection, municipality, db) -> None:
+def create_new_schema_and_project(
+    projection: str,
+    municipality: str,
+    db: Database,
+    create_detailed_plan: bool = False,
+    create_master_plan: bool = False) -> None:
     """Creates new schema to initialized database with parameters given in the dialog"""
     project = QgsProject().instance()
 
@@ -27,32 +32,30 @@ def create_new_schema_and_project(projection, municipality, db) -> None:
         is_saved = save_alert_msg()
         if is_saved == QMessageBox.Save:
             if not project.write():
-                iface.messageBar().pushMessage("Virhe!", "Työtilan " +
-                                               project.baseName() +
-                                               " tallennus epäonnistui.",
-                                               level=Qgis.Critical,
-                                               duration=5)
+                iface.messageBar().pushMessage(
+                    "Virhe!", f"Työtilan {project.baseName()}  tallennus epäonnistui.",
+                    level=Qgis.Critical,
+                    duration=5)
                 return
         elif is_saved == QMessageBox.Cancel:
             return
 
-    srid = str(get_csv_code('/finnish_projections.csv', projection))
-    municipality_code = str(
-        get_csv_code('/municipality_codes.csv', municipality))
-
-    schemas = [
-        Schema(
-            get_new_schema_name(municipality, projection, True),
-            srid,
-            municipality_code,
-            True,
-        ),
-        Schema(
-            get_new_schema_name(municipality, projection, False),
-            srid,
-            municipality_code,
-            False)
-    ]
+    schemas = []
+    if create_detailed_plan:
+        schemas.append(
+            Schema(
+                municipality,
+                projection,
+                PlanType.detailed_plan)
+            )
+    if create_master_plan:
+        schemas.append(
+            Schema(
+                municipality,
+                projection,
+                PlanType.master_plan
+            )
+        )
 
     project_updater = ProjectUpdater(db, schemas)
     try:

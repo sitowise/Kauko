@@ -21,8 +21,16 @@ def save_alert_msg():
 class DatabaseInitializer:
     """Used to initialize PostGis database and interact with it."""
 
-    def __init__(self, iface: QgisInterface, qgs_app: QCoreApplication,
-                 dbname=None, schema=None):
+    def __init__(self, iface: QgisInterface, qgs_app: QCoreApplication, dbname: str = None, schema:str = None):
+        """Initialize the plugin.
+
+        Args:
+            iface (QgisInterface): An interface instance that will be passed to this class
+                which provides the hook by which you can manipulate the QGIS application at run time.
+            qgs_app (QCoreApplication): A QCoreApplication instance.
+            dbname (str, optional): Name of the database to connect to. Defaults to None.
+            schema (str, optional): The schema to use. Defaults to None.
+        """
         self._iface = iface
         self._qgs_app = qgs_app
         self.msgBar = self._iface.messageBar().pushMessage
@@ -31,31 +39,32 @@ class DatabaseInitializer:
         if dbname:
             self.initialize_database(dbname)
 
+
     @property
     def database(self) -> Database:
         return self._database
 
-    def initialize_database(self, db_name=None) -> bool:
+    def initialize_database(self, db_name: str) -> bool:
         """Initializes database with parameters given in dialog
 
-        :return: True if successful else false
+        :return: True if successful, False otherwise.
         """
-        if db_name is None:
+        if not db_name:
             self.msgBar(
                 "Yhdistäminen tietokantaan epäonnistui",
                 "Tietokannan nimeä ei ole anettu",
                 level=Qgis.Critical)
             return False
+
         set_connection(db_name)
-        parameters = get_connection_params(self._qgs_app)
+        params = get_connection_params(self._qgs_app)
 
         # Ask database username and password if now already given
-        if parameters["user"] is None or parameters["password"] is None:
-            login_form = DbLoginForm(parameters["user"],
-                                     parameters["password"])
+        if not params.get("user") or not params.get("password"):
+            login_form = DbLoginForm(params["user"], params["password"])
             if login_form.exec_():
-                parameters["user"] = login_form.usernameLineEdit.text()
-                parameters["password"] = login_form.passwordLineEdit.text()
+                params["user"] = login_form.usernameLineEdit.text()
+                params["password"] = login_form.passwordLineEdit.text()
             else:
                 self.msgBar(
                     "Yhdistäminen tietokantaan epäonnistui",
@@ -63,13 +72,12 @@ class DatabaseInitializer:
                     level=Qgis.Critical)
             return False
 
-        parameters.pop('authcfg', None)  # TODO: TEMPORARY SOLUTION!
-        self._database = Database(parameters)
+        # TODO: Remove the "authcfg" parameter (temporary solution)
+        params.pop("authcfg", None)
 
-        if self._database.is_valid:
-            return True
-
-        self.msgBar("Virhe!",
-                    "Yhdistäminen tietokantaan epäonnistui",
-                    level=Qgis.Critical)
-        return False
+        self._database = Database(params)
+        if not self._database.is_valid:
+            self.msgBar("Virhe!",
+                        "Yhdistäminen tietokantaan epäonnistui",
+                        level=Qgis.Critical)
+        return True
