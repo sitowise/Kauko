@@ -52,7 +52,7 @@ class DatabaseInitializer:
         if not db_name:
             self.msgBar(
                 "Yhdistäminen tietokantaan epäonnistui",
-                "Tietokannan nimeä ei ole anettu",
+                "Tietokannan nimeä ei ole annettu",
                 level=Qgis.Critical)
             return False
 

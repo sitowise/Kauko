@@ -363,11 +363,8 @@ class Kauko:
         # See if OK was pressed
         if result:
             db = initialize_database()
-            if dlg.delete_project(db):
-                self.iface.messageBar().pushMessage(
-                    "Työtila poistettu onnistuneesti",
-                    level=Qgis.Success, duration=5)
-
+            dlg.delete_project(db)
+            
     def get_regulations(self):
         dbname, schema = get_active_db_and_schema()
         if not dbname or not schema:
