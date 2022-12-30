@@ -26,6 +26,12 @@ def create_new_schema_and_project(
     create_detailed_plan: bool = False,
     create_master_plan: bool = False) -> None:
     """Creates new schema to initialized database with parameters given in the dialog"""
+    if not create_detailed_plan and not create_master_plan:
+        iface.messageBar().pushMessage("Virhe!", "Yhtäkään kaavatyyppiä ei ole valittu.",
+                                       level=Qgis.Warning,
+                                       duration=5)
+        return
+
     project = QgsProject().instance()
 
     if project.isDirty():
@@ -336,10 +342,10 @@ def create_schema_objects(db: Database, projects: List[str]) -> List[Schema]:
     is_first = True
     for project in projects:
         if is_first:
-            projects_list += "'" + project + "'"
+            projects_list += f"'{project}'"
             is_first = False
         else:
-            projects_list += ", '" + project + "'"
+            projects_list += f", '{project}'"
     projects_list += ")"
     query = "SELECT name, srid, municipality, combination\n" \
             "FROM public.schema_information\n" \
