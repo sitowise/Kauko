@@ -61,14 +61,17 @@ class ProjectUpdater:
 
     def __get_newest_project(self) -> None:
         project_paths: Dict[PlanType, str] = {
-            PlanType.detailed_plan: '/projects/detailed_plan',
-            PlanType.master_plan: '/projects/master_plan'
+            PlanType.detailed_plan: 'projects/detailed_plan',
+            PlanType.master_plan: 'projects/master_plan'
         }
 
         for plan_type, path in project_paths.items():
             full_path = os.path.join(self.base_path, path)
             scripts = [f for f in os.listdir(full_path) if os.path.isfile(os.path.join(full_path, f))]
-            self._newest_project[plan_type] = sorted(scripts)[-1]
+            try:
+                self._newest_project[plan_type] = sorted(scripts)[-1]
+            except IndexError:
+                self._newest_project[plan_type] = None
 
     def __initialize_projects(self) -> None:
         for schema in self._schemas.values():
@@ -80,9 +83,9 @@ class ProjectUpdater:
     def __get_initialize_project_query(self, schema: Schema) -> str:
         is_master_plan = "TRUE" if schema.plan_type == PlanType.master_plan else "FALSE"
         query = """
-        INSERT INTO public.schema_information(name, srid, municipality, master_plan)
+        INSERT INTO public.schema_information(name, srid, municipality, is_master_plan)
         VALUES ('{name}', {srid}, '{municipality}', {master_plan});
-        CREATE SCHEMA IF NOT EXIST {name};
+        CREATE SCHEMA IF NOT EXISTS {name};
         CREATE TABLE IF NOT EXISTS {name}.versions(
             identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY (INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999) PRIMARY KEY,
             scriptname character varying NOT NULL UNIQUE,
@@ -178,6 +181,7 @@ class ProjectUpdater:
                 schema.name,
                 schema.srid,
                 self._newest_project[schema.plan_type],
+                schema.plan_type,
                 True,
                 schema.is_new
             ):

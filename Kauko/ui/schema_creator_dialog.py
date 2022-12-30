@@ -60,7 +60,13 @@ class InitiateSchemaDialog(QtWidgets.QDialog, FROM_CLASS):
     def get_projection_code(self) -> str:
         return get_csv_code('/finnish_projections.csv', self.get_projection())
 
+    def create_detailed_plan(self) -> bool:
+        return self.detailedPlanCheckBox.isChecked()
+
+    def create_master_plan(self) -> bool:
+        return self.masterPlanCheckBox.isChecked()
+
     def create_schema(self, db):
         projection = self.get_projection()
         municipality = self.get_landAdminAuth()
-        create_new_schema_and_project(projection, municipality, db)
+        create_new_schema_and_project(projection, municipality, db, self.create_detailed_plan(), self.create_master_plan())

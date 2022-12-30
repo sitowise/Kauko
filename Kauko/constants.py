@@ -346,7 +346,7 @@ NUMBER_OF_GEOM_CHECKS_SQL = \
     "'planning_detail_point_geom_check', 'planned_space_geom_check', " \
     "'zoning_element_geom_check');"
 
-PROJECT_TEMPLATE_FOLDER = "/database/project_updater/projects/"
+PROJECT_TEMPLATE_FOLDER = "database/project_updater/projects"
 
 SPATIALREFSYS = "<wkt>WKT</wkt>\n" \
                 "<proj4>PROJ4</proj4>\n" \

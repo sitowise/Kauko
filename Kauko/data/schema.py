@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from data.csv_handler import get_csv_code
+from .csv_handler import get_csv_code
 
 class PlanType(Enum):
     master_plan = "master_plan"
@@ -35,6 +35,14 @@ class Schema:
     @property
     def srid(self) -> str:
         return str(get_csv_code("/finnish_projections.csv", self.projection))
+
+    @property
+    def projection(self) -> str:
+        return self._projection
+
+    @projection.setter
+    def projection(self, value: str):
+        self._projection = value
 
     @property
     def municipality(self) -> str:
