@@ -62,7 +62,8 @@ UPDATE SCHEMANAME.spatial_plan
   SET legal_effectiveness = '01';
 
 UPDATE SCHEMANAME.spatial_plan
-  SET validity_time = DATERANGE(valid_from, valid_to, '[]');
+  SET validity_time = DATERANGE(valid_from, valid_to, '[)')
+  WHERE valid_from IS NOT NULL;
 
 ALTER TABLE SCHEMANAME.spatial_plan
   DROP COLUMN plan_type,
