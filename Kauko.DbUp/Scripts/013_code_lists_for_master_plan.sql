@@ -316,7 +316,7 @@ CREATE TABLE code_lists.master_plan_additional_information_kind(
 
 CREATE TRIGGER upsert_master_plan_additional_information_kind
   BEFORE INSERT OR UPDATE ON code_lists.master_plan_additional_information_kind
-  FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_YK/code/');
+  FOR EACH ROW EXECUTE PROCEDURE code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_LisatiedonLaji_YK/code/');
 
 INSERT INTO code_lists.master_plan_additional_information_kind (codevalue, preflabel_fi, definition_fi, description_fi)
 VALUES
