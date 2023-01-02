@@ -20,6 +20,7 @@
     <None Remove="Scripts\010_check_for_language_string.sql" />
     <None Remove="Scripts\011_versioning_triggers.sql" />
     <None Remove="Scripts\012_update_schema_information_table.sql" />
+    <None Remove="Scripts\013_code_lists_for_master_plan.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +36,7 @@
     <EmbeddedResource Include="Scripts\010_check_for_language_string.sql" />
     <EmbeddedResource Include="Scripts\011_versioning_triggers.sql" />
     <EmbeddedResource Include="Scripts\012_update_schema_information_table.sql" />
+    <EmbeddedResource Include="Scripts\013_code_lists_for_master_plan.sql" />
   </ItemGroup>
 
   <ItemGroup>
