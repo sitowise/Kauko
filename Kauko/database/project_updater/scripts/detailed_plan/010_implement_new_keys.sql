@@ -71,7 +71,6 @@ UPDATE SCHEMANAME.zoning_element
 
 ALTER TABLE SCHEMANAME.zoning_element
   DROP COLUMN fk_spatial_plan CASCADE,
-  ALTER COLUMN spatial_plan SET NOT NULL,
   ALTER COLUMN local_id SET NOT NULL;
 
 ALTER TABLE SCHEMANAME.planned_space
@@ -146,6 +145,7 @@ CREATE TABLE SCHEMANAME.spatial_plan_commentary (
   namespace VARCHAR,
   reference_id VARCHAR,
   latest_change TIMESTAMP DEFAULT now() NOT NULL,
+  storage_time TIMESTAMP DEFAULT now() NOT NULL,
   spatial_plan VARCHAR NOT NULL UNIQUE,
   CONSTRAINT fk_spatial_plan
     FOREIGN KEY (spatial_plan)
@@ -173,6 +173,7 @@ CREATE TABLE SCHEMANAME.participation_and_evalution_plan (
   namespace VARCHAR,
   reference_id VARCHAR,
   latest_change TIMESTAMP DEFAULT now() NOT NULL,
+  storage_time TIMESTAMP DEFAULT now() NOT NULL,
   spatial_plan VARCHAR NOT NULL UNIQUE,
   CONSTRAINT fk_spatial_plan
     FOREIGN KEY (spatial_plan)
@@ -200,7 +201,8 @@ CREATE TABLE SCHEMANAME.document(
   namespace VARCHAR,
   reference_id VARCHAR,
   latest_change TIMESTAMP DEFAULT now() NOT NULL,
-  document_identifier VARCHAR[],
+  storage_time TIMESTAMP DEFAULT now() NOT NULL,
+  document_identifier VARCHAR,
   name JSONB CHECK(check_language_string(name))
 );
 
