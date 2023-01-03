@@ -142,23 +142,6 @@ CREATE TABLE SCHEMANAME.numeric_range (
 );
 
 
--- SCHEMANAME.numeric_value definition
-
-CREATE TABLE SCHEMANAME.numeric_value (
-	identifier serial4 NOT NULL,
-	numeric_value_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	obligatory bool NOT NULL,
-	value float8 NOT NULL,
-	value_type int4 NOT NULL,
-	target_type int4 NOT NULL,
-	localized_name varchar NULL,
-	description_fi varchar NULL,
-	description_se varchar NULL,
-	CONSTRAINT numeric_value_numeric_value_id_key UNIQUE (numeric_value_id),
-	CONSTRAINT numeric_value_pkey PRIMARY KEY (identifier)
-);
-
-
 -- SCHEMANAME.plan_regulation_group definition
 
 CREATE TABLE SCHEMANAME.plan_regulation_group (
@@ -201,20 +184,6 @@ CREATE TABLE SCHEMANAME.planning_detail_line (
 	CONSTRAINT planning_detail_line_producer_specific_id_key UNIQUE (producer_specific_id)
 );
 CREATE INDEX sidx_planning_detail_line_geom ON SCHEMANAME.planning_detail_line USING gist (geom);
-
--- SCHEMANAME.regulative_text definition
-
-CREATE TABLE SCHEMANAME.regulative_text (
-	identifier serial4 NOT NULL,
-	regulative_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"type" int4 NOT NULL,
-	description_fi varchar NULL,
-	description_se varchar NULL,
-	validity int4 NOT NULL DEFAULT 1,
-	CONSTRAINT regulative_text_pkey PRIMARY KEY (identifier),
-	CONSTRAINT regulative_text_regulative_id_key UNIQUE (regulative_id)
-);
-
 
 -- SCHEMANAME.text_value definition
 
@@ -261,22 +230,18 @@ CREATE TABLE SCHEMANAME.document_document (
 	CONSTRAINT document_document_pkey PRIMARY KEY (id),
 	CONSTRAINT document_document_role_check CHECK (check_language_string(role)),
 	CONSTRAINT local_id_check CHECK (((referencing_document_local_id)::text <> (referenced_document_local_id)::text)),
-	CONSTRAINT fk_referenced_document FOREIGN KEY (referenced_document_local_id) REFERENCES SCHEMANAME."document"(local_id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
-	CONSTRAINT fk_referencing_document FOREIGN KEY (referencing_document_local_id) REFERENCES SCHEMANAME."document"(local_id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
+	CONSTRAINT fk_referenced_document FOREIGN KEY (referenced_document_local_id)
+		REFERENCES SCHEMANAME."document"(local_id)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+		DEFERRABLE INITIALLY DEFERRED,
+	CONSTRAINT fk_referencing_document FOREIGN KEY (referencing_document_local_id)
+		REFERENCES SCHEMANAME."document"(local_id)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+		DEFERRABLE INITIALLY DEFERRED
 );
 
-
--- SCHEMANAME.planning_detail_line_numeric_value definition
-
-CREATE TABLE SCHEMANAME.planning_detail_line_numeric_value (
-	identifier serial4 NOT NULL,
-	planning_detail_line_id uuid NOT NULL,
-	numeric_id uuid NOT NULL,
-	CONSTRAINT planning_detail_line_numeric_value_key UNIQUE (planning_detail_line_id, numeric_id),
-	CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (identifier),
-	CONSTRAINT numeric_value_planning_detail_line_fk FOREIGN KEY (numeric_id) REFERENCES SCHEMANAME.numeric_value(numeric_value_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
-	CONSTRAINT planning_detail_line_value_fk FOREIGN KEY (planning_detail_line_id) REFERENCES SCHEMANAME.planning_detail_line(producer_specific_id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
-);
 
 
 -- SCHEMANAME.planning_detail_line_plan_regulation_group definition
@@ -287,22 +252,17 @@ CREATE TABLE SCHEMANAME.planning_detail_line_plan_regulation_group (
 	plan_regulation_group_local_id varchar NOT NULL,
 	CONSTRAINT planning_detail_line_plan_reg_planning_detail_line_local_id_key UNIQUE (planning_detail_line_local_id, plan_regulation_group_local_id),
 	CONSTRAINT planning_detail_line_plan_regulation_group_pkey PRIMARY KEY (id),
-	CONSTRAINT fk_plan_regulation_group FOREIGN KEY (plan_regulation_group_local_id) REFERENCES SCHEMANAME.plan_regulation_group(local_id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED,
-	CONSTRAINT fk_planning_detail_line FOREIGN KEY (planning_detail_line_local_id) REFERENCES SCHEMANAME.planning_detail_line(local_id) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
+	CONSTRAINT fk_plan_regulation_group FOREIGN KEY (plan_regulation_group_local_id)
+		REFERENCES SCHEMANAME.plan_regulation_group(local_id)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+		DEFERRABLE INITIALLY DEFERRED,
+	CONSTRAINT fk_planning_detail_line FOREIGN KEY (planning_detail_line_local_id)
+		REFERENCES SCHEMANAME.planning_detail_line(local_id)
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+		DEFERRABLE INITIALLY DEFERRED
 );
-
-
-
--- SCHEMANAME.localized_objective definition
-
-CREATE TABLE SCHEMANAME.localized_objective (
-	identifier serial4 NOT NULL,
-	objective text NOT NULL,
-	fk_spatial_plan uuid NOT NULL,
-	CONSTRAINT localized_objective_objective_check CHECK ((objective <> ''::text)),
-	CONSTRAINT localized_objective_pkey PRIMARY KEY (identifier)
-);
-
 
 -- SCHEMANAME.participation_and_evalution_plan definition
 
@@ -696,18 +656,6 @@ END),
 );
 CREATE INDEX sidx_planned_space_geom ON SCHEMANAME.planned_space USING gist (geom);
 
-
--- SCHEMANAME.planned_space_numeric_value definition
-
-CREATE TABLE SCHEMANAME.planned_space_numeric_value (
-	identifier serial4 NOT NULL,
-	planned_space_id uuid NOT NULL,
-	numeric_id uuid NOT NULL,
-	CONSTRAINT planned_space_numeric_value_key UNIQUE (planned_space_id, numeric_id),
-	CONSTRAINT planned_space_numeric_value_pkey PRIMARY KEY (identifier)
-);
-
-
 -- SCHEMANAME.planned_space_plan_detail_line definition
 
 CREATE TABLE SCHEMANAME.planned_space_plan_detail_line (
@@ -749,18 +697,6 @@ CREATE TABLE SCHEMANAME.planned_space_plan_regulation_group (
 	CONSTRAINT planned_space_plan_regulation_group_pkey PRIMARY KEY (id),
 	CONSTRAINT planned_space_plan_regulation_planned_space_local_id_plan_r_key UNIQUE (planned_space_local_id, plan_regulation_group_local_id)
 );
-
-
--- SCHEMANAME.planned_space_regulation definition
-
-CREATE TABLE SCHEMANAME.planned_space_regulation (
-	identifier serial4 NOT NULL,
-	planned_space_id uuid NOT NULL,
-	regulative_id uuid NOT NULL,
-	CONSTRAINT planned_space_regulation_key UNIQUE (planned_space_id, regulative_id),
-	CONSTRAINT planned_space_regulation_pkey PRIMARY KEY (identifier)
-);
-
 
 -- SCHEMANAME.planner definition
 
@@ -919,18 +855,6 @@ CREATE TABLE SCHEMANAME.spatial_plan_plan_regulation (
 	CONSTRAINT spatial_plan_plan_regulation_pkey PRIMARY KEY (id),
 	CONSTRAINT spatial_plan_plan_regulation_spatial_plan_local_id_plan_reg_key UNIQUE (spatial_plan_local_id, plan_regulation_local_id)
 );
-
-
--- SCHEMANAME.spatial_plan_regulation definition
-
-CREATE TABLE SCHEMANAME.spatial_plan_regulation (
-	identifier serial4 NOT NULL,
-	spatial_plan_id uuid NOT NULL,
-	regulative_id uuid NOT NULL,
-	CONSTRAINT spatial_plan_regulation_key UNIQUE (spatial_plan_id, regulative_id),
-	CONSTRAINT spatial_plan_regulation_pkey PRIMARY KEY (identifier)
-);
-
 
 -- SCHEMANAME.supplementary_information definition
 
@@ -1182,28 +1106,6 @@ CREATE TABLE SCHEMANAME.zoning_element_planned_space (
 	CONSTRAINT zoning_element_planned_space_pkey PRIMARY KEY (identifier)
 );
 
-
--- SCHEMANAME.zoning_element_regulation definition
-
-CREATE TABLE SCHEMANAME.zoning_element_regulation (
-	identifier serial4 NOT NULL,
-	zoning_element_id uuid NOT NULL,
-	regulative_id uuid NOT NULL,
-	CONSTRAINT zoning_element_regulation_key UNIQUE (zoning_element_id, regulative_id),
-	CONSTRAINT zoning_element_regulation_pkey PRIMARY KEY (identifier)
-);
-
-
--- SCHEMANAME.localized_objective foreign keys
-
-ALTER TABLE SCHEMANAME.localized_objective
-	ADD CONSTRAINT spatial_plan_objective_fkey
-	FOREIGN KEY (fk_spatial_plan)
-	REFERENCES SCHEMANAME.spatial_plan(producer_specific_id)
-	ON DELETE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
-
-
 -- SCHEMANAME.participation_and_evalution_plan foreign keys
 
 ALTER TABLE SCHEMANAME.participation_and_evalution_plan
@@ -1239,7 +1141,7 @@ ALTER TABLE SCHEMANAME.plan_guidance
 	ADD CONSTRAINT fk_life_cycle_status
 	FOREIGN KEY (life_cycle_status)
 	REFERENCES code_lists.spatial_plan_lifecycle_status(codevalue)
-	ON DELETE CASCADE
+	ON DELETE RESTRICT
 	ON UPDATE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
 
@@ -1419,6 +1321,7 @@ ALTER TABLE SCHEMANAME.plan_guidance_theme
 	ADD CONSTRAINT fk_theme
 	FOREIGN KEY (theme_code)
 	REFERENCES code_lists.master_plan_theme(codevalue)
+	ON DELETE RESTRICT
 	ON UPDATE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
 
@@ -1465,12 +1368,14 @@ ALTER TABLE SCHEMANAME.plan_regulation
 	ADD CONSTRAINT fk_life_cycle_status
 	FOREIGN KEY (life_cycle_status)
 	REFERENCES code_lists.spatial_plan_lifecycle_status(codevalue)
+	ON DELETE RESTRICT
 	ON UPDATE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
 ALTER TABLE SCHEMANAME.plan_regulation
 	ADD CONSTRAINT fk_type
 	FOREIGN KEY ("type")
 	REFERENCES code_lists.master_plan_regulation_kind(codevalue)
+	ON DELETE RESTRICT
 	ON UPDATE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
 
@@ -1686,6 +1591,7 @@ ALTER TABLE SCHEMANAME.plan_regulation_theme
 	ADD CONSTRAINT fk_theme
 	FOREIGN KEY (theme_code)
 	REFERENCES code_lists.master_plan_theme(codevalue)
+	ON DELETE RESTRICT
 	ON UPDATE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
 
@@ -1831,21 +1737,6 @@ ALTER TABLE SCHEMANAME.planned_space_plan_regulation_group
 	ON UPDATE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
 
-
--- SCHEMANAME.planned_space_regulation foreign keys
-
-ALTER TABLE SCHEMANAME.planned_space_regulation
-	ADD CONSTRAINT planned_space_regulation_fkey
-	FOREIGN KEY (planned_space_id)
-	REFERENCES SCHEMANAME.planned_space(producer_specific_id)
-	ON DELETE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
-ALTER TABLE SCHEMANAME.planned_space_regulation
-	ADD CONSTRAINT regulative_id_planned_space_fkey
-	FOREIGN KEY (regulative_id)
-	REFERENCES SCHEMANAME.regulative_text(regulative_id)
-	ON DELETE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
 
 
 -- SCHEMANAME.planner foreign keys
@@ -2008,22 +1899,6 @@ ALTER TABLE SCHEMANAME.spatial_plan_plan_regulation
 	DEFERRABLE INITIALLY DEFERRED;
 
 
--- SCHEMANAME.spatial_plan_regulation foreign keys
-
-ALTER TABLE SCHEMANAME.spatial_plan_regulation
-	ADD CONSTRAINT regulative_id_spatial_plan_fkey
-	FOREIGN KEY (regulative_id)
-	REFERENCES SCHEMANAME.regulative_text(regulative_id)
-	ON DELETE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
-ALTER TABLE SCHEMANAME.spatial_plan_regulation
-	ADD CONSTRAINT spatial_plan_regulation_fkey
-	FOREIGN KEY (spatial_plan_id)
-	REFERENCES SCHEMANAME.spatial_plan(producer_specific_id)
-	ON DELETE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
-
-
 -- SCHEMANAME.supplementary_information foreign keys
 
 ALTER TABLE SCHEMANAME.supplementary_information
@@ -2037,6 +1912,7 @@ ALTER TABLE SCHEMANAME.supplementary_information
 	ADD CONSTRAINT fk_type
 	FOREIGN KEY ("type")
 	REFERENCES code_lists.master_plan_additional_information_kind(codevalue)
+	ON DELETE RESTRICT
 	ON UPDATE CASCADE;
 
 
@@ -2387,20 +2263,4 @@ ALTER TABLE SCHEMANAME.zoning_element_planned_space
 	REFERENCES SCHEMANAME.zoning_element(local_id)
 	ON DELETE CASCADE
 	ON UPDATE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
-
-
--- SCHEMANAME.zoning_element_regulation foreign keys
-
-ALTER TABLE SCHEMANAME.zoning_element_regulation
-	ADD CONSTRAINT regulative_id_zoning_fkey
-	FOREIGN KEY (regulative_id)
-	REFERENCES SCHEMANAME.regulative_text(regulative_id)
-	ON DELETE CASCADE
-	DEFERRABLE INITIALLY DEFERRED;
-ALTER TABLE SCHEMANAME.zoning_element_regulation
-	ADD CONSTRAINT zoning_element_regulation_fkey
-	FOREIGN KEY (zoning_element_id)
-	REFERENCES SCHEMANAME.zoning_element(producer_specific_id)
-	ON DELETE CASCADE
 	DEFERRABLE INITIALLY DEFERRED;
