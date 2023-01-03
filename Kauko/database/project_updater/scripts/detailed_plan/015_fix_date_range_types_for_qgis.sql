@@ -119,4 +119,4 @@ UPDATE SCHEMANAME.time_period_value
 
 CREATE TRIGGER time_period_value_value
   BEFORE INSERT OR UPDATE ON SCHEMANAME.time_period_value
-  FOR EACH ROW EXECUTE PROCEDURE convert_to_timerange();
+  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.convert_to_timerange();
