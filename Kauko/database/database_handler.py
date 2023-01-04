@@ -1,15 +1,15 @@
 from typing import List
 
 import psycopg2
-from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import (Qgis, QgsApplication, QgsExpressionContextUtils,
                        QgsProject)
+from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import iface
 
 from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
                          REFRESH_MATERIALIZED_VIEWS)
 from ..data.csv_handler import get_csv_code
-from ..data.schema import Schema
+from ..data.schema import PlanType, Schema
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
 from ..database.db_tools import (get_active_db_and_schema,
@@ -19,40 +19,48 @@ from ..database.query_builder import get_query
 from ..errors import SchemaError
 
 
-def create_new_schema_and_project(projection, municipality, db) -> None:
+def create_new_schema_and_project(
+    projection: str,
+    municipality: str,
+    db: Database,
+    create_detailed_plan: bool = False,
+    create_master_plan: bool = False) -> None:
     """Creates new schema to initialized database with parameters given in the dialog"""
+    if not create_detailed_plan and not create_master_plan:
+        iface.messageBar().pushMessage("Virhe!", "Yhtäkään kaavatyyppiä ei ole valittu.",
+                                       level=Qgis.Warning,
+                                       duration=5)
+        return
+
     project = QgsProject().instance()
 
     if project.isDirty():
         is_saved = save_alert_msg()
         if is_saved == QMessageBox.Save:
             if not project.write():
-                iface.messageBar().pushMessage("Virhe!", "Työtilan " +
-                                               project.baseName() +
-                                               " tallennus epäonnistui.",
-                                               level=Qgis.Critical,
-                                               duration=5)
+                iface.messageBar().pushMessage(
+                    "Virhe!", f"Työtilan {project.baseName()}  tallennus epäonnistui.",
+                    level=Qgis.Critical,
+                    duration=5)
                 return
         elif is_saved == QMessageBox.Cancel:
             return
 
-    srid = str(get_csv_code('/finnish_projections.csv', projection))
-    municipality_code = str(
-        get_csv_code('/municipality_codes.csv', municipality))
-
-    schemas = [
-        Schema(
-            get_new_schema_name(municipality, projection, True),
-            srid,
-            municipality_code,
-            True,
-        ),
-        Schema(
-            get_new_schema_name(municipality, projection, False),
-            srid,
-            municipality_code,
-            False)
-    ]
+    schemas = []
+    if create_detailed_plan:
+        schemas.append(
+            Schema(
+                municipality_name=municipality,
+                plan_type=PlanType.detailed_plan,
+                projection=projection)
+            )
+    if create_master_plan:
+        schemas.append(
+            Schema(
+                municipality_name=municipality,
+                plan_type=PlanType.master_plan,
+                projection=projection)
+        )
 
     project_updater = ProjectUpdater(db, schemas)
     try:
@@ -329,26 +337,23 @@ def update_materialized_views(db, schemas: list):
         db.insert(query)
 
 def create_schema_objects(db: Database, projects: List[str]) -> List[Schema]:
-    projects_list = "("
-    is_first = True
-    for project in projects:
-        if is_first:
-            projects_list += "'" + project + "'"
-            is_first = False
-        else:
-            projects_list += ", '" + project + "'"
-    projects_list += ")"
-    query = "SELECT name, srid, municipality, combination\n" \
-            "FROM public.schema_information\n" \
-            "WHERE name in " + projects_list
+    projects_list =", ".join([f"'{project}'" for project in projects])
+    query = (
+        f"SELECT name, srid, municipality, is_master_plan\n"
+        f"FROM public.schema_information\n"
+        f"WHERE name in ({projects_list})"
+    )
     result = db.select(query)
     schemas = []
     for row in result:
+        srid, municipality, is_master_plan = row[1:]
+        plan_type: PlanType = PlanType.master_plan if parse_value(is_master_plan) else PlanType.detailed_plan
+
         schema = Schema(
-            parse_value(row[0]),
-            parse_value(row[1]),
-            parse_value(row[2]),
-            parse_value(row[3])
-            )
+            municipality_code=parse_value(municipality),
+            plan_type=plan_type,
+            srid=parse_value(srid)
+        )
+
         schemas.append(schema)
     return schemas

@@ -8,14 +8,20 @@ from zipfile import ZipFile
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.core import QgsProject, QgsApplication, QgsMessageLog, Qgis
 
+from .data.schema import PlanType
+
+
 from .data.csv_handler import format_spatial_ref
 from .constants import PROJECT_TEMPLATE_FOLDER
 from .data.tools import save_alert_msg
+from .database.database import Database
 from .database.db_tools import get_connection_params
 
 
-def create_project_file(project_name: str, srid, template: str):
-    with open(os.path.dirname(os.path.abspath(__file__)) + PROJECT_TEMPLATE_FOLDER + template, 'r', encoding='utf-8') as f:
+def create_project_file(project_name: str, srid, template: str, plan_type: PlanType) -> bytes:
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    template_path = os.path.join(base_path, PROJECT_TEMPLATE_FOLDER, plan_type.value, template)
+    with open(template_path, 'r', encoding='utf-8') as f:
         template_file = f.read()
     project = format_project(template_file, project_name, srid)
     files = {
@@ -29,29 +35,39 @@ def create_project_file(project_name: str, srid, template: str):
     return binascii.hexlify(new_zip.getvalue())
 
 
-def create_or_update_project(db, project_name, srid, template, open_after_create = True, isNew = True):
-    is_succeed = False
-    project = create_project_file(project_name, srid, template)
-    now  = datetime.now()
+def create_or_update_project(
+    db: Database,
+    project_name: str,
+    srid: str,
+    template: str,
+    plan_type: PlanType,
+    open_after_create: bool = True,
+    is_new: bool = True,
+) -> bool:
+    project = create_project_file(project_name, srid, template, plan_type)
+    now = datetime.now()
     date_str = now.strftime("%Y-%m-%d %H:%M:%S.%f")
-    metadata = '{"last_modified_time": "' + \
-        date_str + '", "last_modified_user": "dev_admin"}'
-    if isNew:
-        query = "INSERT INTO public.qgis_projects (name,metadata,content) " \
-                "VALUES ('" + project_name + "', '" + metadata + "', " + \
-                    "decode('" + project.decode('utf-8') + "', 'hex'));"
+    metadata = '{"last_modified_time": "' + date_str + '", "last_modified_user": "dev_admin"}'
+    if is_new:
+        query = (
+            "INSERT INTO public.qgis_projects (name,metadata,content) "
+            f"VALUES ('{project_name}', '{metadata}', decode('{project.decode('utf-8')}', 'hex'));"
+        )
     else:
-        query = "UPDATE public.qgis_projects " \
-                "SET metadata = '" + metadata + "', " \
-                "content = decode('" + project.decode('utf-8') + "', 'hex') " \
-                "WHERE name = '" + project_name + "';"
-    query += "UPDATE public.schema_information SET project_version = '" + \
-            template[:template.index('_')] + "' WHERE name = '" + project_name + "';"
-    if (db.insert(query)):
-        is_succeed = True
+        query = (
+            "UPDATE public.qgis_projects "
+            f"SET metadata = '{metadata}', content = decode('{project.decode('utf-8')}', 'hex') "
+            f"WHERE name = '{project_name}';"
+        )
+    query += (
+        f"UPDATE public.schema_information SET project_version = '{template[:template.index('_')]}' "
+        f"WHERE name = '{project_name}';"
+    )
+    is_succeed = bool(db.insert(query))
     if open_after_create:
         open_project(project_name)
     return is_succeed
+
 
 def format_project(proj_file, project_name, srid):
     conn_params = get_connection_params(QgsApplication.instance())

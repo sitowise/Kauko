@@ -30,7 +30,7 @@ $$;
 
 ALTER TABLE SCHEMANAME.zoning_element
 ADD CONSTRAINT validate_validity_dates
-CHECK (validate_zoning_element_validity_dates(valid_from, valid_to, spatial_plan));
+CHECK (SCHEMANAME.validate_zoning_element_validity_dates(valid_from, valid_to, spatial_plan));
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.validate_lifcycle_status()
 RETURNS TRIGGER
@@ -222,7 +222,7 @@ $$;
 
 -- FUNCTION: SCHEMANAME.inherit_validity()
 
-CREATE FUNCTION "SCHEMANAME".inherit_validity()
+CREATE OR REPLACE FUNCTION "SCHEMANAME".inherit_validity()
     RETURNS trigger
     LANGUAGE 'plpgsql'
 AS $BODY$
@@ -290,6 +290,7 @@ END;
 $BODY$;
 
 
+DROP TRIGGER IF EXISTS inherit_validity ON SCHEMANAME.spatial_plan;
 CREATE TRIGGER inherit_validity
   AFTER INSERT OR UPDATE
     OF valid_from, valid_to
@@ -297,11 +298,13 @@ CREATE TRIGGER inherit_validity
   WHEN (pg_trigger_depth() < 1)
 EXECUTE PROCEDURE SCHEMANAME.inherit_validity();
 
+DROP TRIGGER IF EXISTS inherit_validity ON SCHEMANAME.zoning_element;
 CREATE TRIGGER inherit_validity
   AFTER INSERT
   ON SCHEMANAME.zoning_element
 EXECUTE PROCEDURE SCHEMANAME.inherit_validity();
 
+DROP TRIGGER IF EXISTS inherit_validity ON SCHEMANAME.planned_space;
 CREATE TRIGGER inherit_validity
   AFTER INSERT
   ON SCHEMANAME.planned_space
@@ -309,7 +312,7 @@ EXECUTE PROCEDURE SCHEMANAME.inherit_validity();
 
 -- CREATE update_validity TRIGGER
 
-CREATE FUNCTION "SCHEMANAME".update_validity()
+CREATE OR REPLACE FUNCTION "SCHEMANAME".update_validity()
     RETURNS TRIGGER
     LANGUAGE plpgsql
 AS $BODY$
@@ -626,42 +629,42 @@ BEGIN
 END;
 $BODY$;
 
+DROP TRIGGER IF EXISTS update_validity ON SCHEMANAME.spatial_plan;
 create trigger update_validity
     after insert or update
     on SCHEMANAME.spatial_plan
     when (pg_trigger_depth() < 1)
 execute procedure SCHEMANAME.update_validity();
 
+DROP TRIGGER IF EXISTS update_validity ON SCHEMANAME.zoning_element;
 create trigger update_validity
     after insert or update
     on SCHEMANAME.zoning_element
     when (pg_trigger_depth() < 1)
 execute procedure SCHEMANAME.update_validity();
 
+DROP TRIGGER IF EXISTS update_validity ON SCHEMANAME.planned_space;
 create trigger update_validity
     after insert or update
     on SCHEMANAME.planned_space
     when (pg_trigger_depth() < 1)
 execute procedure SCHEMANAME.update_validity();
 
+DROP TRIGGER IF EXISTS update_validity ON SCHEMANAME.planning_detail_line;
 create trigger update_validity
     after insert or update
     on SCHEMANAME.planning_detail_line
     when (pg_trigger_depth() < 1)
 execute procedure SCHEMANAME.update_validity();
 
-create trigger update_validity
-    after insert or update
-    on SCHEMANAME.planning_detail_point
-    when (pg_trigger_depth() < 1)
-execute procedure SCHEMANAME.update_validity();
-
+DROP TRIGGER IF EXISTS update_validity ON SCHEMANAME.describing_text;
 create trigger update_validity
     after insert or update
     on SCHEMANAME.describing_text
     when (pg_trigger_depth() < 1)
 execute procedure SCHEMANAME.update_validity();
 
+DROP TRIGGER IF EXISTS update_validity ON SCHEMANAME.describing_line;
 create trigger update_validity
     after insert or update
     on SCHEMANAME.describing_line
@@ -828,8 +831,3 @@ BEGIN
     AND sp.validity = 1;
 END;
 $BODY$;
-
-
-grant execute on function SCHEMANAME.refresh_validity() to qgis_admin;
-
-grant execute on function SCHEMANAME.refresh_validity() to qgis_editor;

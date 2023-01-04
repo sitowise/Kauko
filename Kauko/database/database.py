@@ -7,7 +7,7 @@ import psycopg2
 class Database:
     """Tools to control database"""
 
-    def __init__(self, parameters):
+    def __init__(self, parameters: dict):
         self.params = parameters
 
     def is_valid(self) -> bool:
@@ -15,13 +15,11 @@ class Database:
 
         :return: bool
         """
-        succeeds = False
         try:
             with psycopg2.connect(**self.params):
-                succeeds = True
+                return True
         except psycopg2.OperationalError:
-            pass
-        return succeeds
+            return False
 
     def insert(self, query: str) -> Boolean:
         # TODO: Implement error handling
