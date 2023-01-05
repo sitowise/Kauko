@@ -17,14 +17,6 @@ class ProjectUpdater:
         self.base_path = os.path.dirname(os.path.abspath(__file__))
         self._db = db
         self._schemas: Dict[str, Schema] = {schema.name: schema for schema in schemas}
-        self._schema_versions: Dict[Schema, str] = {
-            schema: '' for schema in self._schemas
-            }
-        self._project_versions: Dict[Schema, str] = {
-            schema: '' for schema in self._schemas
-        }
-        self._scripts_to_execute: Dict[Schema, List[str]] = {}
-        self._projects_to_update: Dict[Schema, bool] = {}
         self._scripts: Dict[PlanType, List[str]] = {}
         self._view_scripts: Dict[PlanType, List[str]] = {}
         self._newest_project: Dict[PlanType, str] = {}

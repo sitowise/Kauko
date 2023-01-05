@@ -71,6 +71,13 @@ def get_csv_code(filename: str, name: str) -> str:
             return row['code']
 
 
+def get_csv_value(filename: str, code: str) -> str:
+    csv_file = read_csv(filename)
+    for row in csv_file:
+        if code == row['code']:
+            return row['name']
+
+
 def read_spatial_ref_csv(srid):
     try:
         with open(os.path.dirname(os.path.abspath(__file__)) + '/spatialref.csv', newline='') as csvfile:
