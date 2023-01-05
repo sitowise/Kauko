@@ -33,7 +33,6 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QWidget
 
 from .constants import NUMBER_OF_GEOM_CHECKS_SQL
-from .data.tools import parse_value
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
                                         get_projects, get_spatial_plan_names)
 from .database.db_initializer import DatabaseInitializer
@@ -364,7 +363,7 @@ class Kauko:
         if result:
             db = initialize_database()
             dlg.delete_project(db)
-            
+
     def get_regulations(self):
         dbname, schema = get_active_db_and_schema()
         if not dbname or not schema:

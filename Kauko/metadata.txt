@@ -3,7 +3,7 @@ name=Kauko työkalut
 qgisMinimumVersion=3.14
 description=Kauko työkalut
 version=0.1
-author=Sitowise
+author=Sitowise Oy
 email=tiketti@sitowise.com
 
 about=Kauko työkalut
@@ -22,7 +22,7 @@ hasProcessingProvider=no
 tags=python
 
 category=Database
-icon=logo.png
+# icon=logo.png
 # experimental flag
 experimental=False
 

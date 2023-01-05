@@ -2,18 +2,16 @@ from typing import List
 
 import psycopg2
 from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.core import (Qgis, QgsApplication, QgsExpressionContextUtils,
+from qgis.core import (Qgis, QgsExpressionContextUtils,
                        QgsProject)
 from qgis.utils import iface
 
 from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
                          REFRESH_MATERIALIZED_VIEWS)
-from ..data.csv_handler import get_csv_code
 from ..data.schema import Schema, PlanType
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import (get_active_db_and_schema,
-                                 get_connection_params, get_new_schema_name)
+from ..database.db_tools import (get_active_db_and_schema)
 from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
 from ..errors import SchemaError
