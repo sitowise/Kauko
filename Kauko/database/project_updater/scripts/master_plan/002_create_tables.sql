@@ -1,6 +1,33 @@
+-- Functions:
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.validate_zoning_element_validity_dates(valid_from date, valid_to date, spatial_plan character varying)
+ RETURNS boolean
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  sp_valid_from DATE;
+  sp_valid_to DATE;
+  is_valid BOOLEAN := TRUE;
+BEGIN
+  SELECT valid_from, valid_to
+  INTO sp_valid_from, sp_valid_to
+  FROM SCHEMANAME.spatial_plan
+  WHERE local_id = spatial_plan;
+
+  IF valid_from IS NOT NULL AND valid_to IS NOT NULL AND valid_from > valid_to THEN
+    is_valid := FALSE;
+  ELSIF valid_from IS NOT NULL AND sp_valid_from IS NOT NULL AND valid_from < sp_valid_from THEN
+    is_valid := FALSE;
+  ELSIF valid_to IS NOT NULL AND sp_valid_to IS NOT NULL AND valid_to > sp_valid_to THEN
+    is_valid := FALSE;
+  END IF;
+
+  RETURN is_valid;
+END;
+$function$
+;
+
 -- SCHEMANAME.code_value definition
-
-
 
 CREATE TABLE SCHEMANAME.code_value (
 	id serial4 NOT NULL,
@@ -2064,7 +2091,7 @@ ALTER TABLE SCHEMANAME.supplementary_information
 ALTER TABLE SCHEMANAME.supplementary_information
   ADD CONSTRAINT supplementary_information_fk_type
   FOREIGN KEY ("type")
-  REFERENCES code_lists.master_plan_addition_information_kind(codevalue)
+  REFERENCES code_lists.master_plan_additional_information_kind(codevalue)
   ON DELETE RESTRICT
   ON UPDATE CASCADE;
 
