@@ -57,7 +57,7 @@ def is_admin():
     s.beginGroup("variables")
     admin = s.value("kauko_admin")
     s.endGroup()
-    return admin.lower() == "true"
+    return False if admin is None else admin.lower() == "true"
 
 
 
@@ -168,7 +168,7 @@ class Kauko:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-        icon_path = ':/plugins/Kauko/logo.png'
+        icon_path = None
         if is_admin():
             self.add_action(
                 icon_path,
@@ -210,7 +210,7 @@ class Kauko:
             )
 
         self.add_action(
-            icon_path,
+            ':/Kauko/icons/mActionFileOpen.svg',
             text='Avaa työtila',
             callback=self.open_project,
             parent=self.iface.mainWindow(),

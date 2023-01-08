@@ -220,3 +220,4 @@ settings.json
 *.venv
 
 zip_build/
+Kauko/resources.py
