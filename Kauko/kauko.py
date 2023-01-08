@@ -30,15 +30,13 @@ from qgis.core import (Qgis, QgsApplication, QgsCoordinateReferenceSystem,
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMessageBox, QWidget
+from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QWidget
 
 from .constants import NUMBER_OF_GEOM_CHECKS_SQL
-from .data.tools import parse_value
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
                                         get_projects, get_spatial_plan_names)
 from .database.db_initializer import DatabaseInitializer
 from .database.db_tools import get_active_db_and_schema
-# Initialize Qt resources from file resources.py
 from .database.project_updater.project_template_writer import write_template
 from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
@@ -57,9 +55,10 @@ from .ui.update_project_dialog import InitiateUpdateProjectDialog
 def is_admin():
     s = QSettings()
     s.beginGroup("variables")
-    admin = parse_value(s.value("kauko_admin"))
+    admin = s.value("kauko_admin")
     s.endGroup()
-    return admin
+    return admin.lower() == "true"
+
 
 
 class Kauko:
@@ -80,7 +79,19 @@ class Kauko:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = "Kauko"
+
+        self.menu = self.iface.mainWindow().findChild(QMenu, "&Kauko")
+
+        if not self.menu:
+            self.menu = QMenu("&Kauko", self.iface.mainWindow().menuBar())
+            self.menu.setObjectName("&Kauko")
+            actions = self.iface.mainWindow().menuBar().actions()
+            last_action = actions[-1]
+            self.iface.mainWindow().menuBar().insertMenu(last_action, self.menu)
+            if is_admin():
+                self.admin_menu = self.menu.addMenu("&Admin")
+
+
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -95,6 +106,7 @@ class Kauko:
             callback: Callable,
             enabled_flag: bool = True,
             add_to_menu: bool = True,
+            add_to_admin_menu: bool = False,
             add_to_toolbar: bool = True,
             status_tip: str = None,
             whats_this: str = None,
@@ -145,9 +157,10 @@ class Kauko:
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToDatabaseMenu(
-                self.menu,
-                action)
+            self.menu.addAction(action)
+        elif add_to_admin_menu:
+            self.admin_menu.addAction(action)
+
 
         self.actions.append(action)
 
@@ -162,7 +175,39 @@ class Kauko:
                 text="Luo uusi työtila",
                 callback=self.create_schema,
                 parent=self.iface.mainWindow(),
-                add_to_toolbar=False)
+                add_to_toolbar=False,
+                add_to_menu=False,
+                add_to_admin_menu=True)
+
+            self.add_action(
+                icon_path,
+                text="Poista työtila",
+                callback=self.delete_project,
+                parent=self.iface.mainWindow(),
+                add_to_toolbar=False,
+                add_to_menu=False,
+                add_to_admin_menu=True
+            )
+
+            self.add_action(
+                icon_path,
+                text="Päivitä projekti",
+                callback=self.update_projects,
+                parent=self.iface.mainWindow(),
+                add_to_toolbar=False,
+                add_to_menu=False,
+                add_to_admin_menu=True
+            )
+
+            self.add_action(
+                icon_path,
+                text="Tallenna malliksi",
+                callback=self.save_template,
+                parent=self.iface.mainWindow(),
+                add_to_toolbar=False,
+                add_to_menu=False,
+                add_to_admin_menu=True
+            )
 
         self.add_action(
             icon_path,
@@ -171,95 +216,73 @@ class Kauko:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False)
 
-        if is_admin():
-            self.add_action(
-                icon_path,
-                text="Poista työtila",
-                callback=self.delete_project,
-                parent=self.iface.mainWindow(),
-                add_to_toolbar=False,
-            )
 
-            self.add_action(
-                icon_path,
-                text="Päivitä projekti",
-                callback=self.update_projects,
-                parent=self.iface.mainWindow(),
-                add_to_toolbar=False
-            )
-
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Hae määräykset",
             callback=self.get_regulations,
             parent=self.iface.mainWindow(),
-            add_to_toolbar=False)
+            add_to_toolbar=False) """
 
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Aseta asemakaavayhdistelmän muokkaus päälle/pois päältä",
             callback=self.set_editing,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False
-        )
+        ) """
 
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Siirrä asemakaavayhdistelmään",
             callback=self.move_plan,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False
-        )
+        ) """
 
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Valitse näytettävä kaava",
             callback=self.show_selected_plan,
             parent=self.iface.mainWindow(),
-            add_to_toolbar=False)
+            add_to_toolbar=False) """
 
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Näytä kaikki kaavat",
             callback=clear_layer_filters,
             parent=self.iface.mainWindow(),
-            add_to_toolbar=False)
+            add_to_toolbar=False) """
 
-        if is_admin():
-            self.add_action(
-                icon_path,
-                text="Tallenna malliksi",
-                callback=self.save_template,
-                parent=self.iface.mainWindow(),
-                add_to_toolbar=False
-            )
-
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Aseta kaava takaisin keskeneräiseksi",
             callback=self.validity_to_unfinished,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False
-        )
+        ) """
 
-        self.add_action(
+        """ self.add_action(
             icon_path,
             text="Korjaa työtilan topologia",
             callback=self.fix_topology,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False
-        )
+        ) """
 
         # will be set False in run()
         self.first_start = True
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
-        for action in self.actions:
+        """ for action in self.actions:
             self.iface.removePluginDatabaseMenu(
-                "Kauko",
+                self.menu,
                 action)
-            self.iface.removeToolBarIcon(action)
+            self.iface.removeToolBarIcon(action) """
+        self.menu.clear()
+        self.iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
+
 
     def create_schema(self):
         self.database_initializer = \
@@ -339,10 +362,7 @@ class Kauko:
         # See if OK was pressed
         if result:
             db = initialize_database()
-            if dlg.delete_project(db):
-                self.iface.messageBar().pushMessage(
-                    "Työtila poistettu onnistuneesti",
-                    level=Qgis.Success, duration=5)
+            dlg.delete_project(db)
 
     def get_regulations(self):
         dbname, schema = get_active_db_and_schema()

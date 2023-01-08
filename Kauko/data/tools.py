@@ -6,11 +6,11 @@ from ..database.db_tools import get_active_db_and_schema
 def parse_value(value):
     str_value = str(value)
     val = str_value
-    if str_value.upper() == "NULL":
+    if val.upper() in {"NULL", "NONE"}:
         val = None
-    elif str_value.lower() == "true":
+    elif val.lower() == "true":
         val = True
-    elif str_value.lower() == "false":
+    elif val.lower() == "false":
         val = False
     return val
 

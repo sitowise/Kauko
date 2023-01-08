@@ -1,5 +1,4 @@
 from typing import List, Tuple
-from xmlrpc.client import Boolean
 
 import psycopg2
 
@@ -21,7 +20,7 @@ class Database:
         except psycopg2.OperationalError:
             return False
 
-    def insert(self, query: str) -> Boolean:
+    def insert(self, query: str) -> bool:
         # TODO: Implement error handling
         """Used to insert to database
 

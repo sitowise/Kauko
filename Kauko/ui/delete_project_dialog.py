@@ -1,8 +1,11 @@
 import os
+from typing import List
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.gui import QgisInterface
+
+from ..database.database import Database
 
 from ..database.database_handler import delete_schema_and_project
 from ..database.db_tools import get_database_connections
@@ -29,7 +32,7 @@ class InitiateDeleteProjectDialog(QtWidgets.QDialog, FROM_CLASS):
         for conn in connections:
             self.dbComboBox.addItem(conn)
 
-    def add_projectComboBox_items(self, projects):
+    def add_projectComboBox_items(self, projects: List[str]):
         self.projectComboBox.clear()
         for project in projects:
             self.projectComboBox.addItem(project)
@@ -46,5 +49,5 @@ class InitiateDeleteProjectDialog(QtWidgets.QDialog, FROM_CLASS):
     def get_project(self) -> str:
         return self.projectComboBox.currentText()
 
-    def delete_project(self, db) -> bool:
+    def delete_project(self, db: Database) -> bool:
         return delete_schema_and_project(db, self.get_project())

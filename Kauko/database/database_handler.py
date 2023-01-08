@@ -1,19 +1,17 @@
 from typing import List
 
 import psycopg2
-from qgis.core import (Qgis, QgsApplication, QgsExpressionContextUtils,
+from qgis.core import (Qgis, QgsExpressionContextUtils,
                        QgsProject)
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import iface
 
 from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
                          REFRESH_MATERIALIZED_VIEWS)
-from ..data.csv_handler import get_csv_code
 from ..data.schema import PlanType, Schema
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import (get_active_db_and_schema,
-                                 get_connection_params, get_new_schema_name)
+from ..database.db_tools import (get_active_db_and_schema)
 from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
 from ..errors import SchemaError
@@ -85,43 +83,39 @@ def delete_schema_and_project(db: Database, project_name=None) -> bool:
     if not project_name:
         iface.messageBar().pushMessage("Virhe!", "Projektia ei ole valittu",
                                        level=Qgis.Warning, duration=5)
-    if project_name[-1] == 'y':
-        combination_project_name = project_name
-        project_name = project_name[:-2]
-    else:
-        combination_project_name = f"{project_name}_y"
-    msg = QMessageBox()
-    msg.setText(f"Haluatko varmasti poistaa työtilat {project_name} ja {combination_project_name}?")
 
+    msg = QMessageBox()
+    msg.setText(f"Haluatko varmasti poistaa työtilan {project_name}?")
     msg.setIcon(QMessageBox.Warning)
     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     is_deleted = msg.exec_()
+
     if is_deleted != QMessageBox.Yes:
         return False
 
-    for name in [project_name, combination_project_name]:
-        project_query = "DELETE FROM public.qgis_projects WHERE name LIKE '" + \
-                        name + "'"
-        schema_query = f"DROP SCHEMA {name} CASCADE"
-        information_query = "DELETE FROM public.schema_information WHERE name LIKE '" + name + "'"
-        try:
-            db.insert(project_query)
-            db.insert(information_query)
-            try:
-                db.insert(schema_query)
-            except psycopg2.errors.InvalidSchemaName:
-                iface.messageBar().pushMessage("Virhe!",
-                                               "Projektin nimi on virheellinen",
-                                               level=Qgis.Critical,
-                                               duration=5)
-                return False
-        except psycopg2.errors.InsufficientPrivilege:
-            iface.messageBar().pushMessage("Virhe!",
-                                           "Sinulla ei ole riittäviä oikeuksia tähän operaatioon. Ota "
-                                           "yhteyttä ylläpitäjään.",
-                                           level=Qgis.Critical, duration=5)
-            return False
-    iface.messageBar().pushMessage(f"Työtilat {project_name} ja {combination_project_name} poistettu onnistuneesti.", level=Qgis.Success, duration=5)
+    project_query = (
+        f"DELETE FROM public.qgis_projects WHERE name LIKE '{project_name}';"
+    )
+    schema_query = f"DROP SCHEMA {project_name} CASCADE;"
+    information_query = (
+        f"DELETE FROM public.schema_information WHERE name LIKE '{project_name}';"
+    )
+    query = project_query + schema_query + information_query
+    try:
+        db.insert(query)
+    except psycopg2.errors.InvalidSchemaName:
+        iface.messageBar().pushMessage("Virhe!",
+                                        "Projektin nimi on virheellinen",
+                                        level=Qgis.Critical,
+                                        duration=5)
+        return False
+    except psycopg2.errors.InsufficientPrivilege:
+        iface.messageBar().pushMessage("Virhe!",
+                                        "Sinulla ei ole riittäviä oikeuksia tähän operaatioon. Ota "
+                                        "yhteyttä ylläpitäjään.",
+                                        level=Qgis.Critical, duration=5)
+        return False
+    iface.messageBar().pushMessage(f"Työtila {project_name} on poistettu onnistuneesti.", level=Qgis.Success, duration=5)
 
     return True
 
@@ -156,7 +150,7 @@ def drop_geom_checks(schema, db):
     return True
 
 
-def get_projects(db, only_web=False) -> list:
+def get_projects(db: Database, only_web=False) -> List[str]:
     projects = []
     query = "SELECT name FROM public.qgis_projects WHERE name LIKE '%web' ORDER BY name;" if only_web else "SELECT name FROM public.qgis_projects ORDER BY name;"
     try:
