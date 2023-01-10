@@ -10,6 +10,8 @@ about=Kauko työkalut
 
 tracker=https://github.com/sitowise/Kauko/issues
 repository=https://github.com/sitowise/Kauko
+homepage=https://github.com/sitowise/Kauko
+
 # End of mandatory metadata
 
 # Recommended items:

@@ -52,8 +52,9 @@ class DatabaseInitializer:
         if not db_name:
             self.msgBar(
                 "Yhdistäminen tietokantaan epäonnistui",
-                "Tietokannan nimeä ei ole annettu",
-                level=Qgis.Critical)
+                "Tietokannan nimeä ei ole annettu tai PostgreSQL tietokantaa ei ole määritetty",
+                level=Qgis.Critical,
+                duration=10)
             return False
 
         set_connection(db_name)
@@ -61,16 +62,17 @@ class DatabaseInitializer:
 
         # Ask database username and password if now already given
         if not params.get("user") or not params.get("password"):
-            login_form = DbLoginForm(params["user"], params["password"])
+            login_form = DbLoginForm(params["user"], params["dbname"])
             if login_form.exec_():
                 params["user"] = login_form.usernameLineEdit.text()
                 params["password"] = login_form.passwordLineEdit.text()
             else:
                 self.msgBar(
-                    "Yhdistäminen tietokantaan epäonnistui",
+                    f"Yhdistäminen tietokantaan {db_name} epäonnistui",
                     "Käyttäjätunnus tai salasana puuttuu.",
-                    level=Qgis.Critical)
-            return False
+                    level=Qgis.Critical,
+                    duration=10)
+                return False
 
         # TODO: Remove the "authcfg" parameter (temporary solution)
         params.pop("authcfg", None)
@@ -78,6 +80,8 @@ class DatabaseInitializer:
         self._database = Database(params)
         if not self._database.is_valid:
             self.msgBar("Virhe!",
-                        "Yhdistäminen tietokantaan epäonnistui",
-                        level=Qgis.Critical)
+                        f"Yhdistäminen tietokantaan {db_name} epäonnistui",
+                        level=Qgis.Critical,
+                        duration=10)
+            return False
         return True

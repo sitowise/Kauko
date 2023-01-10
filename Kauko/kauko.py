@@ -314,11 +314,13 @@ class Kauko:
         dlg = InitiateOpenProjectDialog(self.iface)
 
         def initialize_database():
-            self.database_initializer.initialize_database(dlg.get_db())
-            database = self.database_initializer.database
-            try:
-                dlg.add_projectComboBox_items(get_projects(database))
-            except psycopg2.OperationalError:
+            if self.database_initializer.initialize_database(dlg.get_db()):
+                database = self.database_initializer.database
+                try:
+                    dlg.add_projectComboBox_items(get_projects(database))
+                except psycopg2.OperationalError:
+                    dlg.add_projectComboBox_items(["Ei yhteyttä!"])
+            else:
                 dlg.add_projectComboBox_items(["Ei yhteyttä!"])
 
         initialize_database()
