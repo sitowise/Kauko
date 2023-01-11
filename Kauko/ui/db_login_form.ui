@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>344</width>
-    <height>150</height>
+    <width>349</width>
+    <height>158</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>120</y>
+     <x>210</x>
+     <y>130</y>
      <width>61</width>
      <height>23</height>
     </rect>
@@ -29,8 +29,8 @@
   <widget class="QPushButton" name="pushButton_2">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>120</y>
+     <x>280</x>
+     <y>130</y>
      <width>61</width>
      <height>23</height>
     </rect>
@@ -39,22 +39,40 @@
     <string>Peruuta</string>
    </property>
   </widget>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>11</x>
-     <y>11</y>
-     <width>321</width>
-     <height>101</height>
+     <x>10</x>
+     <y>10</y>
+     <width>331</width>
+     <height>111</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QLabel" name="label_3">
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Syötä tietokannan käyttäjätunnus ja salasana.&lt;/p&gt;&lt;p&gt;Mikäl tietokannalla ei ole salasanaa, jätä kenttä tyhjäksi.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Syötä käyttäjatunnus ja salasana tietokannalle:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelDbName">
+        <property name="text">
+         <string>Tietokannan nimi</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Mikäli tietokannalla ei ole salasanaa, jätä kenttä tyhjäksi.</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">

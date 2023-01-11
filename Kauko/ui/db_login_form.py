@@ -7,7 +7,7 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'db_login
 
 class DbLoginForm(QtWidgets.QDialog, FROM_CLASS):
 
-    def __init__(self, username, password, parent=None):
+    def __init__(self, username: str, dbname: str, parent=None):
 
         super(DbLoginForm, self).__init__(parent)
         self.setupUi(self)
@@ -15,5 +15,10 @@ class DbLoginForm(QtWidgets.QDialog, FROM_CLASS):
         if username is not None:
             self.usernameLineEdit.setText(username)
 
-        if password is not None:
-            self.passwordLineEdit.setText(password)
+        if dbname is not None:
+            self.labelDbName.setText(dbname)
+        else:
+            self.labelDbName.setText("Virhe: Tietokannan nimeä ei ole määritetty.")
+
+    def get_login_info(self) -> tuple[str, str]:
+        return self.usernameLineEdit.text(), self.passwordLineEdit.text()
