@@ -2,7 +2,7 @@
 name=Kauko työkalut
 qgisMinimumVersion=3.14
 description=Kauko työkalut
-version=0.1.0
+version=0.1.1
 author=Sitowise Oy
 email=tiketti@sitowise.com
 
