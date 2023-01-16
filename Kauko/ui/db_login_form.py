@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 from qgis.PyQt import QtWidgets, uic
 
@@ -20,5 +21,5 @@ class DbLoginForm(QtWidgets.QDialog, FROM_CLASS):
         else:
             self.labelDbName.setText("Virhe: Tietokannan nimeä ei ole määritetty.")
 
-    def get_login_info(self) -> tuple[str, str]:
+    def get_login_info(self) -> Tuple[str, str]:
         return self.usernameLineEdit.text(), self.passwordLineEdit.text()
