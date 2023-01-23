@@ -1,10 +1,13 @@
 CREATE FUNCTION SCHEMANAME.validate_geometry()
 RETURN TRIGGER
 AS $$
+DECLARE
+  valid_reason text;
 BEGIN
   IF NOT ST_IsValid(NEW.geom) THEN
+    valid_reason := ST_IsValidReason(NEW.geom);
     NEW.geom = ST_MakeValid(NEW.geom, 'method=structure');
-    RAISE WARNING 'New or updated geometry in % with identifier % is not valid, but has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier;
+    RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
   END IF;
   RETURN NEW;
 END;
@@ -73,7 +76,7 @@ BEGIN
     FROM SCHEMANAME.spatial_plan AS sp
     WHERE sp.identifier <> new.identifier
       AND sp.geom && NEW.geom
-      AND ST_Relates(sp.geom, NEW.geom, 'F********')
+      AND NOT ST_Relates(sp.geom, NEW.geom, 'F********')
   ) THEN
     RAISE EXCEPTION 'New % geometry with id % overlaps with existing spatial plan geometry', TG_TABLE_NAME, NEW.identifier;
   END IF;
@@ -97,9 +100,9 @@ BEGIN
     FROM SCHEMANAME.zoning_element AS ze
     WHERE ze.identifier <> new.identifier
       AND ze.geom && NEW.geom
-      AND ST_Relates(ze.geom, NEW.geom, 'F********')
+      AND NOT ST_Relates(ze.geom, NEW.geom, 'F********')
   ) THEN
-    RAISE EXCEPTION 'Geometry overlaps with existing zoning element geometry';
+    RAISE EXCEPTION 'New zoning_element geometry with id % overlaps with existing zoning element geometry', NEW.identifier;
   END IF;
   -- Zoning element geometry must not overlap with spatial plan geometry
   IF EXISTS (
@@ -145,7 +148,7 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM SCHEMANAME.spatial_plan sp
-    WHERE sp.geom && NEW.geom
+    WHERE ST_Intersects(sp.geom,NEW.geom)
       AND NOT ST_Relates(sp.geom, NEW.geom, '******FF*')
     RAISE EXCEPTION 'Planning detail line geometry with identifier % is not contained in spatial plan', NEW.identifier;
   )
@@ -167,7 +170,7 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM SCHEMANAME.spatial_plan sp
-    WHERE sp.geom && NEW.geom
+    WHERE ST_Intersects(sp.geom,NEW.geom)
       AND NOT ST_Relates(sp.geom, NEW.geom, '******FF*')
     RAISE EXCEPTION 'Describing text geometry with identifier % is not contained in spatial plan', NEW.identifier;
   )
@@ -189,10 +192,34 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM SCHEMANAME.spatial_plan sp
-    WHERE sp.geom && NEW.geom
+    WHERE ST_Intersects(sp.geom,NEW.geom)
       AND NOT ST_Relates(sp.geom, NEW.geom, '******FF*')
     RAISE EXCEPTION 'Describing line geometry with identifier % is not contained in spatial plan', NEW.identifier;
   )
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE FUNCTION SCHEMANAME.validate_finished_plan(spatial_plan_local_id VARCHAR)
+RETURNS BOOLEAN
+AS $$
+DECLARE
+  _spatial_plan SCHEMANAME.spatial_plan%ROWTYPE;
+  _spatial_plan_area FLOAT;
+  _zoning_element_area FLOAT;
+BEGIN
+  SELECT * INTO _spatial_plan FROM SCHEMANAME.spatial_plan WHERE local_id = spatial_plan_local_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Spatial plan with local id % not found', spatial_plan_local_id;
+  END IF;
+  SELECT ST_Area(_spatial_plan.geom) INTO _spatial_plan_area;
+  SELECT ST_Area(ST_Union(ze.geom)) INTO _zoning_element_area FROM SCHEMANAME.zoning_element WHERE spatial_plan = _spatial_plan.local_id;
+  IF ABS(_spatial_plan_area - _zoning_element_area) > 1 THEN -- 1 square meter tolerance
+    RAISE WARNING 'Zoning element geometries do not cover the spatial plan geometry';
+    RETURN FALSE;
+  END IF;
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+
