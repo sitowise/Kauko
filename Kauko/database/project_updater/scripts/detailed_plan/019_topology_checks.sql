@@ -11,6 +11,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER validate_spatial_plan_geom()
   BEFORE INSERT OR UPDATE OF geom
