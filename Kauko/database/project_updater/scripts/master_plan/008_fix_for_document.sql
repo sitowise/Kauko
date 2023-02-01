@@ -11,6 +11,6 @@ ALTER TABLE SCHEMANAME."document"
 ALTER TABLE SCHEMANAME."document"
   ADD CONSTRAINT fk_document_type
   FOREIGN KEY ("type")
-  REFERENCES code_lists.document_kind ("type")
+  REFERENCES code_lists.document_kind ("codevalue")
   ON DELETE RESTRICT
   ON UPDATE CASCADE;
