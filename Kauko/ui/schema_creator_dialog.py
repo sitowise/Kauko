@@ -1,32 +1,21 @@
-from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt import uic
 from qgis.gui import QgisInterface
 
 from ..data.csv_handler import *
 from ..database.database_handler import create_new_schema_and_project
-from ..database.db_tools import get_database_connections
+from .project_dialog import ProjectDialog
 
 FROM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'schema_creator_dialog.ui'))
 
 
-class InitiateSchemaDialog(QtWidgets.QDialog, FROM_CLASS):
+class InitiateSchemaDialog(ProjectDialog, FROM_CLASS):
 
     def __init__(self, iface: QgisInterface, parent=None):
 
         super(InitiateSchemaDialog, self).__init__(parent)
-        self.setupUi(self)
-        self.iface = iface
-
-        self.add_dbComboBox_items()
         self.add_landAdminAuthComboBox_items()
         self.add_projComboBox_items()
-
-    def add_dbComboBox_items(self):
-        """Add names of available database connections to combobox"""
-        self.dbComboBox.clear()
-        connections = get_database_connections()
-        for conn in connections:
-            self.dbComboBox.addItem(conn)
 
     def add_landAdminAuthComboBox_items(self):
         """Add names of municipalities from municipality codelist to combobox"""
@@ -41,12 +30,6 @@ class InitiateSchemaDialog(QtWidgets.QDialog, FROM_CLASS):
         projections = get_csv_names("/finnish_projections.csv")
         for proj in projections:
             self.projComboBox.addItem(proj)
-
-    def on_refreshPushButton_clicked(self):
-        self.add_dbComboBox_items()
-
-    def get_db(self) -> str:
-        return self.dbComboBox.currentText()
 
     def get_landAdminAuth(self) -> str:
         return self.landAdminAuthComboBox.currentText()
