@@ -1,5 +1,7 @@
 PG_CONNECTIONS = "PostgreSQL/connections"
 
+KAATIO_API_URL = "https://kaatio.spatineo-devops.com/v1/"
+
 QGS_SETTINGS_PSYCOPG2_PARAM_MAP = {
     'database': 'dbname',
     'host': 'host',

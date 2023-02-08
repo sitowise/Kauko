@@ -171,7 +171,8 @@ def get_spatial_plan_names(db: Database, schema=None) -> list:
         query = f"Select {schema}.spatial_plan.name FROM {schema}.spatial_plan ORDER BY name"
         raw_names = db.select(query)
         for name in raw_names:
-            name = ''.join(name)
+            name = name[0]
+            name = ' - '.join(name.values())
             names.append(name)
         return names
     except psycopg2.errors.UndefinedColumn:

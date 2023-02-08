@@ -44,6 +44,7 @@ from .project_handler import open_project
 from .resources import *
 from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
+from .ui.export_plan_dialog import ExportPlanDialog
 from .ui.get_regulations_dialog import InitiateRegulationsDialog
 from .ui.move_plan_dialog import MovePlanDialog
 from .ui.open_project_dialog import InitiateOpenProjectDialog
@@ -219,6 +220,12 @@ class Kauko:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False)
 
+        self.add_action(
+            ':/Kauko/icons/mActionSharingExport.svg',
+            text='Vie tallennuspalveluun',
+            callback=self.export_plan,
+            parent=self.iface.mainWindow(),
+            add_to_toolbar=False)
 
         """ self.add_action(
             icon_path,
@@ -480,3 +487,20 @@ class Kauko:
         self.iface.messageBar().pushMessage(
             "Projekti malli luotu.",
             level=Qgis.Success, duration=5)
+
+    def export_plan(self):
+        self._start(True)
+        if self.schema[-1] == 'y':
+            self.iface.messageBar().pushMessage("Virhe!",
+                                                "Työtila on asemakaavayhdistelmä",
+                                                level=Qgis.Warning, duration=5)
+            return
+        dlg = ExportPlanDialog(self.iface)
+        if not self.database_initializer.initialize_database(self.dbname):
+            return
+        db = self.database_initializer.database
+        spatial_plans = get_spatial_plan_names(db, self.schema)
+        dlg.add_spatial_plan_names(spatial_plans)
+        dlg.show()
+        if dlg.exec_():
+            dlg.export_plan(db, self.schema)
