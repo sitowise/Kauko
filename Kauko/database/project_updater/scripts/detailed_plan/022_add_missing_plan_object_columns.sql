@@ -25,7 +25,7 @@ ALTER TABLE SCHEMANAME.planning_detail_line
 
 UPDATE SCHEMANAME.planning_detail_line
   SET ground_relative_position = '02'
-  WHERE ground_relative_position IS NULL;
+WHERE ground_relative_position IS NULL;
 
 ALTER TABLE SCHEMANAME.planning_detail_line
   ALTER COLUMN bindingness_of_location SET NOT NULL,

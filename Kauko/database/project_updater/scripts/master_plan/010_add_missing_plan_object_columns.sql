@@ -30,7 +30,7 @@ ALTER TABLE SCHEMANAME.planned_space
 
 ALTER TABLE SCHEMANAME.planning_detail_line
   ADD COLUMN bindingness_of_location VARCHAR(2),
-  ADD COLUMN ground_relative_position VARCHAR(2);
+  ADD COLUMN ground_relative_position VARCHAR(2),
   ADD COLUMN environmental_change_nature VARCHAR(2);
 
 ALTER TABLE SCHEMANAME.planning_detail_line
