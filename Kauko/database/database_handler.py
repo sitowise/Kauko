@@ -1,4 +1,6 @@
-from typing import List
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Tuple
 
 import psycopg2
 from qgis.core import (Qgis, QgsExpressionContextUtils,
@@ -11,11 +13,13 @@ from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
 from ..data.schema import PlanType, Schema
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import (get_active_db_and_schema)
+from ..database.db_tools import get_active_db_and_schema, get_table_columns
 from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
 from ..errors import SchemaError
 
+
+LOGGER = logging.getLogger("kauko")
 
 def create_new_schema_and_project(
     projection: str,
@@ -163,18 +167,110 @@ def get_projects(db: Database, only_web=False) -> List[str]:
         return []
 
 
-def get_spatial_plan_names(db: Database, schema=None) -> list:
+def get_code_list(code_list: str, db: Database, value_field: str = "codevalue") -> Dict[int, Dict[str, Any]]:
+    """
+    Returns contents of the desired code list table indexed with code value.
+
+    :param code_list: Name of the code list table in code_lists schema
+    :param db: Database to use
+    :param value_field: Name of the code field, if it is not the standard "codevalue".
+    :return: Dictionary of all code list rows, indexed with foreign key (code value).
+    """
+    query = f"Select * FROM code_lists.{code_list}"
+    rows = db.select(query)
+    columns = get_table_columns(code_list, db, "code_lists")
+    codevalue_index = columns.index(value_field)
+    return {row[codevalue_index]: {field: value for field, value in zip(columns, row)} for row in rows}
+
+
+def get_zoning_elements(fk: str, db: Database, schema=None) -> List[Dict[str, Any]]:
+    """
+    Returns all zoning elements linked to a desired plan. No type checking of field types, as the
+    fields are obtained introspecting the db. Also provide GML representation of
+    geom field.
+    """
     if schema == "":
         return
     try:
-        names = []
-        query = f"Select {schema}.spatial_plan.name FROM {schema}.spatial_plan ORDER BY name"
-        raw_names = db.select(query)
-        for name in raw_names:
-            name = name[0]
+        plan = {}
+        query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.zoning_element WHERE spatial_plan='{fk}'"
+        rows = db.select(query)
+        columns = get_table_columns("zoning_element", db, schema)
+        columns.append("gml")
+        return [{field: value for field, value in zip(columns, row)} for row in rows]
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_spatial_plan(identifier: int, db: Database, schema=None) -> Dict[str, Any]:
+    """
+    Returns all fields from the plan table. No type checking of field types, as the
+    fields are obtained introspecting the db. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        plan = {}
+        query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.spatial_plan WHERE identifier={identifier}"
+        row = db.select(query)[0]
+        columns = get_table_columns("spatial_plan", db, schema)
+        columns.append("gml")
+        return {field: value for field, value in zip(columns, row)}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+# Better be explicit here. We don't want all plan fields to be editable.
+def set_spatial_plan_identity_id(identifier: int, identity_id: str, db: Database, schema=None):
+    """
+    Sets the desired identity id for a saved plan.
+    """
+    if schema == "":
+        return
+    query = f"Update {schema}.spatial_plan set identity_id='{identity_id}' where identifier={identifier}"
+    db.update(query)
+
+
+# Better be explicit here. We don't want all plan fields to be editable.
+def set_spatial_plan_reference_id(identifier: int, reference_id: str, db: Database, schema=None):
+    """
+    Sets the desired reference id for a saved plan.
+    """
+    if schema == "":
+        return
+    query = f"Update {schema}.spatial_plan set reference_id='{reference_id}' where identifier={identifier}"
+    db.update(query)
+
+
+# Better be explicit here. We don't want all plan fields to be editable.
+def set_spatial_plan_storage_time(identifier: int, storage_time: datetime, db: Database, schema=None):
+    """
+    Sets the desired storage time for a saved plan.
+    """
+    if schema == "":
+        return
+    query = f"Update {schema}.spatial_plan set storage_time={storage_time} where identifier={identifier}"
+    db.update(query)
+
+
+def get_spatial_plan_ids_and_names(db: Database, schema=None) -> Dict[int, str]:
+    if schema == "":
+        return
+    try:
+        plans = {}
+        query = f"Select {schema}.spatial_plan.identifier, {schema}.spatial_plan.name FROM {schema}.spatial_plan ORDER BY name"
+        raw_ids_and_names = db.select(query)
+        for row in raw_ids_and_names:
+            id = row[0]
+            name = row[1]
             name = ' - '.join(name.values())
-            names.append(name)
-        return names
+            plans[id] = name
+        return plans
     except psycopg2.errors.UndefinedColumn:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemassa {schema} ei ole saraketta 'nimi'",

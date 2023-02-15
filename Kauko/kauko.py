@@ -32,15 +32,16 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QWidget
 
-from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS
+from .constants import NUMBER_OF_GEOM_CHECKS_SQL, KAATIO_API_URL
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
-                                        get_projects, get_spatial_plan_names)
+                                        get_projects, get_spatial_plan_ids_and_names)
 from .database.db_initializer import DatabaseInitializer
 from .database.db_tools import get_active_db_and_schema, get_database_connections
 from .database.project_updater.project_template_writer import write_template
 from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
 from .project_handler import open_project
+from .qgis_plugin_tools.tools.custom_logging import setup_logger
 from .resources import *
 from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
@@ -51,6 +52,9 @@ from .ui.open_project_dialog import InitiateOpenProjectDialog
 from .ui.schema_creator_dialog import InitiateSchemaDialog
 from .ui.select_plan_name_dialog import InitiateSelectPlanNameDialog
 from .ui.update_project_dialog import InitiateUpdateProjectDialog
+
+
+setup_logger("kauko")
 
 
 def is_admin():
@@ -364,7 +368,8 @@ class Kauko:
         if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        dlg.add_spatial_plan_names(get_spatial_plan_names(db, self.schema))
+
+        dlg.add_spatial_plans(db, self.schema)
 
         dlg.show()
 
@@ -380,8 +385,7 @@ class Kauko:
             return
         db = self.database_initializer.database
 
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
+        dlg.add_spatial_plans(db, self.schema)
 
         dlg.show()
 
@@ -425,8 +429,8 @@ class Kauko:
         if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
+
+        dlg.add_spatial_plans(db, self.schema)
         dlg.show()
         if dlg.exec_():
             if not drop_geom_checks(f"{self.schema}_y", db):
@@ -443,8 +447,8 @@ class Kauko:
         if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
+
+        dlg.add_spatial_plans(db, self.schema)
         dlg.show()
         if dlg.exec_():
             plan_name = dlg.get_spatial_plan_name()
@@ -499,8 +503,16 @@ class Kauko:
         if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
+
+        dlg.add_spatial_plans(db, self.schema)
         dlg.show()
+
+        plan_store_url = KAATIO_API_URL + "store"
+        self.iface.messageBar().pushMessage(plan_store_url,
+                                            level=Qgis.Warning, duration=5)
         if dlg.exec_():
-            dlg.export_plan(db, self.schema)
+            bar_msg = dlg.export_plan(db, self.schema)
+            self.iface.messageBar().pushMessage(
+                bar_msg["details"],
+                level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
+                duration=bar_msg["duration"])
