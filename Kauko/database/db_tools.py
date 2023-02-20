@@ -1,4 +1,5 @@
 from typing import Any, Dict, Set, Tuple
+from urllib.parse import parse_qs, urlparse
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsAuthMethodConfig, QgsProject
@@ -115,32 +116,21 @@ def get_active_db_and_schema() -> Tuple[str, str]:
     :return: database name, schema name
     """
     path = QgsProject().instance().fileName()
-
-    if len(path) <= 0:
-        return "", ""
-
-    start = path.find("dbname=")
-    start += len("dbname=")
-    end = path.find('&', start)
-    dbname = path[start:end] if end != -1 else path[start:]
-    start = path.find("project=")
-    start += len("project=")
-    end = path.find('&', start)
-    schema = path[start:end] if end != -1 else path[start:]
-    return dbname, schema
-
+    
+    parsed_path = urlparse(path)
+    params = parse_qs(parsed_path.query)
+    dbname = params.get("dbname", [""])[0]
+    project = params.get("project", [""])[0]
+    return dbname, project
 
 def get_all_project_schemas(db: Database) -> list:
-    """Get the name of schemas which contain project
+    """Get the names of schemas containing project in their names.
 
-    :param db: Database object
-    :return: list of schema names
+    :param db: A Database object to connect to the database.
+    :return: A list of schema names.
     """
-    schemas = []
-    query = "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name"
-    raw_schemas = db.select(query)
-    for schema in raw_schemas:
-        schema = ''.join(schema)
-        if "_gk" in schema or "_kkj" in schema:
-            schemas.append(schema)
+    query = "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE '%\_gk%' OR schema_name LIKE '%\_kkj%' ORDER BY schema_name"
+    result_set = db.select(query)
+    schemas = [schema[0] for schema in result_set]
     return schemas
+

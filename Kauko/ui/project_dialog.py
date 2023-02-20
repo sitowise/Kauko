@@ -22,7 +22,7 @@ class ProjectDialog(QtWidgets.QDialog):
         for (conn, db) in connections:
             self.dbComboBox.addItem(conn, db)
 
-    def add_projectComboBox_items(self, projects):
+    def add_projectComboBox_items(self, projects: list[str]):
         self.projectComboBox.clear()
         for project in projects:
             self.projectComboBox.addItem(project)

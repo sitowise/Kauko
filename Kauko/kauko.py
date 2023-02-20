@@ -32,6 +32,8 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QWidget
 
+from ui.project_dialog import ProjectDialog
+
 from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
                                         get_projects, get_spatial_plan_names)
@@ -301,7 +303,7 @@ class Kauko:
         self.database_initializer = \
             DatabaseInitializer(self.iface, QgsApplication.instance(), self.dbname, self.schema)
 
-    def _initialize_database(self, dlg: QDialog):
+    def _initialize_database(self, dlg: ProjectDialog):
         self.database_initializer.initialize_database(dlg.get_db())
         database = self.database_initializer.database
         try:

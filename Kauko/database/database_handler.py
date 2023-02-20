@@ -159,6 +159,8 @@ def get_projects(db: Database, only_web=False) -> List[str]:
             project = ''.join(project)
             projects.append(project)
         return projects
+    except AttributeError:
+        return []
     except psycopg2.errors.UndefinedTable:
         return []
 
