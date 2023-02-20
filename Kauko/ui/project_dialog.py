@@ -1,3 +1,4 @@
+from typing import Tuple
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.gui import QgisInterface
@@ -33,17 +34,11 @@ class ProjectDialog(QtWidgets.QDialog):
     def on_refreshPushButton_clicked(self):
         self.add_dbComboBox_items()
 
-    def get_connection(self) -> str:
+    def get_connection_and_db(self) -> Tuple[str,str]:
         """
-        The name of the selected database connection.
+        The name of the selected connection and database.
         """
-        return self.dbComboBox.currentText()
-
-    def get_db(self) -> str:
-        """
-        The name of the selected database.
-        """
-        return self.dbComboBox.currentData()
+        return self.dbComboBox.currentText(), self.dbComboBox.currentData()
 
     def get_project(self) -> str:
         return self.projectComboBox.currentText()

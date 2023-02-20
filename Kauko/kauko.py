@@ -281,7 +281,8 @@ class Kauko:
             DatabaseInitializer(self.iface, QgsApplication.instance(), self.dbname, self.schema)
 
     def _initialize_database(self, dlg: ProjectDialog):
-        self.database_initializer.initialize_database(dlg.get_db())
+        connection_name, db_name = dlg.get_connection_and_db()
+        self.database_initializer.initialize_database(connection_name, db_name)
         database = self.database_initializer.database
         try:
             dlg.add_projectComboBox_items(get_projects(database))
@@ -297,9 +298,11 @@ class Kauko:
         # Run the dialog event loop
         result = dlg.exec_()
         # See if OK was pressed
-        if result and self.database_initializer.initialize_database(dlg.get_db()):
-            database = self.database_initializer.database
-            dlg.create_schema(database)
+        if result:
+            connection_name, db_name = dlg.get_connection_and_db() 
+            if self.database_initializer.initialize_database(connection_name, db_name):
+                database = self.database_initializer.database
+                dlg.create_schema(database)
 
     def open_project(self):
         self._start()

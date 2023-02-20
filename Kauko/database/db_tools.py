@@ -37,26 +37,13 @@ def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool
     return f'{schema_name}_y'.lower() if is_master_plan else schema_name.lower()
 
 
-def set_connection(db_name: str) -> None:
+def set_connection(connection_name: str) -> None:
     """ Sets connection based on used database name
 
-    :param db_name: str
+    :param connnection_name: str
     :return: None
     """
-    # We have to find the connection with the right database name.
-    # TODO: If there are several connections with a database of the same name,
-    # then we're out of luck. There's no way to find out the right
-    # connection and auth settings based on database name alone :(
-    s = QSettings()
-    s.beginGroup(PG_CONNECTIONS)
-    for connection in s.childGroups():
-        s.beginGroup(f"{PG_CONNECTIONS}/{connection}")
-        database = s.value("database")
-        s.endGroup()
-        if database == db_name:
-            # found the connection with the right database
-            break
-    QSettings().setValue("connection", connection)
+    QSettings().setValue("connection", connection_name)
 
 
 def get_connection_name() -> str:

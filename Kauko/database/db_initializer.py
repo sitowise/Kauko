@@ -44,7 +44,7 @@ class DatabaseInitializer:
     def database(self) -> Database:
         return self._database
 
-    def initialize_database(self, db_name: str) -> bool:
+    def initialize_database(self, connection_name: str, db_name: str) -> bool:
         """Initializes database with parameters given in dialog
 
         :return: True if successful, False otherwise.
@@ -57,7 +57,7 @@ class DatabaseInitializer:
                 duration=10)
             return False
 
-        set_connection(db_name)
+        set_connection(connection_name)
         params = get_connection_params(self._qgs_app)
 
         # Ask database username and password if now already given
