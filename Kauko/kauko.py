@@ -32,7 +32,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QWidget
 
-from ui.project_dialog import ProjectDialog
+from .ui.project_dialog import ProjectDialog
 
 from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
@@ -229,21 +229,6 @@ class Kauko:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False) """
 
-        """ self.add_action(
-            icon_path,
-            text="Aseta asemakaavayhdistelmän muokkaus päälle/pois päältä",
-            callback=self.set_editing,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False
-        ) """
-
-        """ self.add_action(
-            icon_path,
-            text="Siirrä asemakaavayhdistelmään",
-            callback=self.move_plan,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False
-        ) """
 
         """ self.add_action(
             icon_path,
@@ -263,14 +248,6 @@ class Kauko:
             icon_path,
             text="Aseta kaava takaisin keskeneräiseksi",
             callback=self.validity_to_unfinished,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False
-        ) """
-
-        """ self.add_action(
-            icon_path,
-            text="Korjaa työtilan topologia",
-            callback=self.fix_topology,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False
         ) """
@@ -387,50 +364,6 @@ class Kauko:
             dlg.write_spatial_plan_name_filters(db, QgsProject().instance(),
                                                 self.schema)
 
-    def set_editing(self):
-        self._start(True)
-        if self.schema[-1] != 'y':
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Työtila ei ole asemakaavayhdistelmä",
-                                                level=Qgis.Warning, duration=5)
-            return
-        db = self.database_initializer.database
-        query = NUMBER_OF_GEOM_CHECKS_SQL.replace("schemaname", self.schema)
-        checks = db.select(query)[0][0]
-        msg = QMessageBox()
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg.setIcon(QMessageBox.Question)
-        if checks == 0:
-            msg.setText("Haluatko laittaa muokkauksen päälle?")
-            if msg.exec_():
-                drop_geom_checks(self.schema, db)
-        else:
-            msg.setText("Haluatko lopettaa muokkauksen?")
-            if msg.exec_():
-                add_geom_checks(self.schema, db)
-
-    def move_plan(self):
-        self._start(True)
-        if self.schema[-1] == 'y':
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Työtila on asemakaavayhdistelmä",
-                                                level=Qgis.Warning, duration=5)
-            return
-        dlg = MovePlanDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
-            return
-        db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
-        dlg.show()
-        if dlg.exec_():
-            if not drop_geom_checks(f"{self.schema}_y", db):
-                return
-            dlg.move_plan(db, self.schema)
-            srid = self.iface.mapCanvas().mapSettings().destinationCrs().authid()[5:]
-            if open_project(f"{self.schema}_y"):
-                QgsProject().instance().setCrs(
-                    QgsCoordinateReferenceSystem(int(srid)))
 
     def validity_to_unfinished(self):
         self._start(True)
@@ -448,13 +381,6 @@ class Kauko:
             db.insert(query)
             self.iface.messageBar().pushMessage(f"Kaava {plan_name} muutettu keskeneräiseksi", level=Qgis.Success, duration=5)
 
-    def fix_topology(self):
-        self._start(True)
-        db = self.database_initializer.database
-        query = get_query(self.schema, "/sql_scripts/fix_topology.sql")
-        db.insert(query)
-        self.iface.messageBar().pushMessage("Kaavan topologia korjattu.",
-                                            level=Qgis.Success, duration=5)
 
     def update_projects(self):
         self.database_initializer = \
