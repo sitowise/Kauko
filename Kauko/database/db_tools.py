@@ -144,16 +144,3 @@ def get_all_project_schemas(db: Database) -> list:
         if "_gk" in schema or "_kkj" in schema:
             schemas.append(schema)
     return schemas
-
-
-def get_table_columns(table: str, db: Database, schema: str = None) -> List[str]:
-    """Get all column names of the specified table
-
-    :param table: Table name
-    :param db: Database object
-    :param schema: Schema
-    :return: List of column names
-    """
-    query = f"SELECT column_name FROM information_schema.columns WHERE table_schema='{schema}' AND table_name='{table}';"
-    rows = db.select(query)
-    return [row[0] for row in rows]

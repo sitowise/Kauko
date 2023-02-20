@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Tuple
 
 import psycopg2
+from psycopg2.extras import DictRow
 from qgis.core import (Qgis, QgsExpressionContextUtils,
                        QgsProject)
 from qgis.PyQt.QtWidgets import QMessageBox
@@ -13,7 +14,7 @@ from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
 from ..data.schema import PlanType, Schema
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import get_active_db_and_schema, get_table_columns
+from ..database.db_tools import get_active_db_and_schema
 from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
 from ..errors import SchemaError
@@ -167,7 +168,7 @@ def get_projects(db: Database, only_web=False) -> List[str]:
         return []
 
 
-def get_code_list(code_list: str, db: Database, value_field: str = "codevalue") -> Dict[int, Dict[str, Any]]:
+def get_code_list(code_list: str, db: Database, value_field: str = "codevalue") -> Dict[int, DictRow]:
     """
     Returns contents of the desired code list table indexed with code value.
 
@@ -178,12 +179,10 @@ def get_code_list(code_list: str, db: Database, value_field: str = "codevalue") 
     """
     query = f"Select * FROM code_lists.{code_list}"
     rows = db.select(query)
-    columns = get_table_columns(code_list, db, "code_lists")
-    codevalue_index = columns.index(value_field)
-    return {row[codevalue_index]: {field: value for field, value in zip(columns, row)} for row in rows}
+    return {row[value_field]: row for row in rows}
 
 
-def get_zoning_elements(fk: str, db: Database, schema=None) -> List[Dict[str, Any]]:
+def get_zoning_elements(fk: str, db: Database, schema=None) -> List[DictRow]:
     """
     Returns all zoning elements linked to a desired plan. No type checking of field types, as the
     fields are obtained introspecting the db. Also provide GML representation of
@@ -193,80 +192,64 @@ def get_zoning_elements(fk: str, db: Database, schema=None) -> List[Dict[str, An
         return
     try:
         query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.zoning_element WHERE spatial_plan='{fk}'"
-        rows = db.select(query)
-        columns = get_table_columns("zoning_element", db, schema)
-        columns.append("gml")
-        return [{field: value for field, value in zip(columns, row)} for row in rows]
+        return db.select(query)
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
                                        level=Qgis.Warning, duration=5)
 
 
-def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str, Dict[str, List[DictRow]]]:
     """
-    Returns all values for a list of zoning regulations. Values are returned separated by regulation and type.
+    Returns all values for a list of zoning regulation ids. Values are returned separated by regulation and type.
     """
     if schema == "":
         return
     values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in fks}
     fk_string = "','".join(fks)
     for value_type in VALUE_TYPES:
+        uuid_field = f"{value_type}_uuid"
+        query = f"Select * FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
+        # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
+        # and time_period_value tables have uuids without the word "value" in them, even though "value" is still
+        # found in the names of those tables. Numeric range is missing "value" everywhere, that is handled in constants.
         try:
-            query = f"Select * FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {value_type}_uuid=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
             rows = db.select(query)
         except psycopg2.errors.UndefinedColumn:
-            # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
-            # and time_period_value tables have uuids without the word "value" in them, even though "value" is still
-            # found in the names of those tables. Numeric range is missing "value" everywhere, that is handled in constants.
-            uuid_prefix = value_type.split("_value")[0]
-            query = f"Select * FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_prefix}_uuid=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
+            uuid_field = value_type.replace("_value", "_uuid")
+            query = f"Select * FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
             rows = db.select(query)
-        columns = get_table_columns(value_type, db, schema)
         for row in rows:
-            values[row[-2]][value_type].append({field: value for field, value in zip(columns, row)})
+            values[row["fk_plan_regulation"]][value_type].append(row)
     return values
 
 
-def get_zoning_element_regulations(fk: str, db: Database, schema=None, values=True) -> Dict[str, Dict[str, Any]]:
+def get_zoning_element_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
     """
-    Returns all regulations linked to a desired zoning element. No type checking of field types, as the
-    fields are obtained introspecting the db. Optionally also provide all regulation values.
+    Returns all regulations linked to a desired zoning element.
     """
     if schema == "":
         return
     try:
         query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.zoning_element_plan_regulation ON local_id=plan_regulation_local_id WHERE zoning_element_local_id='{fk}'"
         rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
                                     f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
                                     level=Qgis.Warning, duration=5)
-    columns = get_table_columns("plan_regulation", db, schema)
-    regulation_list = [{field: value for field, value in zip(columns, row)} for row in rows]
-    regulations = {regulation["local_id"]: regulation for regulation in regulation_list}
-
-    if values:
-        values = get_regulation_values(list(regulations.keys()), db, schema)
-        for key, value in values.items():
-            regulations[key]["values"] = value
-    return regulations
 
 
-def get_spatial_plan(identifier: int, db: Database, schema=None) -> Dict[str, Any]:
+def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
     """
-    Returns all fields from the plan table. No type checking of field types, as the
-    fields are obtained introspecting the db. Also provide GML representation of
+    Returns all fields from the plan table. Also provide GML representation of
     geom field.
     """
     if schema == "":
         return
     try:
         query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.spatial_plan WHERE identifier={identifier}"
-        row = db.select(query)[0]
-        columns = get_table_columns("spatial_plan", db, schema)
-        columns.append("gml")
-        return {field: value for field, value in zip(columns, row)}
+        return db.select(query)[0]
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",

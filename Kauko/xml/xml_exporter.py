@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from psycopg2.extras import DateRange
+from psycopg2.extras import DateRange, DictRow
 from typing import Any, Dict, List
 from xml.etree.ElementTree import dump, Element, ElementTree, fromstring, SubElement, tostring
 
@@ -9,12 +9,13 @@ from qgis.core import QgsProject
 from ..database.database import Database
 from ..database.database_handler import (
     get_code_list,
+    get_regulation_values,
     get_spatial_plan,
+    get_zoning_elements,
+    get_zoning_element_regulations,
     set_spatial_plan_reference_id,
     set_spatial_plan_identity_id,
     set_spatial_plan_storage_time,
-    get_zoning_elements,
-    get_zoning_element_regulations
 )
 
 LOGGER = logging.getLogger("kauko")
@@ -58,17 +59,18 @@ TYPE = SPLAN_NS + ":type"
 LIFECYCLE_STATUS = SPLAN_NS + ":lifecycleStatus"
 
 # GML tags
+GML_POINT = "gml:Point"
+GML_LINESTRING = "gml:LineString"
 GML_POLYGON = "gml:Polygon"
 GML_EXTERIOR = "gml:exterior"
 GML_LINEAR_RING = "gml:LinearRing"
+POS = "pos"
 POS_LIST = "posList"
 TIME_INSTANT = "gml:TimeInstant"
 TIME_POSITION = "gml:timePosition"
 TIME_PERIOD = "gml:TimePeriod"
 BEGIN_POSITION = "gml:beginPosition"
 END_POSITION = "gml:endPosition"
-
-XML_LANG = "xml:lang"
 
 
 def get_gml_id(entry: Dict[str, Any]) -> str:
@@ -123,11 +125,58 @@ def add_time_position(parent: Element, position: datetime, attrib: Dict = None) 
     return time_instant
 
 
+
+
+
+def add_point(parent: Element, gml: str, id: str) -> Element:
+    """
+    Create GML point element with given GML and GML id.
+
+    :param parent: Element under which point should be added
+    :param gml: Geometry GML from ST_asGML
+    :param str: Desired id for point
+    :return: Created element
+    """
+    # PostGIS creates polygon inside multisurface and surface member by default. Add element
+    # to simple polygon instead.
+    gml_element = fromstring(gml)
+    srs_name = gml_element.get("srsName")
+    point = SubElement(parent, GML_LINESTRING, {"srsName": srs_name, "gml:id": id})
+    position = SubElement(point, f"gml:{POS}")
+
+    # TODO: only support single points for now
+    incoming_pos = gml_element.findall(f'.//{POS}')[0]
+    position.text = incoming_pos.text
+    return point
+
+
+def add_line(parent: Element, gml: str, id: str) -> Element:
+    """
+    Create GML line element with given GML and GML id.
+
+    :param parent: Element under which line should be added
+    :param gml: Geometry GML from ST_asGML
+    :param str: Desired id for line
+    :return: Created element
+    """
+    # PostGIS creates polygon inside multisurface and surface member by default. Add element
+    # to simple linestring instead.
+    gml_element = fromstring(gml)
+    srs_name = gml_element.get("srsName")
+    linestring = SubElement(parent, GML_LINESTRING, {"srsName": srs_name, "gml:id": id})
+    pos_list = SubElement(linestring, f"gml:{POS_LIST}")
+
+    # TODO: only support single linestrings for now
+    incoming_pos_list = gml_element.findall(f'.//{POS_LIST}')[0]
+    pos_list.text = incoming_pos_list.text
+    return linestring
+
+
 def add_polygon(parent: Element, gml: str, id: str) -> Element:
     """
     Create GML polygon element with given GML and GML id.
 
-    :param feature: Element under which polygon should be added
+    :param parent: Element under which polygon should be added
     :param gml: Geometry GML from ST_asGML
     :param str: Desired id for polygon
     :return: Created element
@@ -147,10 +196,27 @@ def add_polygon(parent: Element, gml: str, id: str) -> Element:
     return polygon
 
 
+def add_language_string_elements(parent: Element, tag: str, strings: Dict[str, str]) -> List[Element]:
+    """
+    Create XML language string elements for all languages in strings.
+
+    :param parent: Element under which language strings should be added
+    :param tag: Tag to use for the elements
+    :param strings: Dict of language codes and strings
+    :return: Created elements
+    """
+    elements = []
+    for language, text in strings.items():
+        element = SubElement(parent, tag, {"xml:lang": language})
+        element.text = text
+        elements.append(element)
+    return elements
+
+
 def add_code_element(
         parent: Element,
         tag: str,
-        code_list: Dict[int, Dict[str, Any]],
+        code_list: Dict[int, DictRow],
         code_value: str,
         title_field: str = "preflabel_fi"
     ) -> Element:
@@ -171,7 +237,7 @@ def add_code_element(
     })
 
 
-def add_value_element(parent: Element, value_type: str, value: Dict[str, Any]) -> Element:
+def add_value_element(parent: Element, value_type: str, value: DictRow) -> Element:
     """
     Create value element under specified element.
 
@@ -193,15 +259,55 @@ def add_value_element(parent: Element, value_type: str, value: Dict[str, Any]) -
         "time_instant_value": SPLAN_NS + ":TimeInstantValue",
         "time_period_value": SPLAN_NS + ":TimePeriodValue",
     }
+    UNIT_OF_MEASURE = SPLAN_NS + ":unitOfMeasure"
     container_element = SubElement(parent, VALUE)
     type_element = SubElement(container_element, VALUE_TYPE_MAP[value_type])
     if value_type == "text_value":
-        fin_name = SubElement(container_element, VALUE, {XML_LANG: "fin"})
-        fin_name.text = value["value"].get("fin", "")
-        swe_name = SubElement(container_element, VALUE, {XML_LANG: "swe"})
-        swe_name.text = value["value"].get("swe", "")
-    if value_type == "code_value":
+        add_language_string_elements(type_element, VALUE, value["value"])
+    elif value_type == "code_value":
+        CODE_LIST_IDENTIFIER = SPLAN_NS + ":codelistIdentifier"
+        LABEL = SPLAN_NS + ":label"
+        value_element = SubElement(type_element, VALUE)
+        value_element.text = value["value"]
+        code_list_element = SubElement(type_element, CODE_LIST_IDENTIFIER)
+        code_list_element.text = value["code_list"]
+        add_language_string_elements(type_element, LABEL, value["title"])
+    elif value_type == "identifier_value":
+        SYSTEM_IDENTIFIER = SPLAN_NS + ":systemIdentifier"
+        SYSTEM_NAME = SPLAN_NS + ":systemValue"
+        value_element = SubElement(type_element, VALUE)
+        value_element.text = value["value"]
+        system_identifier_element = SubElement(type_element, SYSTEM_IDENTIFIER)
+        system_identifier_element.text = value["register_id"]
+        add_language_string_elements(type_element, SYSTEM_NAME, value["register_name"])
+    elif value_type == "numeric_double_value":
+        value_element = SubElement(type_element, VALUE)
+        value_element.text = str(value["value"])
+        unit_element = SubElement(type_element, UNIT_OF_MEASURE)
+        unit_element.text = value["unit_of_measure"]
+    elif value_type == "numeric_range":
+        MINIMUM_VALUE = SPLAN_NS + ":minimumValue"
+        MAXIMUM_VALUE = SPLAN_NS + ":maximumValue"
+        minimum_element = SubElement(type_element, MINIMUM_VALUE)
+        minimum_element.text = str(value["minimum_value"])
+        maximum_element = SubElement(type_element, MAXIMUM_VALUE)
+        maximum_element.text = str(value["maximum_value"])
+        unit_element = SubElement(type_element, UNIT_OF_MEASURE)
+        unit_element.text = value["unit_of_measure"]
+    elif value_type == "time_instant_value":
+        value_element = SubElement(type_element, VALUE)
+        add_time_position(value_element, value["value"])
+    elif value_type == "time_period_value":
+        value_element = SubElement(type_element, VALUE)
+        add_time_period(value_element, value["value"])
+    elif value_type == "geometry_area_value":
+        value_element = SubElement(type_element, VALUE)
+        add_polygon(value_element, value["value"], value["geometry_area_value_uuid"])
+    elif value_type == "geometry_line_value":
         pass
+    elif value_type == "geometry_point_value":
+        pass
+    return container_element
 
 
 class XMLExporter:
@@ -220,7 +326,7 @@ class XMLExporter:
         self.detail_plan_regulation_kinds = get_code_list("detail_plan_regulation_kind", db)
         self.master_plan_regulation_kinds = get_code_list("master_plan_regulation_kind", db)
 
-    def add_lud_core_element(self, feature: Element, entry: Dict[str, Any], tag: str) -> Element:
+    def add_lud_core_element(self, feature: Element, entry: DictRow, tag: str) -> Element:
         """
         Create XML element with lud-core fields, if present in entry.
 
@@ -243,10 +349,7 @@ class XMLExporter:
             latest_change = SubElement(element, LATEST_CHANGE)
             add_time_position(latest_change, entry["latest_change"])
         if "name" in entry and entry["name"]:
-            fin_name = SubElement(element, NAME, {XML_LANG: "fin"})
-            fin_name.text = entry["name"].get("fin", "")
-            swe_name = SubElement(element, NAME, {XML_LANG: "swe"})
-            swe_name.text = entry["name"].get("swe", "")
+            add_language_string_elements(element, NAME, entry["name"])
         # NOTE: Lud-core boundary refers to plan boundary only. Therefore, it should not be present in other
         # objects. Other objects will have splan geometry instead.
         if "gml" in entry and tag == SPATIAL_PLAN:
@@ -265,7 +368,7 @@ class XMLExporter:
             pass
         return element
 
-    def add_spatial_plan_element(self, collection: Element, plan_data: Dict[str, Any]) -> Element:
+    def add_spatial_plan_element(self, collection: Element, plan_data: DictRow) -> Element:
         """
         Create spatial plan element under specified feature collection using plan_data.
 
@@ -299,7 +402,7 @@ class XMLExporter:
 
         return feature
 
-    def add_plan_object_element(self, feature: Element, entry: Dict[str, Any], plan_gml_id: str) -> Element:
+    def add_plan_object_element(self, feature: Element, entry: DictRow, plan_gml_id: str) -> Element:
         """
         Create XML element with plan object fields, if present in entry.
 
@@ -320,17 +423,19 @@ class XMLExporter:
 
     def add_plan_order_element(self,
         feature: Element,
-        entry: Dict[str, Any],
+        entry: DictRow,
+        values: Dict[str, List[DictRow]],
         plan_gml_id: str,
-        target_gml_id: str = None,
+        target_gml_id: str,
         lifecycle_status: int = None,
         master_plan: bool = False,
     ) -> Element:
         """
         Create XML element with plan order fields, if present in entry.
 
-        :param collection: Feature under which new element should be added
-        :param object_data: Plan order data from Kauko database
+        :param feature: Feature under which new element should be added
+        :param entry: Plan order data from Kauko database
+        :param values: Dict of order value types and values of each type
         :param plan_gml_id: GML id for plan
         :param target_gml_id: GML id for target, if order is not directly attached to plan
         :param lifecycle_status: Plan lifecycle status. Required in each plan order if not found in entry.
@@ -338,6 +443,10 @@ class XMLExporter:
         :return: XML element of the plan order
         """
         plan_order = self.add_lud_core_element(feature, entry, PLAN_ORDER)
+
+        for value_type, values in values.items():
+            for value in values:
+                add_value_element(plan_order, value_type, value)
 
         plan = SubElement(plan_order, SPATIAL_PLAN_BUT_WITH_SMALL_INITIAL_JUST_FOR_FUN, {"xlink:href": "#" + plan_gml_id})
         if target_gml_id:
@@ -350,19 +459,16 @@ class XMLExporter:
 
         # lifecycle status is required for each plan order
         if not lifecycle_status:
-            lifecycle_status = entry["lifecycle_status"]
+            lifecycle_status = entry["life_cycle_status"]
         add_code_element(plan_order, LIFECYCLE_STATUS, self.lifecycle_statuses, lifecycle_status)
 
         if "validity_time" in plan_order and plan_order["validity_time"]:
             validity_time = SubElement(plan_order, VALIDITY_TIME_INSIDE_SPLAN)
             add_time_period(validity_time, entry["validity_time"])
 
-        for value_type, values in plan_order["values"].items():
-            for value in values:
-                add_value_element(plan_order, value_type, value)
         return plan_order
 
-    def add_zoning_elements(self, collection: Element, zoning_elements: List[Dict[str, Any]], gml_id: str, lifecycle_status: int) -> List[Element]:
+    def add_zoning_elements(self, collection: Element, zoning_elements: List[DictRow], gml_id: str, lifecycle_status: int) -> List[Element]:
         """
         Add Kauko database zoning elements as plan objects and their land use
         types as plan orders to Kaatio feature collection.
@@ -387,21 +493,24 @@ class XMLExporter:
             zoning_order["local_id"] += "-zoning_order"
             # The zoning order type is the land use kind. Element type does not apply to order.
             zoning_order["type"] = zoning_order["land_use_kind"]
-            self.add_plan_order_element(order_feature, zoning_order, gml_id, get_gml_id(zoning_element), lifecycle_status)
             # TODO: Each zoning element may only have text values and supplementary information with code values
             # https://tietomallit.ymparisto.fi/kaavatiedot/soveltamisprofiili/asemakaava/v1.0/kayttotarkoitukset/#alueen-käyttötarkoitus
             # Where are these stored in Kauko? Do we want to pick one particular regulation linked to the geometry
             # and link it to this order? Currently, we create all orders separately, because they may have
-            # any values.
+            # any values, and pass empty values list in the zoning order.
+            self.add_plan_order_element(order_feature, zoning_order, dict(), gml_id, get_gml_id(zoning_element), lifecycle_status)
 
             # Create all the rest of the planOrders linked to the planObject
             LOGGER.info("fetching regulations...")
             regulations = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema)
+            regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema)
             LOGGER.info("got regulations:")
             LOGGER.info(regulations)
-            for regulation in regulations.values():
+            for id, regulation in regulations.items():
                 LOGGER.info("adding regulation order...")
-                self.add_plan_order_element(order_feature, regulation, gml_id, get_gml_id(zoning_element))
+                values = regulation_values[id]
+                order_feature = SubElement(collection, FEATUREMEMBER)
+                self.add_plan_order_element(order_feature, regulation, values, gml_id, get_gml_id(zoning_element))
         return elements
 
     def add_plan_object_elements(self, collection: Element, local_id: int, gml_id: str, lifecycle_status: int) -> List[Element]:

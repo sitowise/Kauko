@@ -1,6 +1,7 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import psycopg2
+import psycopg2.extras
 
 
 class Database:
@@ -30,7 +31,7 @@ class Database:
         :return: Boolean
         """
         with psycopg2.connect(**self.params) as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 cur.execute(query)
                 return True
 
@@ -44,11 +45,11 @@ class Database:
         :return: Boolean
         """
         with psycopg2.connect(**self.params) as conn:
-            with conn.cursor() as cur:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 cur.execute(query)
                 return True
 
-    def select(self, query: str) -> List[Tuple]:
+    def select(self, query: str) -> List[psycopg2.extras.DictRow]:
         # TODO: Implement limiting query to select
         # TODO: Sanitize query to prevent sql injection in db strings
         """Used to select from database
@@ -58,7 +59,7 @@ class Database:
         """
         try:
             with psycopg2.connect(**self.params) as conn:
-                with conn.cursor() as cur:
+                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                     cur.execute(query)
                     return cur.fetchall()
         except psycopg2.OperationalError:
