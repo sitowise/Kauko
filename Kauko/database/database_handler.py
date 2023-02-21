@@ -202,14 +202,18 @@ def get_zoning_elements(fk: str, db: Database, schema=None) -> List[DictRow]:
 def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str, Dict[str, List[DictRow]]]:
     """
     Returns all values for a list of zoning regulation ids. Values are returned separated by regulation and type.
+    Also provide GML representation of geometry values.
     """
     if schema == "":
         return
     values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in fks}
     fk_string = "','".join(fks)
     for value_type in VALUE_TYPES:
+        fields = "*"
+        if "geometry" in value_type:
+            fields += ", ST_asGML(3, value, 15, 1, '', null) as gml"
         uuid_field = f"{value_type}_uuid"
-        query = f"Select * FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
+        query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
         # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
         # and time_period_value tables have uuids without the word "value" in them, even though "value" is still
         # found in the names of those tables. Numeric range is missing "value" everywhere, that is handled in constants.
@@ -217,7 +221,7 @@ def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str
             rows = db.select(query)
         except psycopg2.errors.UndefinedColumn:
             uuid_field = value_type.replace("_value", "_uuid")
-            query = f"Select * FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
+            query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
             rows = db.select(query)
         for row in rows:
             values[row["fk_plan_regulation"]][value_type].append(row)

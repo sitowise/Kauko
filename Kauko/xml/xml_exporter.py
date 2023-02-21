@@ -49,6 +49,7 @@ VALIDITY_TIME = CORE_NS + ":validityTime"
 SPATIAL_PLAN = SPLAN_NS + ":SpatialPlan"
 SPATIAL_PLAN_BUT_WITH_SMALL_INITIAL_JUST_FOR_FUN = SPLAN_NS + ":spatialPlan"
 VALIDITY_TIME_INSIDE_SPLAN = SPLAN_NS + ":validityTime"
+NAME_INSIDE_SPLAN = SPLAN_NS + ":loc_name"
 PLAN_OBJECT = SPLAN_NS + ":PlanObject"
 PLAN_ORDER = SPLAN_NS + ":PlanOrder"
 TARGET = SPLAN_NS + ":target"
@@ -73,7 +74,7 @@ BEGIN_POSITION = "gml:beginPosition"
 END_POSITION = "gml:endPosition"
 
 
-def get_gml_id(entry: Dict[str, Any]) -> str:
+def get_gml_id(entry: DictRow) -> str:
     """
     Return unique gml id for an entry in the database. In case the row has not been saved to
     the Kaatio API yet, it will not have reference id set.
@@ -134,14 +135,12 @@ def add_point(parent: Element, gml: str, id: str) -> Element:
 
     :param parent: Element under which point should be added
     :param gml: Geometry GML from ST_asGML
-    :param str: Desired id for point
+    :param str: Valid gml id for point
     :return: Created element
     """
-    # PostGIS creates polygon inside multisurface and surface member by default. Add element
-    # to simple polygon instead.
     gml_element = fromstring(gml)
     srs_name = gml_element.get("srsName")
-    point = SubElement(parent, GML_LINESTRING, {"srsName": srs_name, "gml:id": id})
+    point = SubElement(parent, GML_POINT, {"srsName": srs_name, "gml:id": id})
     position = SubElement(point, f"gml:{POS}")
 
     # TODO: only support single points for now
@@ -150,25 +149,26 @@ def add_point(parent: Element, gml: str, id: str) -> Element:
     return point
 
 
-def add_line(parent: Element, gml: str, id: str) -> Element:
+def add_linestring(parent: Element, gml: str, id: str) -> Element:
     """
     Create GML line element with given GML and GML id.
 
     :param parent: Element under which line should be added
     :param gml: Geometry GML from ST_asGML
-    :param str: Desired id for line
+    :param str: Valid gml id for line
     :return: Created element
     """
-    # PostGIS creates polygon inside multisurface and surface member by default. Add element
+    # PostGIS creates linestring inside multicurve and curve member by default. Add element
     # to simple linestring instead.
     gml_element = fromstring(gml)
     srs_name = gml_element.get("srsName")
-    linestring = SubElement(parent, GML_LINESTRING, {"srsName": srs_name, "gml:id": id})
+    linestring = SubElement(parent, GML_LINESTRING, {"srsName": srs_name, "gml:id": id, "srsDimension": "2"})
     pos_list = SubElement(linestring, f"gml:{POS_LIST}")
 
     # TODO: only support single linestrings for now
     incoming_pos_list = gml_element.findall(f'.//{POS_LIST}')[0]
     pos_list.text = incoming_pos_list.text
+
     return linestring
 
 
@@ -178,7 +178,7 @@ def add_polygon(parent: Element, gml: str, id: str) -> Element:
 
     :param parent: Element under which polygon should be added
     :param gml: Geometry GML from ST_asGML
-    :param str: Desired id for polygon
+    :param str: Valid gml id for polygon
     :return: Created element
     """
     # PostGIS creates polygon inside multisurface and surface member by default. Add element
@@ -302,11 +302,13 @@ def add_value_element(parent: Element, value_type: str, value: DictRow) -> Eleme
         add_time_period(value_element, value["value"])
     elif value_type == "geometry_area_value":
         value_element = SubElement(type_element, VALUE)
-        add_polygon(value_element, value["value"], value["geometry_area_value_uuid"])
+        add_polygon(value_element, value["gml"], "id-" + value["geometry_area_value_uuid"])
     elif value_type == "geometry_line_value":
-        pass
+        value_element = SubElement(type_element, VALUE)
+        add_linestring(value_element, value["gml"], "id-" + value["geometry_line_value_uuid"])
     elif value_type == "geometry_point_value":
-        pass
+        value_element = SubElement(type_element, VALUE)
+        add_point(value_element, value["gml"], "id-" + value["geometry_point_value_uuid"])
     return container_element
 
 
@@ -348,18 +350,20 @@ class XMLExporter:
         if "latest_change" in entry:
             latest_change = SubElement(element, LATEST_CHANGE)
             add_time_position(latest_change, entry["latest_change"])
-        if "name" in entry and entry["name"]:
+        # NOTE: Lud-core name refers to plan name only. Therefore, it should not be present in other objects.
+        # Other objects will have identical splan name field instead.
+        if tag == SPATIAL_PLAN and "name" in entry and entry["name"]:
             add_language_string_elements(element, NAME, entry["name"])
         # NOTE: Lud-core boundary refers to plan boundary only. Therefore, it should not be present in other
         # objects. Other objects will have splan geometry instead.
-        if "gml" in entry and tag == SPATIAL_PLAN:
+        if tag == SPATIAL_PLAN and "gml" in entry:
             boundary = SubElement(element, BOUNDARY)
             add_polygon(boundary, entry["gml"], f"{get_gml_id(entry)}.geom.0")
         if "legal_effectiveness" in entry:
             add_code_element(element, LEGAL_EFFECTIVENESS, self.legal_effectiveness_kinds, entry["legal_effectiveness"])
         # NOTE: Lud-core validity time refers to plan validity time only. Therefore, it should not be present
         # in other objects. Other objects will have identical splan validity time instead, go figure.
-        if "validity_time" in entry and entry["validity_time"] and tag == SPATIAL_PLAN:
+        if tag == SPATIAL_PLAN and "validity_time" in entry and entry["validity_time"]:
             validity_time = SubElement(element, VALIDITY_TIME)
             add_time_period(validity_time, entry["validity_time"])
         if "land_administration_authority" in entry:
@@ -412,6 +416,8 @@ class XMLExporter:
         :return: XML element of the plan object
         """
         plan_object = self.add_lud_core_element(feature, entry, PLAN_OBJECT)
+        if "name" in entry and entry["name"]:
+            add_language_string_elements(plan_object, NAME_INSIDE_SPLAN, entry["name"])
 
         geometry = SubElement(plan_object, GEOMETRY)
         add_polygon(geometry, entry["gml"],  f"{get_gml_id(entry)}.geom.0")
@@ -443,6 +449,8 @@ class XMLExporter:
         :return: XML element of the plan order
         """
         plan_order = self.add_lud_core_element(feature, entry, PLAN_ORDER)
+        if "name" in entry and entry["name"]:
+            add_language_string_elements(plan_order, NAME_INSIDE_SPLAN, entry["name"])
 
         for value_type, values in values.items():
             for value in values:
