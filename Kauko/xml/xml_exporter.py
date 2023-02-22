@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from psycopg2.extras import DateRange, DictRow
-from typing import Any, Dict, List
+from typing import Dict, List, Union
 from xml.etree.ElementTree import dump, Element, ElementTree, fromstring, SubElement, tostring
 
 from qgis.core import QgsProject
@@ -9,10 +9,13 @@ from qgis.core import QgsProject
 from ..database.database import Database
 from ..database.database_handler import (
     get_code_list,
+    get_describing_texts,
+    get_describing_lines,
     get_planned_spaces,
     get_planned_space_regulations,
     get_plan_detail_lines,
     get_plan_detail_line_regulations,
+    get_plan_regulations,
     get_regulation_values,
     get_spatial_plan,
     get_zoning_elements,
@@ -436,7 +439,7 @@ class XMLExporter:
     def add_plan_order_element(self,
         entry: DictRow,
         values: Dict[str, List[DictRow]],
-        target_gml_id: str,
+        target_gml_id: Union[str, None],
         master_plan: bool = False,
     ) -> None:
         """
@@ -444,7 +447,7 @@ class XMLExporter:
 
         :param entry: Plan order data from Kauko database
         :param values: Dict of order value types and values of each type
-        :param target_gml_id: GML id for target, if order is not directly attached to plan
+        :param target_gml_id: GML id for target, or None if order is attached directly to plan
         :param master_plan: True if we want to use master plan code lists instead. The default is detail plan.
         """
         plan_order = self.add_lud_core_element(entry, PLAN_ORDER)
@@ -472,12 +475,12 @@ class XMLExporter:
             validity_time = SubElement(plan_order, VALIDITY_TIME_INSIDE_SPLAN)
             add_time_period(validity_time, entry["validity_time"])
 
-    def add_regulations(self, regulations: Dict[str, DictRow], target_gml_id: str) -> None:
+    def add_regulations(self, regulations: Dict[str, DictRow], target_gml_id: Union[str, None]) -> None:
         """
         Add Kauko database regulations and their values as plan orders.
 
         :param detail_lines: Plan regulations from Kauko database, indexed with ids.
-        :param target_gml_id: GML id for regulation target
+        :param target_gml_id: GML id for regulation target, or None if regulation pertains to plan directly.
         """
         regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema)
         for id, regulation in regulations.items():
@@ -603,17 +606,21 @@ class XMLExporter:
         LOGGER.info(planned_spaces)
         self.add_planned_spaces(planned_spaces)
 
+        # TODO: päätettävä, miten selittävät tekstit ja viivat viedään, jos ollenkaan
         LOGGER.info("fetching describing texts...")
         describing_texts = get_describing_texts(plan_data["local_id"], self.db, self.schema)
-        #self.add_describing_texts(root, describing_texts, get_gml_id(plan_data))
-
+        #self.add_describing_texts(describing_texts)
         LOGGER.info("fetching describing lines...")
         describing_texts = get_describing_lines(plan_data["local_id"], self.db, self.schema)
-        #self.add_describing_lines(root, describing_texts, get_gml_id(plan_data))
+        #self.add_describing_lines(describing_texts)
 
         # finally, add order elements directly linked to the plan
         LOGGER.info("creating plan order elements linked to plan")
-        # TODO
+        regulations = get_plan_regulations(plan_data["local_id"], self.db, self.schema)
+        LOGGER.info("got regulations")
+        self.add_regulations(regulations, None)
+
+        # TODO: add group regulations, supplementary information, guidance, commentary, document, participation
 
         tree = ElementTree(self.root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")

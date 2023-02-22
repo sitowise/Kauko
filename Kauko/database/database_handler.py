@@ -232,6 +232,56 @@ def get_plan_detail_lines(fk: str, db: Database, schema=None) -> List[DictRow]:
                                        level=Qgis.Warning, duration=5)
 
 
+def get_describing_lines(fk: str, db: Database, schema=None) -> List[DictRow]:
+    """
+    Returns all describing lines inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, describing_line.geom, 15, 1, '', null) as gml FROM {schema}.describing_line JOIN {schema}.zoning_element_describing_line ON describing_line.identifier=describing_line_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["identifier"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_describing_texts(fk: str, db: Database, schema=None) -> List[DictRow]:
+    """
+    Returns all describing texts inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, describing_text.geom, 15, 1, '', null) as gml FROM {schema}.describing_text JOIN {schema}.zoning_element_describing_text ON describing_text.identifier=describing_text_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["identifier"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_plan_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all regulations linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.spatial_plan_plan_regulation ON local_id=plan_regulation_local_id WHERE spatial_plan_local_id='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
 def get_zoning_element_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
     """
     Returns all regulations linked to a desired zoning element.
@@ -262,7 +312,6 @@ def get_planned_space_regulations(fk: str, db: Database, schema=None) -> Dict[st
         iface.messageBar().pushMessage("Virhe!",
                                     f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
                                     level=Qgis.Warning, duration=5)
-
 
 
 def get_plan_detail_line_regulations(fk: str, db: Database, schema=None) -> List[DictRow]:
