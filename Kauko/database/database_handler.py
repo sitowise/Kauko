@@ -266,14 +266,15 @@ def get_describing_texts(fk: str, db: Database, schema=None) -> List[DictRow]:
                                        level=Qgis.Warning, duration=5)
 
 
-def get_plan_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+def get_plan_regulations(fk: str, db: Database, schema=None, guidance=False) -> Dict[str, DictRow]:
     """
-    Returns all regulations linked to a desired plan.
+    Returns all regulations (or guidances) linked to a desired plan.
     """
     if schema == "":
         return
     try:
-        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.spatial_plan_plan_regulation ON local_id=plan_regulation_local_id WHERE spatial_plan_local_id='{fk}'"
+        regulation = "regulation" if not guidance else "guidance"
+        query = f"Select * FROM {schema}.plan_{regulation} JOIN {schema}.spatial_plan_plan_{regulation} ON local_id=plan_{regulation}_local_id WHERE spatial_plan_local_id='{fk}'"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -282,14 +283,15 @@ def get_plan_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRo
                                     level=Qgis.Warning, duration=5)
 
 
-def get_zoning_element_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+def get_zoning_element_regulations(fk: str, db: Database, schema=None, guidance=False) -> Dict[str, DictRow]:
     """
-    Returns all regulations linked to a desired zoning element.
+    Returns all regulations (or guidances) linked to a desired zoning element.
     """
     if schema == "":
         return
     try:
-        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.zoning_element_plan_regulation ON local_id=plan_regulation_local_id WHERE zoning_element_local_id='{fk}'"
+        regulation = "regulation" if not guidance else "guidance"
+        query = f"Select * FROM {schema}.plan_{regulation} JOIN {schema}.zoning_element_plan_{regulation} ON local_id=plan_{regulation}_local_id WHERE zoning_element_local_id='{fk}'"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -298,14 +300,15 @@ def get_zoning_element_regulations(fk: str, db: Database, schema=None) -> Dict[s
                                     level=Qgis.Warning, duration=5)
 
 
-def get_planned_space_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+def get_planned_space_regulations(fk: str, db: Database, schema=None, guidance=False) -> Dict[str, DictRow]:
     """
-    Returns all regulations linked to a desired planned space.
+    Returns all regulations (or guidances) linked to a desired planned space.
     """
     if schema == "":
         return
     try:
-        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.planned_space_plan_regulation ON local_id=plan_regulation_local_id WHERE planned_space_local_id='{fk}'"
+        regulation = "regulation" if not guidance else "guidance"
+        query = f"Select * FROM {schema}.plan_{regulation} JOIN {schema}.planned_space_plan_{regulation} ON local_id=plan_{regulation}_local_id WHERE planned_space_local_id='{fk}'"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -314,14 +317,15 @@ def get_planned_space_regulations(fk: str, db: Database, schema=None) -> Dict[st
                                     level=Qgis.Warning, duration=5)
 
 
-def get_plan_detail_line_regulations(fk: str, db: Database, schema=None) -> List[DictRow]:
+def get_plan_detail_line_regulations(fk: str, db: Database, schema=None, guidance=False) -> List[DictRow]:
     """
-    Returns all regulations linked to a desired planning detail line.
+    Returns all regulations (or guidances) linked to a desired planning detail line.
     """
     if schema == "":
         return
     try:
-        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.planning_detail_line_plan_regulation ON local_id=plan_regulation_local_id WHERE planning_detail_line_local_id='{fk}'"
+        regulation = "regulation" if not guidance else "guidance"
+        query = f"Select * FROM {schema}.plan_{regulation} JOIN {schema}.planning_detail_line_plan_{regulation} ON local_id=plan_{regulation}_local_id WHERE planning_detail_line_local_id='{fk}'"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -330,13 +334,14 @@ def get_plan_detail_line_regulations(fk: str, db: Database, schema=None) -> List
                                        level=Qgis.Warning, duration=5)
 
 
-def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str, Dict[str, List[DictRow]]]:
+def get_regulation_values(fks: List[str], db: Database, schema=None, guidance=False) -> Dict[str, Dict[str, List[DictRow]]]:
     """
-    Returns all values for a list of zoning regulation ids. Values are returned separated by regulation and type.
-    Also provide GML representation of geometry values.
+    Returns all values for a list of zoning regulation (or guidance) ids. Values are returned separated by regulation
+    (or guidance) and type. Also provide GML representation of geometry values.
     """
     if schema == "":
         return
+    regulation = "regulation" if not guidance else "guidance"
     values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in fks}
     fk_string = "','".join(fks)
     for value_type in VALUE_TYPES:
@@ -344,7 +349,7 @@ def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str
         if "geometry" in value_type:
             fields += ", ST_asGML(3, value, 15, 1, '', null) as gml"
         uuid_field = f"{value_type}_uuid"
-        query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
+        query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_{regulation}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_{regulation} in ('{fk_string}')"
         # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
         # and time_period_value tables have uuids without the word "value" in them, even though "value" is still
         # found in the names of those tables. Numeric range is missing "value" everywhere, that is handled in constants.
@@ -352,10 +357,10 @@ def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str
             rows = db.select(query)
         except psycopg2.errors.UndefinedColumn:
             uuid_field = value_type.replace("_value", "_uuid")
-            query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_regulation_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_regulation in ('{fk_string}')"
+            query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_{regulation}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_{regulation} in ('{fk_string}')"
             rows = db.select(query)
         for row in rows:
-            values[row["fk_plan_regulation"]][value_type].append(row)
+            values[row[f"fk_plan_{regulation}"]][value_type].append(row)
     return values
 
 

@@ -59,6 +59,7 @@ VALIDITY_TIME_INSIDE_SPLAN = SPLAN_NS + ":validityTime"
 NAME_INSIDE_SPLAN = SPLAN_NS + ":loc_name"
 PLAN_OBJECT = SPLAN_NS + ":PlanObject"
 PLAN_ORDER = SPLAN_NS + ":PlanOrder"
+PLAN_RECOMMENDATION = SPLAN_NS + ":PlanRecommendation"
 TARGET = SPLAN_NS + ":target"
 GEOMETRY = SPLAN_NS + ":geometry"
 GROUND_RELATIVE_POSITION = SPLAN_NS + ":groundRelativePosition"
@@ -441,6 +442,7 @@ class XMLExporter:
         values: Dict[str, List[DictRow]],
         target_gml_id: Union[str, None],
         master_plan: bool = False,
+        recommendation: bool = False
     ) -> None:
         """
         Create XML element with plan order fields, if present in entry.
@@ -449,8 +451,13 @@ class XMLExporter:
         :param values: Dict of order value types and values of each type
         :param target_gml_id: GML id for target, or None if order is attached directly to plan
         :param master_plan: True if we want to use master plan code lists instead. The default is detail plan.
+        :param guidance: True if we want to add plan recommendation element instead. The default is plan order.
         """
-        plan_order = self.add_lud_core_element(entry, PLAN_ORDER)
+        if recommendation:
+            plan_order = self.add_lud_core_element(entry, PLAN_RECOMMENDATION)
+        else:
+            plan_order = self.add_lud_core_element(entry, PLAN_ORDER)
+
         if "name" in entry and entry["name"]:
             add_language_string_elements(plan_order, NAME_INSIDE_SPLAN, entry["name"])
 
@@ -462,10 +469,11 @@ class XMLExporter:
         if target_gml_id:
             target = SubElement(plan_order, TARGET, {"xlink:href": "#" + target_gml_id})
 
-        if master_plan:
-            add_code_element(plan_order, TYPE, self.master_plan_regulation_kinds, entry["type"])
-        else:
-            add_code_element(plan_order, TYPE, self.detail_plan_regulation_kinds, entry["type"])
+        if "type" in entry:
+            if master_plan:
+                add_code_element(plan_order, TYPE, self.master_plan_regulation_kinds, entry["type"])
+            else:
+                add_code_element(plan_order, TYPE, self.detail_plan_regulation_kinds, entry["type"])
 
         # lifecycle status is required for each plan order
         lifecycle_status = entry["life_cycle_status"] if "life_cycle_status" in entry else self.lifecycle_status
@@ -475,18 +483,19 @@ class XMLExporter:
             validity_time = SubElement(plan_order, VALIDITY_TIME_INSIDE_SPLAN)
             add_time_period(validity_time, entry["validity_time"])
 
-    def add_regulations(self, regulations: Dict[str, DictRow], target_gml_id: Union[str, None]) -> None:
+    def add_regulations(self, regulations: Dict[str, DictRow], target_gml_id: Union[str, None], guidance: bool = False) -> None:
         """
-        Add Kauko database regulations and their values as plan orders.
+        Add Kauko database regulations (or guidances) and their values as plan orders (or recommendations)
 
-        :param detail_lines: Plan regulations from Kauko database, indexed with ids.
+        :param detail_lines: Plan regulations (or guidances) from Kauko database, indexed with ids.
         :param target_gml_id: GML id for regulation target, or None if regulation pertains to plan directly.
+        :param guidance: True if we want to add guidances instead. Default is regulation.
         """
-        regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema)
+        regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema, guidance)
         for id, regulation in regulations.items():
             LOGGER.info("adding regulation order...")
             values = regulation_values[id]
-            self.add_plan_order_element(regulation, values, target_gml_id)
+            self.add_plan_order_element(regulation, values, target_gml_id, recommendation=guidance)
 
     def add_planning_detail_lines(self, detail_lines: Dict[str, DictRow]) -> None:
         """
@@ -557,14 +566,17 @@ class XMLExporter:
             # any values, and pass empty values list in the zoning order.
             self.add_plan_order_element(zoning_order, dict(), get_gml_id(zoning_element))
 
-            # Create all the rest of the planOrders linked to the zoning element
+            # Create all the rest of the planOrders and planRecommendations linked to the zoning element
             LOGGER.info("fetching regulations...")
             regulations = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema)
+            guidances = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema, guidance=True)
             LOGGER.info("got regulations:")
             LOGGER.info(regulations)
+            LOGGER.info(guidances)
             self.add_regulations(regulations, get_gml_id(zoning_element))
+            self.add_regulations(guidances, get_gml_id(zoning_element), guidance=True)
 
-            # TODO: add group regulations, supplementary information, and guidance
+            # TODO: add group regulations, supplementary information, and documents
 
     def get_xml(self, plan_id: int) -> bytes:
         """
@@ -617,10 +629,12 @@ class XMLExporter:
         # finally, add order elements directly linked to the plan
         LOGGER.info("creating plan order elements linked to plan")
         regulations = get_plan_regulations(plan_data["local_id"], self.db, self.schema)
+        guidances = get_plan_regulations(plan_data["local_id"], self.db, self.schema, guidance=True)
         LOGGER.info("got regulations")
         self.add_regulations(regulations, None)
+        self.add_regulations(guidances, None, guidance=True)
 
-        # TODO: add group regulations, supplementary information, guidance, commentary, document, participation
+        # TODO: add group regulations, supplementary information, commentary, document, participation
 
         tree = ElementTree(self.root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")
