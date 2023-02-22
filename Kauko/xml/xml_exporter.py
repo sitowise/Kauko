@@ -9,6 +9,10 @@ from qgis.core import QgsProject
 from ..database.database import Database
 from ..database.database_handler import (
     get_code_list,
+    get_planned_spaces,
+    get_planned_space_regulations,
+    get_plan_detail_lines,
+    get_plan_detail_line_regulations,
     get_regulation_values,
     get_spatial_plan,
     get_zoning_elements,
@@ -420,11 +424,16 @@ class XMLExporter:
             add_language_string_elements(plan_object, NAME_INSIDE_SPLAN, entry["name"])
 
         geometry = SubElement(plan_object, GEOMETRY)
-        add_polygon(geometry, entry["gml"],  f"{get_gml_id(entry)}.geom.0")
+        if entry["gml"].startswith("<MultiSurface"):
+            add_polygon(geometry, entry["gml"], f"{get_gml_id(entry)}.geom.0")
+        elif entry["gml"].startswith("<MultiCurve"):
+            add_linestring(geometry, entry["gml"], f"{get_gml_id(entry)}.geom.0")
 
         plan = SubElement(plan_object, SPATIAL_PLAN_BUT_WITH_SMALL_INITIAL_JUST_FOR_FUN, {"xlink:href": "#" + plan_gml_id})
-        add_code_element(plan_object, BINDINGNESS_OF_LOCATION, self.bindingness_kinds, entry["bindingness_of_location"])
-        add_code_element(plan_object, GROUND_RELATIVE_POSITION, self.ground_relativeness_kinds, entry["ground_relative_position"])
+        if "bindingness_of_location" in entry:
+            add_code_element(plan_object, BINDINGNESS_OF_LOCATION, self.bindingness_kinds, entry["bindingness_of_location"])
+        if "ground_relative_position" in entry:
+            add_code_element(plan_object, GROUND_RELATIVE_POSITION, self.ground_relativeness_kinds, entry["ground_relative_position"])
         return plan_object
 
     def add_plan_order_element(self,
@@ -476,18 +485,84 @@ class XMLExporter:
 
         return plan_order
 
-    def add_zoning_elements(self, collection: Element, zoning_elements: List[DictRow], gml_id: str, lifecycle_status: int) -> List[Element]:
+
+    def add_regulations(self, collection: Element, regulations: Dict[str, DictRow], gml_id: str, target_gml_id: str) -> List[Element]:
+        """
+        Add Kauko database regulations and their values as plan orders.
+
+        :param collection: Element under which elements should be added
+        :param detail_lines: Plan regulations from Kauko database, indexed with ids.
+        :param gml_id: GML id for plan
+        :param target_gml_id: GML id for regulation target, if regulations are not directly attached to plan
+        :return: XML elements for regulations
+        """
+        regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema)
+        for id, regulation in regulations.items():
+            LOGGER.info("adding regulation order...")
+            values = regulation_values[id]
+            order_feature = SubElement(collection, FEATUREMEMBER)
+            self.add_plan_order_element(order_feature, regulation, values, gml_id, target_gml_id)
+
+    def add_planning_detail_lines(self, collection: Element, detail_lines: Dict[str, DictRow], gml_id: str) -> None:
+        """
+        Add Kauko database planning detail lines as plan objects. Also add
+        their regulations.
+
+        :param collection: Element under which elements should be added
+        :param detail_lines: Planning detail lines from Kauko database
+        :param gml_id: GML id for plan
+        """
+        for id, detail_line in detail_lines.items():
+            LOGGER.info(detail_line)
+            feature = SubElement(collection, FEATUREMEMBER)
+            self.add_plan_object_element(feature, detail_line, gml_id)
+
+            # TODO: lisättävä viivamaiseen tarkennemerkintään liittyvä kaavamääräys
+            # kaavamääräyskoodistosta sen jälkeen, kun viivamaisiin merkintöihin on lisätty
+            # asemakaavakoodistoon viittaava kenttä. Tällä hetkellä tarkennemerkinnällä on
+            # oma koodisto, joka ei viittaa asemakaavakoodistoon.
+
+            # Create all the rest of the planOrders linked to the detail line
+            LOGGER.info("object element added, fetching regulations...")
+            regulations = get_plan_detail_line_regulations(id, self.db, self.schema)
+            LOGGER.info("got regulations:")
+            LOGGER.info(regulations)
+            self.add_regulations(collection, regulations, gml_id, get_gml_id(detail_line))
+
+    def add_planned_spaces(self, collection: Element, planned_spaces: Dict[str, DictRow], gml_id: str) -> None:
+        """
+        Add Kauko database planned spaces lines as plan objects. Also add all their
+        regulations.
+
+        :param collection: Element under which elements should be added
+        :param planned_spaces: Planned spaces from Kauko database
+        :param gml_id: GML id for plan
+        """
+        for id, planned_space in planned_spaces.items():
+            LOGGER.info(planned_space)
+            feature = SubElement(collection, FEATUREMEMBER)
+            self.add_plan_object_element(feature, planned_space, gml_id)
+
+            # Create all the rest of the planOrders linked to the planned space
+            LOGGER.info("object element added, fetching regulations...")
+            regulations = get_planned_space_regulations(id, self.db, self.schema)
+            LOGGER.info("got regulations:")
+            LOGGER.info(regulations)
+            self.add_regulations(collection, regulations, gml_id, get_gml_id(planned_space))
+
+            # Do not import plan detail lines again. All plan detail lines linked to planned
+            # spaces are already linked to their zoning elements.
+
+    def add_zoning_elements(self, collection: Element, zoning_elements: List[DictRow], gml_id: str, lifecycle_status: int) -> None:
         """
         Add Kauko database zoning elements as plan objects and their land use
-        types as plan orders to Kaatio feature collection.
+        types as plan orders to Kaatio feature collection. Also add their regulations.
 
         :param collection: Element under which elements should be added
         :param zoning_elements: Zoning elements from Kauko database
         :param gml_id: GML id for plan
         :param lifecycle_status: Plan lifecycle status. Required in each plan order.
-        :return: XML elements for all zoning elements linked to the plan
         """
-        elements = []
         for zoning_element in zoning_elements:
             LOGGER.info(zoning_element)
             feature = SubElement(collection, FEATUREMEMBER)
@@ -508,40 +583,14 @@ class XMLExporter:
             # any values, and pass empty values list in the zoning order.
             self.add_plan_order_element(order_feature, zoning_order, dict(), gml_id, get_gml_id(zoning_element), lifecycle_status)
 
-            # Create all the rest of the planOrders linked to the planObject
+            # Create all the rest of the planOrders linked to the zoning element
             LOGGER.info("fetching regulations...")
             regulations = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema)
-            regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema)
             LOGGER.info("got regulations:")
             LOGGER.info(regulations)
-            for id, regulation in regulations.items():
-                LOGGER.info("adding regulation order...")
-                values = regulation_values[id]
-                order_feature = SubElement(collection, FEATUREMEMBER)
-                self.add_plan_order_element(order_feature, regulation, values, gml_id, get_gml_id(zoning_element))
-        return elements
+            self.add_regulations(collection, regulations, gml_id, get_gml_id(zoning_element))
 
-    def add_plan_object_elements(self, collection: Element, local_id: int, gml_id: str, lifecycle_status: int) -> List[Element]:
-        """
-        Add all Kaatio plan objects linked to a plan in Kauko database.
-
-        :param collection: Element under which objects should be added
-        :param local_id: Local id for plan in Kauko database
-        :param gml_id: GML id for plan
-        :param lifecycle_status: Plan lifecycle status. Required in each plan order.
-        :return: XML elements for all plan objects linked to the plan
-        """
-        elements = []
-        LOGGER.info("getting zoning elements")
-        zoning_elements = get_zoning_elements(local_id, self.db, self.schema)
-        LOGGER.info("adding zoning elements")
-        elements.extend(self.add_zoning_elements(collection, zoning_elements, gml_id, lifecycle_status))
-        # elements.add(self.add_planned_spaces(collection, plan_id))
-        # elements.add(self.add_planning_detail_lines(collection, plan_id))
-        # elements.add(self.add_describing_lines(collection, plan_id))
-        # elements.add(self.add_describing_texts(collection, plan_id))
-        LOGGER.info("returning zoning elements")
-        return elements
+            # TODO: add group regulations, supplementary information, and guidance
 
     def get_xml(self, plan_id: int) -> bytes:
         """
@@ -553,14 +602,39 @@ class XMLExporter:
         LOGGER.info("creating root")
         root = Element(FEATURECOLLECTION, {**FEATURECOLLECTION_ATTRIBUTES, "gml:id": "foobar"})
 
-        LOGGER.info("getting plan data:")
+        LOGGER.info("fetching plan data...")
         plan_data = get_spatial_plan(plan_id, self.db, self.schema)
         LOGGER.info(plan_data)
         LOGGER.info("creating plan element")
         self.add_spatial_plan_element(root, plan_data)
 
-        LOGGER.info("creating plan object elements")
-        self.add_plan_object_elements(root, plan_data["local_id"], get_gml_id(plan_data), plan_data["lifecycle_status"])
+        LOGGER.info("fetching zoning elements...")
+        zoning_elements = get_zoning_elements(plan_data["local_id"], self.db, self.schema)
+        LOGGER.info(zoning_elements)
+        LOGGER.info("adding zoning elements")
+        self.add_zoning_elements(root, zoning_elements, get_gml_id(plan_data), plan_data["lifecycle_status"])
+
+        # Create planning detail lines separately. The same lines may belong to multiple zoning
+        # elements and multiple planned spaces. Creating planning detail lines
+        # one zoning element at a time would duplicate lines in XML.
+        LOGGER.info("fetching planning detail lines...")
+        detail_lines = get_plan_detail_lines(plan_data["local_id"], self.db, self.schema)
+        LOGGER.info("got detail lines:")
+        LOGGER.info(detail_lines)
+        self.add_planning_detail_lines(root, detail_lines, get_gml_id(plan_data))
+
+        # Create planned spaces separately. Due to buffers in relation triggers, the same planned space
+        # may belong to multiple zoning elements, even if they do not strictly overlap. Creating planned spaces
+        # one zoning element at a time would duplicate planned spaces in XML.
+        LOGGER.info("fetching planned spaces...")
+        planned_spaces = get_planned_spaces(plan_data["local_id"], self.db, self.schema)
+        LOGGER.info("got planned spaces:")
+        LOGGER.info(planned_spaces)
+        self.add_planned_spaces(root, planned_spaces, get_gml_id(plan_data))
+
+        # finally, add order elements directly linked to the plan
+        LOGGER.info("creating plan order elements linked to plan")
+        # self.add_plan_order_elements(root, plan_data["local_id"], get_gml_id(plan_data), plan_data["lifecycle_status"])
 
         tree = ElementTree(root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")

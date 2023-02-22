@@ -184,8 +184,7 @@ def get_code_list(code_list: str, db: Database, value_field: str = "codevalue") 
 
 def get_zoning_elements(fk: str, db: Database, schema=None) -> List[DictRow]:
     """
-    Returns all zoning elements linked to a desired plan. No type checking of field types, as the
-    fields are obtained introspecting the db. Also provide GML representation of
+    Returns all zoning elements linked to a desired plan. Also provide GML representation of
     geom field.
     """
     if schema == "":
@@ -193,6 +192,89 @@ def get_zoning_elements(fk: str, db: Database, schema=None) -> List[DictRow]:
     try:
         query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.zoning_element WHERE spatial_plan='{fk}'"
         return db.select(query)
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_planned_spaces(fk: str, db: Database, schema=None) -> List[DictRow]:
+    """
+    Returns all planned spaces inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, planned_space.geom, 15, 1, '', null) as gml FROM {schema}.planned_space JOIN {schema}.zoning_element_planned_space ON planned_space.local_id=planned_space_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_plan_detail_lines(fk: str, db: Database, schema=None) -> List[DictRow]:
+    """
+    Returns all detail lines inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, planning_detail_line.geom, 15, 1, '', null) as gml FROM {schema}.planning_detail_line JOIN {schema}.zoning_element_plan_detail_line ON planning_detail_line.local_id=planning_detail_line_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_zoning_element_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all regulations linked to a desired zoning element.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.zoning_element_plan_regulation ON local_id=plan_regulation_local_id WHERE zoning_element_local_id='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
+def get_planned_space_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all regulations linked to a desired planned space.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.planned_space_plan_regulation ON local_id=plan_regulation_local_id WHERE planned_space_local_id='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
+
+def get_plan_detail_line_regulations(fk: str, db: Database, schema=None) -> List[DictRow]:
+    """
+    Returns all regulations linked to a desired planning detail line.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.planning_detail_line_plan_regulation ON local_id=plan_regulation_local_id WHERE planning_detail_line_local_id='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
@@ -226,22 +308,6 @@ def get_regulation_values(fks: List[str], db: Database, schema=None) -> Dict[str
         for row in rows:
             values[row["fk_plan_regulation"]][value_type].append(row)
     return values
-
-
-def get_zoning_element_regulations(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
-    """
-    Returns all regulations linked to a desired zoning element.
-    """
-    if schema == "":
-        return
-    try:
-        query = f"Select * FROM {schema}.plan_regulation JOIN {schema}.zoning_element_plan_regulation ON local_id=plan_regulation_local_id WHERE zoning_element_local_id='{fk}'"
-        rows = db.select(query)
-        return {row["local_id"]: row for row in rows}
-    except psycopg2.errors.UndefinedTable:
-        iface.messageBar().pushMessage("Virhe!",
-                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
-                                    level=Qgis.Warning, duration=5)
 
 
 def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
