@@ -104,7 +104,6 @@ def add_time_period(parent: Element, period: DateRange) -> Element:
     :param period: Time period to add
     :return: Created GML element
     """
-    #LOGGER.info(str(type(period)).replace("<", "replaced"))
     time_period = SubElement(parent, TIME_PERIOD)
     begin_position = SubElement(time_period, BEGIN_POSITION)
     if period.lower:
@@ -132,9 +131,6 @@ def add_time_position(parent: Element, position: datetime, attrib: Dict = None) 
     time_position = SubElement(time_instant, TIME_POSITION)
     time_position.text = position.isoformat()
     return time_instant
-
-
-
 
 
 def add_point(parent: Element, gml: str, id: str) -> Element:
@@ -350,9 +346,6 @@ class XMLExporter:
         :return: Element created inside lud-core:featureMember
         """
         feature = SubElement(self.root, FEATUREMEMBER)
-
-        LOGGER.info("adding lud core fields for entry")
-        LOGGER.info(entry)
         # The gml:id will have to be unique, because it is used to link objects in the XML to each other.
         # Use placeholder gml ids generated from uuids if the plan has not been saved yet.
         element = SubElement(feature, tag, {"gml:id": get_gml_id(entry)})
@@ -493,7 +486,6 @@ class XMLExporter:
         """
         regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema, guidance)
         for id, regulation in regulations.items():
-            LOGGER.info("adding regulation order...")
             values = regulation_values[id]
             self.add_plan_order_element(regulation, values, target_gml_id, recommendation=guidance)
 
@@ -505,7 +497,6 @@ class XMLExporter:
         :param detail_lines: Planning detail lines from Kauko database
         """
         for id, detail_line in detail_lines.items():
-            LOGGER.info(detail_line)
             self.add_plan_object_element(detail_line)
 
             # TODO: lisättävä viivamaiseen tarkennemerkintään liittyvä kaavamääräys
@@ -513,12 +504,11 @@ class XMLExporter:
             # asemakaavakoodistoon viittaava kenttä. Tällä hetkellä tarkennemerkinnällä on
             # oma koodisto, joka ei viittaa asemakaavakoodistoon.
 
-            # Create all the rest of the planOrders linked to the detail line
-            LOGGER.info("object element added, fetching regulations...")
+            # Create all the rest of the planOrders and planRecommendations linked to the detail line
             regulations = get_plan_detail_line_regulations(id, self.db, self.schema)
-            LOGGER.info("got regulations:")
-            LOGGER.info(regulations)
+            guidances = get_plan_detail_line_regulations(id, self.db, self.schema, guidance=True)
             self.add_regulations(regulations, get_gml_id(detail_line))
+            self.add_regulations(guidances, get_gml_id(detail_line), guidance=True)
 
     def add_planned_spaces(self, planned_spaces: Dict[str, DictRow]) -> None:
         """
@@ -528,15 +518,13 @@ class XMLExporter:
         :param planned_spaces: Planned spaces from Kauko database
         """
         for id, planned_space in planned_spaces.items():
-            LOGGER.info(planned_space)
             self.add_plan_object_element(planned_space)
 
-            # Create all the rest of the planOrders linked to the planned space
-            LOGGER.info("object element added, fetching regulations...")
+            # Create all the rest of the planOrders and planRecommendations linked to the planned space
             regulations = get_planned_space_regulations(id, self.db, self.schema)
-            LOGGER.info("got regulations:")
-            LOGGER.info(regulations)
+            guidances = get_planned_space_regulations(id, self.db, self.schema, guidance=True)
             self.add_regulations(regulations, get_gml_id(planned_space))
+            self.add_regulations(guidances, get_gml_id(planned_space), guidance=True)
 
             # Do not import plan detail lines again. All plan detail lines linked to planned
             # spaces are already linked to their zoning elements.
@@ -549,11 +537,9 @@ class XMLExporter:
         :param zoning_elements: Zoning elements from Kauko database
         """
         for zoning_element in zoning_elements:
-            LOGGER.info(zoning_element)
             self.add_plan_object_element(zoning_element)
 
             # Each zoning element must have planOrder linked to planObject.
-            LOGGER.info("object element added, adding order...")
             zoning_order = zoning_element.copy()
             # This order must have a unique gml id though.
             zoning_order["local_id"] += "-zoning_order"
@@ -567,12 +553,8 @@ class XMLExporter:
             self.add_plan_order_element(zoning_order, dict(), get_gml_id(zoning_element))
 
             # Create all the rest of the planOrders and planRecommendations linked to the zoning element
-            LOGGER.info("fetching regulations...")
             regulations = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema)
             guidances = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema, guidance=True)
-            LOGGER.info("got regulations:")
-            LOGGER.info(regulations)
-            LOGGER.info(guidances)
             self.add_regulations(regulations, get_gml_id(zoning_element))
             self.add_regulations(guidances, get_gml_id(zoning_element), guidance=True)
 
