@@ -4,22 +4,21 @@ from psycopg2.extras import DateRange, DictRow
 from typing import Dict, List, Union
 from xml.etree.ElementTree import dump, Element, ElementTree, fromstring, SubElement, tostring
 
-from qgis.core import QgsProject
+#from qgis.core import QgsProject
 
 from ..database.database import Database
 from ..database.database_handler import (
     get_code_list,
     get_describing_texts,
     get_describing_lines,
+    get_group_regulations,
     get_planned_spaces,
-    get_planned_space_regulations,
     get_plan_detail_lines,
-    get_plan_detail_line_regulations,
     get_plan_regulations,
+    get_regulation_groups,
     get_regulation_values,
     get_spatial_plan,
     get_zoning_elements,
-    get_zoning_element_regulations,
     set_spatial_plan_reference_id,
     set_spatial_plan_identity_id,
     set_spatial_plan_storage_time,
@@ -45,12 +44,14 @@ FEATURECOLLECTION_ATTRIBUTES["xsi:schemaLocation"] = "http://tietomallit.ymparis
 # lud-core tags
 FEATUREMEMBER = CORE_NS + ":featureMember"
 PRODUCER_SPECIFIC_IDENTIFIER = CORE_NS + ":producerSpecificIdentifier"
+OBJECT_IDENTIFIER = CORE_NS + ":objectIdentifier"
 LATEST_CHANGE = CORE_NS + ":latestChange"
 NAME = CORE_NS + ":loc_name"
 BOUNDARY = CORE_NS + ":boundary"
 LEGAL_EFFECTIVENESS = CORE_NS + ":legalEffectiveness"
 RESPONSIBLE_ORGANIZATION = CORE_NS + ":responsibleOrganization"
 VALIDITY_TIME = CORE_NS + ":validityTime"
+CODE_SPACE = "http://uri.suomi.fi/object/rytj/kaava"
 
 # splan tags
 SPATIAL_PLAN = SPLAN_NS + ":SpatialPlan"
@@ -60,7 +61,10 @@ NAME_INSIDE_SPLAN = SPLAN_NS + ":loc_name"
 PLAN_OBJECT = SPLAN_NS + ":PlanObject"
 PLAN_ORDER = SPLAN_NS + ":PlanOrder"
 PLAN_RECOMMENDATION = SPLAN_NS + ":PlanRecommendation"
+PLAN_ORDER_GROUP = SPLAN_NS + ":PlanOrderGroup"
 TARGET = SPLAN_NS + ":target"
+MEMBER = SPLAN_NS + ":member"
+GROUP_NUMBER = SPLAN_NS + ":groupNumber"
 GEOMETRY = SPLAN_NS + ":geometry"
 GROUND_RELATIVE_POSITION = SPLAN_NS + ":groundRelativePosition"
 BINDINGNESS_OF_LOCATION = SPLAN_NS + ":bindingnessOfLocation"
@@ -80,20 +84,22 @@ TIME_POSITION = "gml:timePosition"
 TIME_PERIOD = "gml:TimePeriod"
 BEGIN_POSITION = "gml:beginPosition"
 END_POSITION = "gml:endPosition"
+REFERENCE_IDENTIFIER = "gml:identifier"
 
 
-def get_gml_id(entry: DictRow) -> str:
+def get_gml_id(entry: Union[DictRow, Dict]) -> Union[str, None]:
     """
-    Return unique gml id for an entry in the database. In case the row has not been saved to
-    the Kaatio API yet, it will not have reference id set.
+    Return unique gml id for an entry in the database.
     """
     # XML is really particular about accepted identity strings. Notably, an identity string
     # cannot start with a number, since it will not fulfill the \\\\i-[:]][\\\\c-[:]]* XSD regex,
     # as reported by the Kaatio API.
     #
-    # This means we cannot use the bare reference id or local id here. The id will be thrown
-    # away by the API when POSTing, but it still has to pass validation.
-    return "id-"+ entry["reference_id"] if entry["reference_id"] else "id-" + entry["local_id"]
+    # This means we cannot use the bare local id here. The id will be thrown
+    # away by the API when POSTing, but it still has to pass validation. We are
+    # free to use local_id for gml id at each save.
+    local_id = entry["local_id"]
+    return "id-" + local_id if local_id else None
 
 
 def add_time_period(parent: Element, period: DateRange) -> Element:
@@ -336,7 +342,6 @@ class XMLExporter:
         self.detail_plan_regulation_kinds = get_code_list("detail_plan_regulation_kind", db)
         self.master_plan_regulation_kinds = get_code_list("master_plan_regulation_kind", db)
 
-
     def add_lud_core_element(self, entry: DictRow, tag: str) -> Element:
         """
         Add feature member and containing XML element with lud-core fields, if present in entry.
@@ -347,12 +352,23 @@ class XMLExporter:
         """
         feature = SubElement(self.root, FEATUREMEMBER)
         # The gml:id will have to be unique, because it is used to link objects in the XML to each other.
-        # Use placeholder gml ids generated from uuids if the plan has not been saved yet.
+        # We may use placeholder gml ids generated from local ids. The API will always respond by
+        # generating a new gml id, which will be saved as reference id.
         element = SubElement(feature, tag, {"gml:id": get_gml_id(entry)})
 
         # lud-core fields
         producer_specific_identifier = SubElement(element, PRODUCER_SPECIFIC_IDENTIFIER)
         producer_specific_identifier.text = entry["producer_specific_id"]
+        # TODO: Looks like Kaatio API currently does not accept lud-core:objectIdentifier.
+        # if entry["identity_id"]:
+        #     object_identifier = SubElement(element, OBJECT_IDENTIFIER)
+        #     object_identifier.text = entry["identity_id"]
+        if entry["reference_id"]:
+            # TODO: Don't know if this is even needed. This is id for the old version, not the new
+            # version, anyway. Identity id should tell the API what our object is.
+            reference_identifier = SubElement(element, REFERENCE_IDENTIFIER, {"codeSpace": CODE_SPACE})
+            tag_without_ns = tag.split("splan:")[1]
+            reference_identifier.text = f'{tag_without_ns}/id-{entry["reference_id"]}'
 
         if "latest_change" in entry:
             latest_change = SubElement(element, LATEST_CHANGE)
@@ -401,10 +417,12 @@ class XMLExporter:
         add_code_element(plan, LIFECYCLE_STATUS, self.lifecycle_statuses, plan_data["lifecycle_status"])
         add_code_element(plan, GROUND_RELATIVE_POSITION, self.ground_relativeness_kinds, plan_data["ground_relative_position"])
         
-        initiation_time = SubElement(plan, INITIATION_TIME)
-        add_time_position(initiation_time, plan_data["initiation_time"])
-        approval_time = SubElement(plan, APPROVAL_TIME)
-        add_time_position(approval_time, plan_data["approval_time"])
+        if plan_data["initiation_time"]:
+            initiation_time = SubElement(plan, INITIATION_TIME)
+            add_time_position(initiation_time, plan_data["initiation_time"])
+        if plan_data["approval_time"]:
+            approval_time = SubElement(plan, APPROVAL_TIME)
+            add_time_position(approval_time, plan_data["approval_time"])
         
         add_code_element(plan, DIGITAL_ORIGIN, self.digital_origin_kinds, plan_data["digital_origin"])
 
@@ -433,7 +451,7 @@ class XMLExporter:
     def add_plan_order_element(self,
         entry: DictRow,
         values: Dict[str, List[DictRow]],
-        target_gml_id: Union[str, None],
+        target_gml_ids: List[str],
         master_plan: bool = False,
         recommendation: bool = False
     ) -> None:
@@ -442,9 +460,9 @@ class XMLExporter:
 
         :param entry: Plan order data from Kauko database
         :param values: Dict of order value types and values of each type
-        :param target_gml_id: GML id for target, or None if order is attached directly to plan
+        :param target_gml_ids: GML ids for all regulation targets
         :param master_plan: True if we want to use master plan code lists instead. The default is detail plan.
-        :param guidance: True if we want to add plan recommendation element instead. The default is plan order.
+        :param recommendation: True if we want to add plan recommendation element instead. The default is plan order.
         """
         if recommendation:
             plan_order = self.add_lud_core_element(entry, PLAN_RECOMMENDATION)
@@ -459,8 +477,16 @@ class XMLExporter:
                 add_value_element(plan_order, value_type, value)
 
         plan = SubElement(plan_order, SPATIAL_PLAN_BUT_WITH_SMALL_INITIAL_JUST_FOR_FUN, {"xlink:href": "#" + self.plan_id})
-        if target_gml_id:
-            target = SubElement(plan_order, TARGET, {"xlink:href": "#" + target_gml_id})
+        for target_gml_id in target_gml_ids:
+            # TODO: This is weird. Plan cannot be a target for plan order, this causes an API error.
+            # Instead, orders *without* target are assumed to belong to the plan directly.
+            #
+            # This is obviously a problem, since some orders without target will belong to order
+            # groups, they should *not* belong to the plan directly.
+            #
+            # For the time being, do not add plan as target.
+            if target_gml_id and not target_gml_id == self.plan_id:
+                target = SubElement(plan_order, TARGET, {"xlink:href": "#" + target_gml_id})
 
         if "type" in entry:
             if master_plan:
@@ -476,23 +502,67 @@ class XMLExporter:
             validity_time = SubElement(plan_order, VALIDITY_TIME_INSIDE_SPLAN)
             add_time_period(validity_time, entry["validity_time"])
 
-    def add_regulations(self, regulations: Dict[str, DictRow], target_gml_id: Union[str, None], guidance: bool = False) -> None:
+    def add_plan_order_group_element(self, entry: DictRow, target_gml_ids: List[str], member_gml_ids: List[str]):
+        """
+        Create XML element with plan order group fields.
+
+        :param entry: Plan order group data from Kauko database
+        :param target_gml_ids: GML ids for targets
+        :param member_gml_ids: GML ids for members
+        """
+        group = self.add_lud_core_element(entry, PLAN_ORDER_GROUP)
+        if "name" in entry and entry["name"]:
+            add_language_string_elements(group, NAME_INSIDE_SPLAN, entry["name"])
+
+        plan = SubElement(group, SPATIAL_PLAN_BUT_WITH_SMALL_INITIAL_JUST_FOR_FUN, {"xlink:href": "#" + self.plan_id})
+        for target_gml_id in target_gml_ids:
+            target = SubElement(group, TARGET, {"xlink:href": "#" + target_gml_id})
+
+        group_number = SubElement(group, GROUP_NUMBER)
+        group_number.text = str(entry["group_number"])
+        for member_gml_id in member_gml_ids:
+            member = SubElement(group, MEMBER, {"xlink:href": "#" + member_gml_id})
+
+    def add_regulations(self, regulations: Dict[str, Dict[str, DictRow]], guidance: bool = False) -> None:
         """
         Add Kauko database regulations (or guidances) and their values as plan orders (or recommendations)
 
-        :param detail_lines: Plan regulations (or guidances) from Kauko database, indexed with ids.
-        :param target_gml_id: GML id for regulation target, or None if regulation pertains to plan directly.
+        :param regulations: Plan regulations (or guidances) from Kauko database, indexed with regulation ids and target ids.
+                            Each regulation may be present in multiple targets.
         :param guidance: True if we want to add guidances instead. Default is regulation.
         """
         regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema, guidance)
-        for id, regulation in regulations.items():
-            values = regulation_values[id]
-            self.add_plan_order_element(regulation, values, target_gml_id, recommendation=guidance)
+        for regulation_id, regulation_by_target in regulations.items():
+            target_ids = regulation_by_target.keys()
+            regulation = next(iter(regulation_by_target.values()))
+            values = regulation_values[regulation_id]
+            self.add_plan_order_element(
+                regulation, values, [get_gml_id({"local_id": id}) for id in target_ids], recommendation=guidance
+            )
+
+    def add_regulation_groups(self, groups: Dict[str, Dict[str, DictRow]], regulations: Dict[str, Dict[str, DictRow]]) -> None:
+        """
+        Add Kauko database regulation groups as plan order groups
+
+        :param groups: Plan regulation groups from Kauko database, indexed with group ids and target ids. Each group may be
+                        present in multiple targets.
+        :param regulations: Plan regulations from Kauko database, indexed with group ids and regulation ids. Each regulation
+                        may be present in multiple groups.
+        :param targets: Plan regulation group targets from Kauko database, indexed with target id.
+        """
+        for group_id, group_by_target in groups.items():
+            target_ids = group_by_target.keys()
+            member_ids = regulations[group_id].keys()
+            group = next(iter(group_by_target.values()))
+            self.add_plan_order_group_element(
+                group,
+                [get_gml_id({"local_id": id}) for id in target_ids],
+                [get_gml_id({"local_id": id}) for id in member_ids]
+            )
 
     def add_planning_detail_lines(self, detail_lines: Dict[str, DictRow]) -> None:
         """
-        Add Kauko database planning detail lines as plan objects. Also add
-        their regulations.
+        Add Kauko database planning detail lines as plan objects.
 
         :param detail_lines: Planning detail lines from Kauko database
         """
@@ -504,61 +574,42 @@ class XMLExporter:
             # asemakaavakoodistoon viittaava kenttä. Tällä hetkellä tarkennemerkinnällä on
             # oma koodisto, joka ei viittaa asemakaavakoodistoon.
 
-            # Create all the rest of the planOrders and planRecommendations linked to the detail line
-            regulations = get_plan_detail_line_regulations(id, self.db, self.schema)
-            guidances = get_plan_detail_line_regulations(id, self.db, self.schema, guidance=True)
-            self.add_regulations(regulations, get_gml_id(detail_line))
-            self.add_regulations(guidances, get_gml_id(detail_line), guidance=True)
-
     def add_planned_spaces(self, planned_spaces: Dict[str, DictRow]) -> None:
         """
-        Add Kauko database planned spaces lines as plan objects. Also add all their
-        regulations.
+        Add Kauko database planned spaces lines as plan objects.
 
         :param planned_spaces: Planned spaces from Kauko database
         """
         for id, planned_space in planned_spaces.items():
             self.add_plan_object_element(planned_space)
 
-            # Create all the rest of the planOrders and planRecommendations linked to the planned space
-            regulations = get_planned_space_regulations(id, self.db, self.schema)
-            guidances = get_planned_space_regulations(id, self.db, self.schema, guidance=True)
-            self.add_regulations(regulations, get_gml_id(planned_space))
-            self.add_regulations(guidances, get_gml_id(planned_space), guidance=True)
-
-            # Do not import plan detail lines again. All plan detail lines linked to planned
-            # spaces are already linked to their zoning elements.
-
-    def add_zoning_elements(self, zoning_elements: List[DictRow]) -> None:
+    def add_zoning_elements(self, zoning_elements: Dict[str, DictRow]) -> None:
         """
         Add Kauko database zoning elements as plan objects and their land use
-        types as plan orders to Kaatio feature collection. Also add their regulations.
+        types as plan orders to Kaatio feature collection.
 
         :param zoning_elements: Zoning elements from Kauko database
         """
-        for zoning_element in zoning_elements:
+        for id, zoning_element in zoning_elements.items():
             self.add_plan_object_element(zoning_element)
 
             # Each zoning element must have planOrder linked to planObject.
             zoning_order = zoning_element.copy()
-            # This order must have a unique gml id though.
-            zoning_order["local_id"] += "-zoning_order"
+            # This order must have unique ids though.
+            zoning_order["local_id"] += ".zoning_order"
+            zoning_order["producer_specific_id"] += ".zoning_order"
+            if zoning_order["reference_id"]:
+                zoning_order["reference_id"] += ".zoning_order"
             # The zoning order type is the land use kind. Element type does not apply to order.
             zoning_order["type"] = zoning_order["land_use_kind"]
             # TODO: Each zoning element may only have text values and supplementary information with code values
             # https://tietomallit.ymparisto.fi/kaavatiedot/soveltamisprofiili/asemakaava/v1.0/kayttotarkoitukset/#alueen-käyttötarkoitus
             # Where are these stored in Kauko? Do we want to pick one particular regulation linked to the geometry
             # and link it to this order? Currently, we create all orders separately, because they may have
-            # any values, and pass empty values list in the zoning order.
-            self.add_plan_order_element(zoning_order, dict(), get_gml_id(zoning_element))
+            # any type and any values, and pass empty values list in the zoning order.
+            self.add_plan_order_element(zoning_order, dict(), [get_gml_id(zoning_element)])
 
-            # Create all the rest of the planOrders and planRecommendations linked to the zoning element
-            regulations = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema)
-            guidances = get_zoning_element_regulations(zoning_element["local_id"], self.db, self.schema, guidance=True)
-            self.add_regulations(regulations, get_gml_id(zoning_element))
-            self.add_regulations(guidances, get_gml_id(zoning_element), guidance=True)
-
-            # TODO: add group regulations, supplementary information, and documents
+            # TODO: add supplementary information, commentary, document, participation, planner
 
     def get_xml(self, plan_id: int) -> bytes:
         """
@@ -576,13 +627,14 @@ class XMLExporter:
         self.plan_id = get_gml_id(plan_data)
         self.lifecycle_status = plan_data["lifecycle_status"]
 
+        # 1) Fetch and create all zoning elements
         LOGGER.info("fetching zoning elements...")
         zoning_elements = get_zoning_elements(plan_data["local_id"], self.db, self.schema)
         LOGGER.info(zoning_elements)
         LOGGER.info("adding zoning elements")
         self.add_zoning_elements(zoning_elements)
 
-        # Create planning detail lines separately. The same lines may belong to multiple zoning
+        # 2) Fetch and create all planning detail lines. The same lines may belong to multiple zoning
         # elements and multiple planned spaces. Creating planning detail lines
         # one zoning element at a time would duplicate lines in XML.
         LOGGER.info("fetching planning detail lines...")
@@ -591,7 +643,7 @@ class XMLExporter:
         LOGGER.info(detail_lines)
         self.add_planning_detail_lines(detail_lines)
 
-        # Create planned spaces separately. Due to buffers in relation triggers, the same planned space
+        # 3) Fetch and create all planned spaces. Due to buffers in relation triggers, the same planned space
         # may belong to multiple zoning elements, even if they do not strictly overlap. Creating planned spaces
         # one zoning element at a time would duplicate planned spaces in XML.
         LOGGER.info("fetching planned spaces...")
@@ -600,7 +652,7 @@ class XMLExporter:
         LOGGER.info(planned_spaces)
         self.add_planned_spaces(planned_spaces)
 
-        # TODO: päätettävä, miten selittävät tekstit ja viivat viedään, jos ollenkaan
+        # 4) TODO: päätettävä, miten selittävät tekstit ja viivat viedään, jos ollenkaan
         LOGGER.info("fetching describing texts...")
         describing_texts = get_describing_texts(plan_data["local_id"], self.db, self.schema)
         #self.add_describing_texts(describing_texts)
@@ -608,15 +660,95 @@ class XMLExporter:
         describing_texts = get_describing_lines(plan_data["local_id"], self.db, self.schema)
         #self.add_describing_lines(describing_texts)
 
-        # finally, add order elements directly linked to the plan
-        LOGGER.info("creating plan order elements linked to plan")
-        regulations = get_plan_regulations(plan_data["local_id"], self.db, self.schema)
-        guidances = get_plan_regulations(plan_data["local_id"], self.db, self.schema, guidance=True)
-        LOGGER.info("got regulations")
-        self.add_regulations(regulations, None)
-        self.add_regulations(guidances, None, guidance=True)
+        # 5) Fetch all regulation groups and their regulations. The same regulation group may
+        # belong to multiple zoning elements, detail lines and planned spaces. The same
+        # regulation may belong to multiple groups, zoning elements, detail lines and spaces.
+        LOGGER.info("fetching regulation groups...")
+        zoning_element_regulation_groups = get_regulation_groups("zoning_element", zoning_elements.keys(), self.db, self.schema)
+        planned_space_regulation_groups = get_regulation_groups("planned_space", planned_spaces.keys(), self.db, self.schema)
+        detail_line_regulation_groups = get_regulation_groups("planning_detail_line", detail_lines.keys(), self.db, self.schema)
+        # combine regulation groups:
+        group_ids = set().union(
+            zoning_element_regulation_groups.keys(),
+            planned_space_regulation_groups.keys(),
+            detail_line_regulation_groups.keys()
+            )
+        # regulation groups by group id and target id:
+        regulation_groups = {group_id: {
+            **(zoning_element_regulation_groups[group_id]),
+            **(planned_space_regulation_groups[group_id]),
+            **(detail_line_regulation_groups[group_id])
+        } for group_id in group_ids}
+        LOGGER.info("got groups:")
+        LOGGER.info(regulation_groups)
+        # get all regulations in groups:
+        regulations_by_group = get_group_regulations(regulation_groups.keys(), self.db, self.schema)
+        group_regulations = {
+            id: regulation for regulation_dict in regulations_by_group.values()
+            for id, regulation in regulation_dict.items()
+        }
+        LOGGER.info("regulations in groups:")
+        LOGGER.info(group_regulations)
 
-        # TODO: add group regulations, supplementary information, commentary, document, participation
+        # 6) Fetch and create the rest of the regulations and guidances here. Do *not* create them
+        # for each zoning element, planned space, line and group separately. If the same regulation
+        # refers to multiple plan objects, it would duplicate regulations in XML. We must add each
+        # regulation only once.
+        LOGGER.info("fetching regulations...")
+        plan_regulations = get_plan_regulations("spatial_plan", [plan_data["local_id"]], self.db, self.schema)
+        plan_guidances = get_plan_regulations("spatial_plan", [plan_data["local_id"]], self.db, self.schema, guidance=True)
+        zoning_element_regulations = get_plan_regulations("zoning_element", zoning_elements.keys(), self.db, self.schema)
+        zoning_element_guidances = get_plan_regulations(
+            "zoning_element", zoning_elements.keys(), self.db, self.schema, guidance=True
+            )
+        planned_space_regulations = get_plan_regulations("planned_space", planned_spaces.keys(), self.db, self.schema)
+        planned_space_guidances = get_plan_regulations(
+            "planned_space", planned_spaces.keys(), self.db, self.schema, guidance=True
+            )
+        detail_line_regulations = get_plan_regulations("planning_detail_line", detail_lines.keys(), self.db, self.schema)
+        detail_line_guidances = get_plan_regulations(
+            "planning_detail_line", detail_lines.keys(), self.db, self.schema, guidance=True
+            )
+        # combine regulations, also taking into account group regulations fetched earlier:
+        regulation_ids = set().union(
+            plan_regulations.keys(),
+            zoning_element_regulations.keys(),
+            planned_space_regulations.keys(),
+            detail_line_regulations.keys(),
+            group_regulations.keys()
+            )
+        # regulations by regulation id and target id:
+        regulations = {regulation_id: {
+            **(plan_regulations[regulation_id]),
+            **(zoning_element_regulations[regulation_id]),
+            **(planned_space_regulations[regulation_id]),
+            **(detail_line_regulations[regulation_id]),
+            None: group_regulations.get(regulation_id, None)  # group regulations have no target
+        } for regulation_id in regulation_ids}
+        LOGGER.info("got regulations:")
+        LOGGER.info(regulations)
+        guidance_ids = set().union(
+            plan_guidances.keys(),
+            zoning_element_guidances.keys(),
+            planned_space_guidances.keys(),
+            detail_line_guidances.keys(),
+            )
+        guidances = {guidance_id: {
+            **plan_guidances[guidance_id],
+            **zoning_element_guidances[guidance_id],
+            **planned_space_guidances[guidance_id],
+            **detail_line_guidances[guidance_id],
+        } for guidance_id in guidance_ids}
+        LOGGER.info("got guidances:")
+        LOGGER.info(guidances)
+        self.add_regulations(regulations)
+        self.add_regulations(guidances, guidance=True)
+
+        # 7) Regulation groups may only be added after all regulations have been added. They refer
+        # to existing regulations.
+        self.add_regulation_groups(zoning_element_regulation_groups, regulations_by_group)
+
+        # TODO: add supplementary information, commentary, document, participation, planner
 
         tree = ElementTree(self.root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")
