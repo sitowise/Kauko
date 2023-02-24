@@ -22,7 +22,7 @@ BEGIN
                             CASE
                               WHEN validity = 1 THEN ''11''
                               WHEN validity = 2 THEN ''10''
-                              WHEN validity = 3 THEN ''13''
+                              WHEN validity = 3 THEN ''12''
                               WHEN validity = 4 THEN ''01''
                             END;',
                       table_name);
@@ -45,14 +45,12 @@ BEGIN
       SELECT
         sp.local_id,
         sp.geom,
-        sp.valid_from,
-        sp.valid_to,
         sp.lifecycle_status,
         sp.validity_time
       FROM SCHEMANAME.spatial_plan sp
-      WHERE sp.valid_from IS NOT NULL
-          AND sp.lifecycle_status NOT IN ('07', '09', '12', '13', '14', '15')
-          AND (sp.valid_to IS NULL OR sp.valid_to >= CURRENT_DATE)
+      WHERE sp.validity_time IS NOT NULL
+          AND sp.lifecycle_status NOT IN ('12', '13')
+          AND (UPPER(sp.validity_time) IS NULL OR UPPER(sp.validity_time) >= CURRENT_DATE)
   );
 
   WITH spatial_plan_valid_from AS (
@@ -494,7 +492,7 @@ BEGIN
       FROM SCHEMANAME.spatial_plan sp2
         INNER JOIN SCHEMANAME.zoning_element ze2
           ON ze2.spatial_plan = sp2.local_id
-      WHERE ze2.lifecycle_status IN ('06', '07', '08', '')
+      WHERE ze2.lifecycle_status IN ('06', '07', '08', '10')
   )
   UPDATE SCHEMANAME.spatial_plan sp
   SET lifecycle_status = '11'
@@ -505,7 +503,7 @@ BEGIN
   SET lifecycle_status = '10'
   FROM SCHEMANAME.zoning_element ze
   WHERE sp.local_id = ze.spatial_plan
-    AND ze.lifecycle_status <> 1
-    AND sp.lifecycle_status = 1;
+    AND ze.lifecycle_status <> ('06', '07', '08', '10', '12')
+    AND sp.lifecycle_status = '11';
 END;
 $BODY$;
