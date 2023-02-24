@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Set, Tuple
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsAuthMethodConfig, QgsProject
@@ -7,16 +7,21 @@ from .database import Database
 from ..constants import *
 
 
-def get_database_connections() -> set:
-    """Returns names of all PostGis connections saved to QGis
+def get_database_connections() -> Set[Tuple]:
+    """Returns names of all PostGis connections and their databases saved to QGis
 
-    :return: set
+    :return: set[Tuple]
     """
     s = QSettings()
     s.beginGroup(PG_CONNECTIONS)
-    keys = s.allKeys()
+    connections = s.childGroups()
+    tuples = set()
+    for connection in connections:
+        s.beginGroup(connection)
+        tuples.add((connection, s.value("database")))
+        s.endGroup()
     s.endGroup()
-    return {key.split('/')[0] for key in keys if '/' in key}
+    return tuples
 
 
 def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool) -> str:
@@ -32,16 +37,29 @@ def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool
 
 
 def set_connection(db_name: str) -> None:
-    """ Sets connection as database name to QSettings
+    """ Sets connection based on used database name
 
     :param db_name: str
     :return: None
     """
-    QSettings().setValue('connection', db_name)
+    # We have to find the connection with the right database name.
+    # TODO: If there are several connections with a database of the same name,
+    # then we're out of luck. There's no way to find out the right
+    # connection and auth settings based on database name alone :(
+    s = QSettings()
+    s.beginGroup(PG_CONNECTIONS)
+    for connection in s.childGroups():
+        s.beginGroup(f"{PG_CONNECTIONS}/{connection}")
+        database = s.value("database")
+        s.endGroup()
+        if database == db_name:
+            # found the connection with the right database
+            break
+    QSettings().setValue("connection", connection)
 
 
 def get_connection_name() -> str:
-    """Return the name of used database
+    """Return the name of used connection
 
     :return: str
     """

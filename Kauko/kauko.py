@@ -22,7 +22,7 @@
  ***************************************************************************/
 """
 import os.path
-from typing import Callable
+from typing import Callable, Tuple
 
 import psycopg2
 from qgis.core import (Qgis, QgsApplication, QgsCoordinateReferenceSystem,
@@ -30,13 +30,13 @@ from qgis.core import (Qgis, QgsApplication, QgsCoordinateReferenceSystem,
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QWidget
+from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QWidget
 
-from .constants import NUMBER_OF_GEOM_CHECKS_SQL
+from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
                                         get_projects, get_spatial_plan_names)
 from .database.db_initializer import DatabaseInitializer
-from .database.db_tools import get_active_db_and_schema
+from .database.db_tools import get_active_db_and_schema, get_database_connections
 from .database.project_updater.project_template_writer import write_template
 from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
@@ -95,9 +95,12 @@ class Kauko:
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
-        self.first_start = None
+        # this doesn't do anything. self.first_start is never used
+        # self.first_start = None
 
         self.database_initializer = None
+        self.dbname = None
+        self.schema = None
 
     def add_action(
             self,
@@ -270,9 +273,6 @@ class Kauko:
             add_to_toolbar=False
         ) """
 
-        # will be set False in run()
-        self.first_start = True
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         """ for action in self.actions:
@@ -283,15 +283,35 @@ class Kauko:
         self.menu.clear()
         self.iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
 
+    def _start(self, require_db: bool=False):
+        """
+        Sets the current database initializer, database and schema.
+
+        :param require_db: Determines if the command requires an open project.
+        """
+        if require_db:
+            self.dbname, self.schema = get_active_db_and_schema()
+            if not self.dbname or not self.schema:
+                self.iface.messageBar().pushMessage("Virhe!",
+                                                "Yksikään projekti ei ole avoinna.",
+                                                level=Qgis.Warning, duration=5)
+        else:
+            self.dbname = None
+            self.schema = None
+        self.database_initializer = \
+            DatabaseInitializer(self.iface, QgsApplication.instance(), self.dbname, self.schema)
+
+    def _initialize_database(self, dlg: QDialog):
+        self.database_initializer.initialize_database(dlg.get_db())
+        database = self.database_initializer.database
+        try:
+            dlg.add_projectComboBox_items(get_projects(database))
+        except psycopg2.OperationalError:
+            dlg.add_projectComboBox_items(["Ei yhteyttä!"])
+        return database
 
     def create_schema(self):
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance())
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start:
-            self.first_start = False
+        self._start()
         dlg = InitiateSchemaDialog(self.iface)
         dlg.show()
 
@@ -303,28 +323,10 @@ class Kauko:
             dlg.create_schema(database)
 
     def open_project(self):
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance())
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start:
-            self.first_start = False
-
+        self._start()
         dlg = InitiateOpenProjectDialog(self.iface)
-
-        def initialize_database():
-            if self.database_initializer.initialize_database(dlg.get_db()):
-                database = self.database_initializer.database
-                try:
-                    dlg.add_projectComboBox_items(get_projects(database))
-                except psycopg2.OperationalError:
-                    dlg.add_projectComboBox_items(["Ei yhteyttä!"])
-            else:
-                dlg.add_projectComboBox_items(["Ei yhteyttä!"])
-
-        initialize_database()
-        dlg.db_changed.connect(initialize_database)
+        self._initialize_database(dlg)
+        dlg.db_changed.connect(lambda: self._initialize_database(dlg))
 
         dlg.show()
         # Run the dialog event loop
@@ -335,27 +337,10 @@ class Kauko:
             dlg.open_project()
 
     def delete_project(self):
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance())
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start:
-            self.first_start = False
-
+        self._start()
         dlg = InitiateDeleteProjectDialog(self.iface)
-
-        def initialize_database():
-            self.database_initializer.initialize_database(dlg.get_db())
-            database = self.database_initializer.database
-            try:
-                dlg.add_projectComboBox_items(get_projects(database))
-            except psycopg2.OperationalError:
-                dlg.add_projectComboBox_items(["Ei yhteyttä!"])
-            return database
-
-        initialize_database()
-        dlg.db_changed.connect(initialize_database)
+        self._initialize_database(dlg)
+        dlg.db_changed.connect(lambda: self._initialize_database(dlg))
 
         dlg.show()
 
@@ -363,59 +348,32 @@ class Kauko:
         result = dlg.exec_()
         # See if OK was pressed
         if result:
-            db = initialize_database()
+            db = self._initialize_database(dlg)
             dlg.delete_project(db)
 
     def get_regulations(self):
-        dbname, schema = get_active_db_and_schema()
-        if not dbname or not schema:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance())
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start:
-            self.first_start = False
-
+        self._start(True)
         dlg = InitiateRegulationsDialog(self.iface)
-        if not self.database_initializer.initialize_database(dbname):
+        if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        dlg.add_spatial_plan_names(get_spatial_plan_names(db, schema))
+        dlg.add_spatial_plan_names(get_spatial_plan_names(db, self.schema))
 
         dlg.show()
 
         # Run the dialog event loop
         # See if OK was pressed
         if dlg.exec_():
-            dlg.write_regulations(db, schema)
+            dlg.write_regulations(db, self.schema)
 
     def show_selected_plan(self):
-        dbname, schema = get_active_db_and_schema()
-        if len(schema) == 0:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
-                                schema)
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start:
-            self.first_start = False
-
+        self._start(True)
         dlg = InitiateSelectPlanNameDialog(self.iface)
-        if not self.database_initializer.initialize_database(dbname):
+        if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
 
-        spatial_plans = get_spatial_plan_names(db, schema)
+        spatial_plans = get_spatial_plan_names(db, self.schema)
         dlg.add_spatial_plan_names(spatial_plans)
 
         dlg.show()
@@ -425,24 +383,17 @@ class Kauko:
         if dlg.exec_():
             clear_layer_filters()
             dlg.write_spatial_plan_name_filters(db, QgsProject().instance(),
-                                                schema)
+                                                self.schema)
 
     def set_editing(self):
-        dbname, schema = get_active_db_and_schema()
-        if not dbname and not schema:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        elif schema[-1] != 'y':
+        self._start(True)
+        if self.schema[-1] != 'y':
             self.iface.messageBar().pushMessage("Virhe!",
                                                 "Työtila ei ole asemakaavayhdistelmä",
                                                 level=Qgis.Warning, duration=5)
             return
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), dbname)
         db = self.database_initializer.database
-        query = NUMBER_OF_GEOM_CHECKS_SQL.replace("schemaname", schema)
+        query = NUMBER_OF_GEOM_CHECKS_SQL.replace("schemaname", self.schema)
         checks = db.select(query)[0][0]
         msg = QMessageBox()
         msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -450,80 +401,55 @@ class Kauko:
         if checks == 0:
             msg.setText("Haluatko laittaa muokkauksen päälle?")
             if msg.exec_():
-                drop_geom_checks(schema, db)
+                drop_geom_checks(self.schema, db)
         else:
             msg.setText("Haluatko lopettaa muokkauksen?")
             if msg.exec_():
-                add_geom_checks(schema, db)
+                add_geom_checks(self.schema, db)
 
     def move_plan(self):
-        dbname, schema = get_active_db_and_schema()
-        if not dbname and not schema:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        elif schema[-1] == 'y':
+        self._start(True)
+        if self.schema[-1] == 'y':
             self.iface.messageBar().pushMessage("Virhe!",
                                                 "Työtila on asemakaavayhdistelmä",
                                                 level=Qgis.Warning, duration=5)
             return
-
-        self.database_initializer = \
-                DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
-                                schema)
         dlg = MovePlanDialog(self.iface)
-        if not self.database_initializer.initialize_database(dbname):
+        if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, schema)
+        spatial_plans = get_spatial_plan_names(db, self.schema)
         dlg.add_spatial_plan_names(spatial_plans)
         dlg.show()
         if dlg.exec_():
-            if not drop_geom_checks(f"{schema}_y", db):
+            if not drop_geom_checks(f"{self.schema}_y", db):
                 return
-            dlg.move_plan(db, schema)
+            dlg.move_plan(db, self.schema)
             srid = self.iface.mapCanvas().mapSettings().destinationCrs().authid()[5:]
-            if open_project(f"{schema}_y"):
+            if open_project(f"{self.schema}_y"):
                 QgsProject().instance().setCrs(
                     QgsCoordinateReferenceSystem(int(srid)))
 
     def validity_to_unfinished(self):
-        dbname, schema = get_active_db_and_schema()
-        if not dbname and not schema:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        self.database_initializer = \
-                DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
-                                schema)
+        self._start(True)
         dlg = ChangeToUnfinished(self.iface)
-        if not self.database_initializer.initialize_database(dbname):
+        if not self.database_initializer.initialize_database(self.dbname):
             return
         db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, schema)
+        spatial_plans = get_spatial_plan_names(db, self.schema)
         dlg.add_spatial_plan_names(spatial_plans)
         dlg.show()
         if dlg.exec_():
             plan_name = dlg.get_spatial_plan_name()
-            query = get_query(schema, "/sql_scripts/change_to_unfinished.sql",
+            query = get_query(self.schema, "/sql_scripts/change_to_unfinished.sql",
                             plan_name=plan_name)
             db.insert(query)
             self.iface.messageBar().pushMessage(f"Kaava {plan_name} muutettu keskeneräiseksi", level=Qgis.Success, duration=5)
 
     def fix_topology(self):
-        dbname, schema = get_active_db_and_schema()
-        if not dbname and not schema:
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Yksikään projekti ei ole avoinna.",
-                                                level=Qgis.Warning, duration=5)
-            return
-        self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), dbname,
-                                schema)
+        self._start(True)
         db = self.database_initializer.database
-        query = get_query(schema, "/sql_scripts/fix_topology.sql")
+        query = get_query(self.schema, "/sql_scripts/fix_topology.sql")
         db.insert(query)
         self.iface.messageBar().pushMessage("Kaavan topologia korjattu.",
                                             level=Qgis.Success, duration=5)
@@ -533,18 +459,8 @@ class Kauko:
             DatabaseInitializer(self.iface, QgsApplication.instance())
 
         dlg = InitiateUpdateProjectDialog(self.iface)
-
-        def initialize_database():
-            self.database_initializer.initialize_database(dlg.get_db())
-            db = self.database_initializer.database
-            try:
-                dlg.add_projects(get_projects(db))
-            except psycopg2.OperationalError:
-                dlg.add_projects(["Ei yhteyttä!"])
-
-        initialize_database()
-
-        dlg.db_changed.connect(initialize_database)
+        self._initialize_database(dlg)
+        dlg.db_changed.connect(lambda: self._initialize_database(dlg))
 
         dlg.show()
         # Run the dialog event loop
