@@ -417,6 +417,55 @@ def get_supplementary_information(fks: List[str], db: Database, schema=None) -> 
                                     level=Qgis.Warning, duration=5)
 
 
+def get_plan_commentaries(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all commentaries linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.spatial_plan_commentary WHERE spatial_plan='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_participation_and_evaluation_plans(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all participation and evaluation plans linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.participation_and_evalution_plan WHERE spatial_plan='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_planners(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all planners linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.planner WHERE fk_spatial_plan='{fk}'"
+        rows = db.select(query)
+        # TODO: Fix this once planners have more id fields
+        return {row["identifier"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
 def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
     """
     Returns all fields from the plan table. Also provide GML representation of

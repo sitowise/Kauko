@@ -13,7 +13,10 @@ from ..database.database_handler import (
     get_describing_texts,
     get_describing_lines,
     get_group_regulations,
+    get_participation_and_evaluation_plans,
     get_planned_spaces,
+    get_planners,
+    get_plan_commentaries,
     get_plan_detail_lines,
     get_plan_regulations,
     get_regulation_groups,
@@ -74,6 +77,12 @@ GROUND_RELATIVE_POSITION = SPLAN_NS + ":groundRelativePosition"
 BINDINGNESS_OF_LOCATION = SPLAN_NS + ":bindingnessOfLocation"
 TYPE = SPLAN_NS + ":type"
 LIFECYCLE_STATUS = SPLAN_NS + ":lifecycleStatus"
+COMMENTARY = SPLAN_NS + ":SpatialPlanCommentary"
+PARTICIPATION_AND_EVALUATION_PLAN = SPLAN_NS + ":ParticipationAndEvaluationPlan"
+PLANNER = SPLAN_NS + ":Planner"
+PERSON_NAME = SPLAN_NS + ":personName"
+PROFESSION_TITLE = SPLAN_NS + ":professionTitle"
+ROLE = SPLAN_NS + ":role"
 
 # GML tags
 GML_POINT = "gml:Point"
@@ -431,11 +440,44 @@ class XMLExporter:
         
         add_code_element(plan, DIGITAL_ORIGIN, self.digital_origin_kinds, plan_data["digital_origin"])
 
+    def add_spatial_plan_commentary_element(self, entry: DictRow) -> None:
+        """
+        Add XML element with spatial plan commentary fields.
+
+        :param entry: Spatial plan commentary data from Kauko database
+        """
+        commentary = self.add_lud_core_element(entry, COMMENTARY)
+
+    def add_participation_and_evaluation_plan_element(self, entry: DictRow) -> None:
+        """
+        Add XML element with participation and evaluation plan fields.
+
+        :param entry: Participation and evaluation plan data from Kauko database
+        """
+        plan = self.add_lud_core_element(entry, PARTICIPATION_AND_EVALUATION_PLAN)
+
+    def add_planner_element(self, entry: DictRow) -> None:
+        """
+        Add XML element with participation and evaluation plan fields.
+
+        :param entry: Participation and evaluation plan data from Kauko database
+        """
+        # TODO: Use this once planner has any lud core fields in database.
+        # planner = self.add_lud_core_element(entry, PLANNER)
+        feature = SubElement(self.root, FEATUREMEMBER)
+        planner = SubElement(feature, PLANNER)
+        person_name = SubElement(planner, PERSON_NAME)
+        person_name.text = entry["name"]
+        if entry["professional_title"]:
+            add_language_string_elements(planner, PROFESSION_TITLE, entry["professional_title"])
+        if entry["role"]:
+            add_language_string_elements(planner, ROLE, entry["role"])
+
     def add_plan_object_element(self, entry: DictRow) -> None:
         """
         Add XML element with plan object fields, if present in entry.
 
-        :param object_data: Plan object data from Kauko database
+        :param entry: Plan object data from Kauko database
         """
         plan_object = self.add_lud_core_element(entry, PLAN_OBJECT)
         if "name" in entry and entry["name"]:
@@ -655,6 +697,35 @@ class XMLExporter:
 
             # TODO: commentary, document, participation, planner
 
+    def add_commentaries(self, commentaries: Dict[str, DictRow]) -> None:
+        """
+        Add Kauko database commentaries as spatial plan commentary objects.
+
+        :param commentaries: Commentaries from Kauko database
+        """
+        # TODO: fetch and add documents here?
+        for id, commentary in commentaries.items():
+            self.add_spatial_plan_commentary_element(commentary)
+
+    def add_participation_and_evaluation_plans(self, participation_and_evaluation_plans: Dict[str, DictRow]) -> None:
+        """
+        Add Kauko database participation and evaluation plans as participation and evaluation plan objects.
+
+        :param participation_and_evaluation_plans: Participation and evaluation plans from Kauko database
+        """
+        # TODO: fetch and add documents here?
+        for id, plan in participation_and_evaluation_plans.items():
+            self.add_participation_and_evaluation_plan_element(plan)
+
+    def add_planners(self, planners: Dict[str, DictRow]) -> None:
+        """
+        Add Kauko database planners as planner objects.
+
+        :param  planners: Planners from Kauko database
+        """
+        for id, planner in planners.items():
+            self.add_planner_element(planner)
+
     def get_xml(self, plan_id: int) -> bytes:
         """
         Return Kaatio XML generated from a plan in Kauko database.
@@ -666,6 +737,7 @@ class XMLExporter:
         plan_data = get_spatial_plan(plan_id, self.db, self.schema)
         LOGGER.info(plan_data)
         LOGGER.info("creating plan element")
+        # TODO: add annexes here?
         self.add_spatial_plan_element(plan_data)
         LOGGER.info("setting global values")
         self.plan_id = get_gml_id(plan_data)
@@ -792,7 +864,23 @@ class XMLExporter:
         # to existing regulations.
         self.add_regulation_groups(zoning_element_regulation_groups, regulations_by_group)
 
-        # TODO: add commentary, document, participation, planner
+        # 8) Fetch and create all commentaries
+        commentaries = get_plan_commentaries(plan_data["local_id"], self.db, self.schema)
+        self.add_commentaries(commentaries)
+
+        # 9) Fetch and create all participation and evaluation plans
+        participation_and_evaluation_plans = get_participation_and_evaluation_plans(
+            plan_data["local_id"], self.db , self.schema
+        )
+        self.add_participation_and_evaluation_plans(participation_and_evaluation_plans)
+
+        # 10) Fetch and create all planners
+        # TODO: For some reason, planners are always attached to all versions of the plan
+        # (producer specific id), never one version (local id).
+        # TODO: Enable planners when the API doesn't crash. Currently, planners
+        # HTTP 500 in Kaatio API server.
+        # planners = get_planners(plan_data["producer_specific_id"], self.db, self.schema)
+        # self.add_planners(planners)
 
         tree = ElementTree(self.root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")
