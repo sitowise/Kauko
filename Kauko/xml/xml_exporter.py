@@ -465,7 +465,8 @@ class XMLExporter:
         # TODO: Use this once planner has any lud core fields in database.
         # planner = self.add_lud_core_element(entry, PLANNER)
         feature = SubElement(self.root, FEATUREMEMBER)
-        planner = SubElement(feature, PLANNER)
+        # TODO: use proper gml id once planner has an uuid
+        planner = SubElement(feature, PLANNER, {"gml:id": f"id-planner-{entry['identifier']}"})
         person_name = SubElement(planner, PERSON_NAME)
         person_name.text = entry["name"]
         if entry["professional_title"]:
@@ -877,10 +878,8 @@ class XMLExporter:
         # 10) Fetch and create all planners
         # TODO: For some reason, planners are always attached to all versions of the plan
         # (producer specific id), never one version (local id).
-        # TODO: Enable planners when the API doesn't crash. Currently, planners
-        # HTTP 500 in Kaatio API server.
-        # planners = get_planners(plan_data["producer_specific_id"], self.db, self.schema)
-        # self.add_planners(planners)
+        planners = get_planners(plan_data["producer_specific_id"], self.db, self.schema)
+        self.add_planners(planners)
 
         tree = ElementTree(self.root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")
