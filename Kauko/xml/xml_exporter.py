@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from datetime import datetime
 from psycopg2.extras import DateRange, DictRow
 from typing import Dict, List, Union
@@ -16,8 +17,9 @@ from ..database.database_handler import (
     get_plan_detail_lines,
     get_plan_regulations,
     get_regulation_groups,
-    get_regulation_values,
     get_spatial_plan,
+    get_supplementary_information,
+    get_values,
     get_zoning_elements,
     set_spatial_plan_reference_id,
     set_spatial_plan_identity_id,
@@ -62,6 +64,8 @@ PLAN_OBJECT = SPLAN_NS + ":PlanObject"
 PLAN_ORDER = SPLAN_NS + ":PlanOrder"
 PLAN_RECOMMENDATION = SPLAN_NS + ":PlanRecommendation"
 PLAN_ORDER_GROUP = SPLAN_NS + ":PlanOrderGroup"
+SUPPLEMENTARY_INFO = SPLAN_NS + ":supplementaryInfo"
+SUPPLEMENTARY_INFORMATION = SPLAN_NS + ":SupplementaryInformation"
 TARGET = SPLAN_NS + ":target"
 MEMBER = SPLAN_NS + ":member"
 GROUP_NUMBER = SPLAN_NS + ":groupNumber"
@@ -341,6 +345,7 @@ class XMLExporter:
         self.bindingness_kinds = get_code_list("bindingness_kind", db)
         self.detail_plan_regulation_kinds = get_code_list("detail_plan_regulation_kind", db)
         self.master_plan_regulation_kinds = get_code_list("master_plan_regulation_kind", db)
+        self.detail_plan_addition_information_kinds = get_code_list("detail_plan_addition_information_kind", db)
 
     def add_lud_core_element(self, entry: DictRow, tag: str) -> Element:
         """
@@ -451,6 +456,8 @@ class XMLExporter:
     def add_plan_order_element(self,
         entry: DictRow,
         values: Dict[str, List[DictRow]],
+        supplementary_information: Dict[str, DictRow],
+        supplementary_information_values: Dict[str, Dict[str, List[DictRow]]],
         target_gml_ids: List[str],
         master_plan: bool = False,
         recommendation: bool = False
@@ -460,6 +467,9 @@ class XMLExporter:
 
         :param entry: Plan order data from Kauko database
         :param values: Dict of order value types and values of each type
+        :param supplementary_information: Dict of supplementary information for order
+        :param supplementary_information_values: Dict of supplementary information ids and dicts of information value types
+            and values of each type
         :param target_gml_ids: GML ids for all regulation targets
         :param master_plan: True if we want to use master plan code lists instead. The default is detail plan.
         :param recommendation: True if we want to add plan recommendation element instead. The default is plan order.
@@ -502,6 +512,22 @@ class XMLExporter:
             validity_time = SubElement(plan_order, VALIDITY_TIME_INSIDE_SPLAN)
             add_time_period(validity_time, entry["validity_time"])
 
+        # only plan orders may have supplementary information
+        for id, information in supplementary_information.items():
+            info_element = SubElement(plan_order, SUPPLEMENTARY_INFO)
+            information_element = SubElement(info_element, SUPPLEMENTARY_INFORMATION)
+
+            type = information["type"]
+            add_code_element(information_element, TYPE, self.detail_plan_addition_information_kinds, type)
+
+            name = information["name"]
+            add_language_string_elements(information_element, NAME_INSIDE_SPLAN, name)
+
+            values = supplementary_information_values[id]
+            for value_type, values in values.items():
+                for value in values:
+                    add_value_element(information_element, value_type, value)
+
     def add_plan_order_group_element(self, entry: DictRow, target_gml_ids: List[str], member_gml_ids: List[str]):
         """
         Create XML element with plan order group fields.
@@ -525,19 +551,37 @@ class XMLExporter:
 
     def add_regulations(self, regulations: Dict[str, Dict[str, DictRow]], guidance: bool = False) -> None:
         """
-        Add Kauko database regulations (or guidances) and their values as plan orders (or recommendations)
+        Add Kauko database regulations (or guidances), their values, supplementary information and their
+        values as plan orders (or recommendations)
 
         :param regulations: Plan regulations (or guidances) from Kauko database, indexed with regulation ids and target ids.
                             Each regulation may be present in multiple targets.
         :param guidance: True if we want to add guidances instead. Default is regulation.
         """
-        regulation_values = get_regulation_values(regulations.keys(), self.db, self.schema, guidance)
+        regulation_values = get_values(
+            "plan_regulation" if not guidance else "plan_guidance", regulations.keys(), self.db, self.schema
+        )
+        regulation_supplementary_information = get_supplementary_information(
+            regulations.keys(), self.db, self.schema
+        ) if not guidance else defaultdict(dict)
+        supplementary_information_ids = set().union(
+            *[information.keys() for information in regulation_supplementary_information.values()]
+        )
+        supplementary_information_values = get_values(
+            "supplementary_information", supplementary_information_ids, self.db, self.schema
+        ) if not guidance else defaultdict(dict)
         for regulation_id, regulation_by_target in regulations.items():
             target_ids = regulation_by_target.keys()
             regulation = next(iter(regulation_by_target.values()))
             values = regulation_values[regulation_id]
+            informations = regulation_supplementary_information[regulation_id]
             self.add_plan_order_element(
-                regulation, values, [get_gml_id({"local_id": id}) for id in target_ids], recommendation=guidance
+                regulation,
+                values,
+                informations,
+                supplementary_information_values,
+                [get_gml_id({"local_id": id}) for id in target_ids],
+                recommendation=guidance
             )
 
     def add_regulation_groups(self, groups: Dict[str, Dict[str, DictRow]], regulations: Dict[str, Dict[str, DictRow]]) -> None:
@@ -607,9 +651,9 @@ class XMLExporter:
             # Where are these stored in Kauko? Do we want to pick one particular regulation linked to the geometry
             # and link it to this order? Currently, we create all orders separately, because they may have
             # any type and any values, and pass empty values list in the zoning order.
-            self.add_plan_order_element(zoning_order, dict(), [get_gml_id(zoning_element)])
+            self.add_plan_order_element(zoning_order, dict(), dict(), dict(), [get_gml_id(zoning_element)])
 
-            # TODO: add supplementary information, commentary, document, participation, planner
+            # TODO: commentary, document, participation, planner
 
     def get_xml(self, plan_id: int) -> bytes:
         """
@@ -748,7 +792,7 @@ class XMLExporter:
         # to existing regulations.
         self.add_regulation_groups(zoning_element_regulation_groups, regulations_by_group)
 
-        # TODO: add supplementary information, commentary, document, participation, planner
+        # TODO: add commentary, document, participation, planner
 
         tree = ElementTree(self.root)
         tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")

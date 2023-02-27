@@ -361,22 +361,27 @@ def get_group_regulations(regulation_group_ids: Iterable[str], db: Database, sch
                                     level=Qgis.Warning, duration=5)
 
 
-def get_regulation_values(fks: List[str], db: Database, schema=None, guidance=False) -> Dict[str, Dict[str, List[DictRow]]]:
+def get_values(
+        object_table: Literal["plan_regulation", "plan_guidance", "supplementary_information"],
+        object_ids: Iterable[str],
+        db: Database,
+        schema=None
+    ) -> Dict[str, Dict[str, List[DictRow]]]:
     """
-    Returns all values for a list of zoning regulation (or guidance) ids. Values are returned separated by regulation
-    (or guidance) and type. Also provide GML representation of geometry values.
+    Returns all values for a list of zoning regulation (or guidance, or supplemntary information) ids.
+    Values are returned separated by regulation (or guidance, or supplementary information) and type.
+    Also provide GML representation of geometry values.
     """
     if schema == "":
         return
-    regulation = "regulation" if not guidance else "guidance"
-    values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in fks}
-    fk_string = "','".join(fks)
+    values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in object_ids}
+    fk_string = "','".join(object_ids)
     for value_type in VALUE_TYPES:
         fields = "*"
         if "geometry" in value_type:
             fields += ", ST_asGML(3, value, 15, 1, '', null) as gml"
         uuid_field = f"{value_type}_uuid"
-        query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_{regulation}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_{regulation} in ('{fk_string}')"
+        query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.{object_table}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_{object_table} in ('{fk_string}')"
         # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
         # and time_period_value tables have uuids without the word "value" in them, even though "value" is still
         # found in the names of those tables. Numeric range is missing "value" everywhere, that is handled in constants.
@@ -384,11 +389,32 @@ def get_regulation_values(fks: List[str], db: Database, schema=None, guidance=Fa
             rows = db.select(query)
         except psycopg2.errors.UndefinedColumn:
             uuid_field = value_type.replace("_value", "_uuid")
-            query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.plan_{regulation}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_plan_{regulation} in ('{fk_string}')"
+            query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.{object_table}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_{object_table} in ('{fk_string}')"
             rows = db.select(query)
         for row in rows:
-            values[row[f"fk_plan_{regulation}"]][value_type].append(row)
+            values[row[f"fk_{object_table}"]][value_type].append(row)
     return values
+
+
+def get_supplementary_information(fks: List[str], db: Database, schema=None) -> DefaultDict[str, Dict[str, DictRow]]:
+    """
+    Returns supplementary information for a list of zoning regulation ids. Values are returned
+    separated by regulation id and information id.
+    """
+    if schema == "":
+        return
+    fk_string = "','".join(fks)
+    try:
+        query = f"Select * FROM {schema}.supplementary_information WHERE fk_plan_regulation in ('{fk_string}')"
+        rows = db.select(query)
+        information_by_regulation_id = defaultdict(dict)
+        for row in rows:
+            information_by_regulation_id[row["fk_plan_regulation"]][row["producer_specific_id"]] = row
+        return information_by_regulation_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
 
 
 def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
