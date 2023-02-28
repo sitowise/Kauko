@@ -433,16 +433,16 @@ def get_plan_commentaries(fk: str, db: Database, schema=None) -> Dict[str, DictR
                                        level=Qgis.Warning, duration=5)
 
 
-def get_participation_and_evaluation_plans(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+def get_participation_and_evaluation_plan(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
     """
-    Returns all participation and evaluation plans linked to a desired plan.
+    Returns participation and evaluation plan linked to a desired plan.
     """
     if schema == "":
         return
     try:
         query = f"Select * FROM {schema}.participation_and_evalution_plan WHERE spatial_plan='{fk}'"
-        rows = db.select(query)
-        return {row["local_id"]: row for row in rows}
+        row = db.select(query)[0]
+        return {row["local_id"]: row}
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
@@ -464,6 +464,54 @@ def get_planners(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
                                        level=Qgis.Warning, duration=5)
+
+
+def get_documents(
+        object_table: Literal[
+            "document",
+            "patricipation_evalution_plan",
+            "plan_guidance",
+            "plan_regulation",
+            "spatial_plan_commentary"],
+        object_ids: Iterable[str],
+        db: Database,
+        schema=None
+    ) -> DefaultDict[str, Dict[str, DictRow]]:
+    """
+    Returns all documents linked to desired objects. Documents are returned separated by target id
+    and document id. Same document may be present in multiple targets.
+
+    :param object_table: Table to query for linked document
+    :param object_ids: Ids to query for linked document
+    :param db: Database to query
+    :param schema: Schema to query
+    :return: Documents by document id and target id. Each document dict will contain one row for each document target.
+    """
+    if schema == "":
+        return
+    fk_string = "','".join(object_ids)
+    try:
+        # TODO: There are some typos etc. in some of the table names, this can be removed when they are fixed
+        if object_table == "patricipation_evalution_plan":
+            object_fk_prefix = "participation_and_evalution_plan"
+        else:
+            object_fk_prefix = object_table
+        if object_table == "document":
+            document_fk_prefix = "referenced_document"
+            object_fk_prefix = "referencing_document"
+        else:
+            document_fk_prefix = "document"
+
+        query = f"Select * FROM {schema}.document JOIN {schema}.{object_table}_document ON local_id={document_fk_prefix}_local_id WHERE {object_fk_prefix}_local_id in ('{fk_string}')"
+        rows = db.select(query)
+        documents_by_document_id = defaultdict(dict)
+        for row in rows:
+            documents_by_document_id[row[f"{object_fk_prefix}_local_id"]][row["local_id"]] = row
+        return documents_by_document_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
 
 
 def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
