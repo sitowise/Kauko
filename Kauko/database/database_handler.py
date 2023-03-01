@@ -559,7 +559,7 @@ def set_spatial_plan_storage_time(identifier: int, storage_time: datetime, db: D
     """
     if schema == "":
         return
-    query = f"Update {schema}.spatial_plan set storage_time={storage_time} where identifier={identifier}"
+    query = f"Update {schema}.spatial_plan set storage_time='{storage_time}' where identifier={identifier}"
     db.update(query)
 
 
