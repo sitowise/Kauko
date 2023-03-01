@@ -362,6 +362,7 @@ class XMLExporter:
         self.schema = schema
         self.root = Element(FEATURECOLLECTION, {**FEATURECOLLECTION_ATTRIBUTES, "gml:id": "foobar"})
         self.plan = None
+        self.plan_name = None
         self.plan_id = ""
         self.lifecycle_status = 0
 
@@ -837,11 +838,13 @@ class XMLExporter:
             # TODO: use get_gml_id once planner has an uuid
             add_reference_element(self.plan, PLANNER_REF, f"#id-planner-{planner['identifier']}")
 
-    def get_xml(self, plan_id: int) -> bytes:
+    def get_xml(self, plan_id: int, save_path: str = None) -> bytes:
         """
-        Return Kaatio XML generated from a plan in Kauko database.
+        Return Kaatio XML generated from a plan in Kauko database. Optionally, also save generated XML
+        to given location.
 
         :param plan_id: Plan identifier in Kauko database
+        :param save_path: Path to save XML to
         :return: UTF-8 encoded XML in bytes
         """
         # 1) Fetch and create spatial plan
@@ -855,6 +858,7 @@ class XMLExporter:
         self.plan = self.add_spatial_plan_element(plan_data)
         LOGGER.info("setting global values")
         self.plan_id = get_gml_id(plan_data)
+        self.plan_name = plan_data["name"]["fin"]
         self.lifecycle_status = plan_data["lifecycle_status"]
 
         # 2) Fetch and create all zoning elements
@@ -1015,9 +1019,21 @@ class XMLExporter:
         }
         self.add_regulation_documents(documents_by_id)
 
-        tree = ElementTree(self.root)
-        tree.write("/Users/riku/repos/Kauko/plan.xml", "utf-8")
+        if save_path:
+            tree = ElementTree(self.root)
+            tree.write(f"{save_path}/{self.plan_name}.xml", "utf-8")
         return tostring(self.root, "utf-8")
+
+    def save_response(self, response: str, save_path: str):
+        """
+        Save XML response from Kaatio server to given location
+
+        :param response: XML response from Kaatio server
+        :param save_path: Path to save XML to
+        """
+        incoming_plan = fromstring(response)
+        tree = ElementTree(incoming_plan)
+        tree.write(f"{save_path}/{self.plan_name}.response.xml", "utf-8")
 
     def update_plan_in_db(self, plan_id: int, response: str):
         """
