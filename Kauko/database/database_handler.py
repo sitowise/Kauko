@@ -287,8 +287,8 @@ def get_plan_regulations(
     :param guidance: Query guidances instead of regulations. Default is False.
     :return: Regulations by regulation id and target id. Each regulation dict will contain one row for each regulation target.
     """
-    if schema == "":
-        return
+    if schema == "" or not object_ids:
+        return defaultdict()
     fk_string = "','".join(object_ids)
     try:
         regulation = "regulation" if not guidance else "guidance"
@@ -320,8 +320,8 @@ def get_regulation_groups(
     :param schema: Schema to query
     :return: Groups by group id and target id. Each group dict will contain one row for each group target.
     """
-    if schema == "":
-        return
+    if schema == "" or not object_ids:
+        return defaultdict()
     fk_string = "','".join(object_ids)
     try:
         query = f"Select DISTINCT * FROM {schema}.plan_regulation_group JOIN {schema}.{object_table}_plan_regulation_group ON plan_regulation_group.local_id=plan_regulation_group_local_id WHERE {object_table}_local_id in ('{fk_string}')"
@@ -372,8 +372,8 @@ def get_values(
     Values are returned separated by regulation (or guidance, or supplementary information) and type.
     Also provide GML representation of geometry values.
     """
-    if schema == "":
-        return
+    if schema == "" or not object_ids:
+        return dict()
     values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in object_ids}
     fk_string = "','".join(object_ids)
     for value_type in VALUE_TYPES:
@@ -441,8 +441,8 @@ def get_participation_and_evaluation_plan(fk: str, db: Database, schema=None) ->
         return
     try:
         query = f"Select * FROM {schema}.participation_and_evalution_plan WHERE spatial_plan='{fk}'"
-        row = db.select(query)[0]
-        return {row["local_id"]: row}
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
@@ -487,8 +487,8 @@ def get_documents(
     :param schema: Schema to query
     :return: Documents by document id and target id. Each document dict will contain one row for each document target.
     """
-    if schema == "":
-        return
+    if schema == "" or not object_ids:
+        return defaultdict()
     fk_string = "','".join(object_ids)
     try:
         # TODO: There are some typos etc. in some of the table names, this can be removed when they are fixed
