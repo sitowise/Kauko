@@ -401,12 +401,6 @@ class XMLExporter:
         # if entry["identity_id"]:
         #     object_identifier = SubElement(element, OBJECT_IDENTIFIER)
         #     object_identifier.text = entry["identity_id"]
-        if entry["reference_id"]:
-            # TODO: Don't know if this is even needed. This is id for the old version, not the new
-            # version, anyway. Identity id should tell the API what our object is.
-            reference_identifier = SubElement(element, REFERENCE_IDENTIFIER, {"codeSpace": CODE_SPACE})
-            tag_without_ns = tag.split("splan:")[1]
-            reference_identifier.text = f'{tag_without_ns}/id-{entry["reference_id"]}'
 
         if "latest_change" in entry:
             latest_change = SubElement(element, LATEST_CHANGE)
