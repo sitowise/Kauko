@@ -34,6 +34,107 @@ BEGIN
     SET session_replication_role = DEFAULT;
 END $$ DISABLE TRIGGER ALL;
 
+CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_spatial_plan_area(spatial_local_id VARCHAR)
+RETURNS geometry
+LANGUAGE plpgsql
+STRICT
+AS $function$
+DECLARE
+  spatial_plan_geometry geometry;
+  _spatial_plan RECORD;
+  _zoning_element_geoms geometry[];
+BEGIN
+  _spatial_plan := (
+    SELECT local_id, geom, validity_time, lifecycle_status
+    FROM SCHEMANAME.spatial_plan
+    WHERE local_id = spatial_local_id
+    LIMIT 1
+  );
+  IF _spatial_plan IS NULL THEN
+    RAISE EXCEPTION 'Spatial plan with local_id % does not exist', spatial_local_id;
+  END IF;
+  IF _spatial_plan.lifecycle_status NOT IN ('8', '10', '11') THEN
+    RAISE EXCEPTION 'Spatial plan with local_id % is not valid', spatial_local_id;
+  END IF;
+  IF _spatial_plan.lifecycle_status = '11' THEN
+    RETURN _spatial_plan.geom;
+  END IF;
+  IF _spatial_plan.lifecycle_status = '8' THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM SCHEMANAME.zoning_element
+      WHERE spatial_plan = spatial_local_id
+        AND lifecycle_status IN ('10', '11')
+    ) THEN
+      RETURN NULL
+    END IF;
+  END IF;
+  
+  -- get zoning element geometries
+  SELECT
+    SCHEMANAME.get_valid_zoning_element_area(ze.local_id)
+  INTO
+    _zoning_element_geoms
+  FROM
+    SCHEMANAME.zoning_element ze
+  WHERE
+    ze.spatial_plan = spatial_local_id
+    AND ze.lifecycle_status IN ('10', '11')
+    AND ze.validity_time @> CURRENT_DATE;
+  
+  -- compute the union of all zoning element geometries
+  RETURN ST_Union(_zoning_element_geoms);
+END;
+
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_zoning_element_area(zoning_local_id VARCHAR)
+  RETURNS geometry
+  LANGUAGE plpgsql STRICT
+AS $function$
+DECLARE
+  _local_id varchar;
+  _geom geometry;
+  _validity_time datarange;
+  _lifecycle_status varchar;
+  _spatial_plan varchar;
+  zoning_element_geometry geometry;
+BEGIN
+  SELECT local_id, geom, validity_time, lifecycle_status, spatial_plan 
+  INTO _local_id, _geom, _validity_time, _lifecycle_status, _spatial_plan
+  FROM SCHEMANAME.zoning_element 
+  WHERE local_id = zoning_local_id 
+  LIMIT 1;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Zoning element with local_id % does not exist', zoning_local_id;
+  END IF;
+
+  IF _lifecycle_status NOT IN ('10', '11') THEN
+    RAISE EXCEPTION 'Zoning element with local_id % is not valid', zoning_local_id;
+  END IF;
+
+  IF _lifecycle_status = '11' THEN
+    RETURN _geom;
+  END IF;
+
+  WITH valid_zoning_elements AS (
+    SELECT geom
+    FROM SCHEMANAME.zoning_element 
+    WHERE spatial_plan <> _spatial_plan
+      AND lifecycle_status IN ('10', '11')
+      AND validity_time &> _validity_time
+      AND ST_Intersects(geom, _geom)
+  )
+  SELECT ST_Difference(_geom, ST_Union(valid_zoning_elements.geom))
+  INTO zoning_element_geometry
+  FROM valid_zoning_elements;
+
+  RETURN zoning_element_geometry;
+END;
+
+
+  
+
 CREATE OR REPLACE FUNCTION SCHEMANAME.update_validity()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -42,20 +143,28 @@ BEGIN
   PERFORM SCHEMANAME.refresh_validity();
 
   CREATE TEMPORARY TABLE temp_spatial_plan AS (
+    WITH valid_geom AS (
       SELECT
-        sp.local_id,
-        sp.geom,
-        sp.lifecycle_status,
-        sp.validity_time
-      FROM SCHEMANAME.spatial_plan sp
-      WHERE sp.validity_time IS NOT NULL
-          AND sp.lifecycle_status NOT IN ('12', '13')
-          AND (UPPER(sp.validity_time) IS NULL OR UPPER(sp.validity_time) >= CURRENT_DATE)
+        local_id,
+        SCHEMANAME.get_valid_spatial_plan_area(local_id) AS geom
+      FROM SCHEMANAME.spatial_plan
+      WHERE sp.lifecycle_status IN ('8', '10', '11')
+        AND sp.validity_time @> CURRENT_DATE
+    )
+    SELECT
+      sp.local_id,
+      vg.geom,
+      sp.lifecycle_status,
+      sp.validity_time
+    FROM valid_geom vg
+      JOIN SCHEMANAME.spatial_plan sp on sp.local_id = vg.local_id
+    WHERE vg.geom IS NOT NULL;
   );
+
 
   WITH spatial_plan_valid_from AS (
       SELECT
-        MAX(tsp.valid_from) AS max_valid_from,
+        MAX(lower(tsp.validity_time)) AS max_valid_from,
         sp.local_id
       FROM SCHEMANAME.spatial_plan sp
       JOIN temp_spatial_plan tsp ON
@@ -73,8 +182,8 @@ BEGIN
     valid_to = spvf.max_valid_from
   FROM spatial_plan_valid_from spvf
   WHERE sp.local_id = spvf.local_id
-      AND sp.lifecycle_status NOT IN ('12', '13', '14', '15')
-      AND (sp.valid_to IS NULL OR sp.valid_to >= CURRENT_DATE)
+      AND sp.lifecycle_status IN ('10', '11')
+      AND sp.validity_time @> CURRENT_DATE
       AND ST_Within(
         sp.geom,
         ST_Buffer(
@@ -82,13 +191,14 @@ BEGIN
             ST_Union(tsp.geom)
           FROM temp_spatial_plan tsp
           WHERE tsp.local_id <> sp.local_id
-          AND tsp.valid_from > sp.valid_from),
+          AND tsp.validity_time &> sp.validity_time
+          ),
           0.1));
 
   UPDATE SCHEMANAME.spatial_plan sp
   SET lifecycle_status = '10'
   WHERE sp.lifecycle_status = '11'
-    AND (sp.valid_to IS NULL OR sp.valid_to >= CURRENT_DATE)
+    AND sp.validity_time @> CURRENT_DATE
     AND ST_Overlaps(
       sp.geom,
       ST_Buffer(
@@ -96,25 +206,33 @@ BEGIN
         FROM temp_spatial_plan tsp
         WHERE 
           tsp.local_id <> sp.local_id
-          AND tsp.valid_from > sp.valid_from
-          AND tsp.lifecycle_status = '11'),
+          AND tsp.validity_time &> sp.validity_time
+          AND tsp.lifecycle_status IN ('10', '11')),
           0.1)
       );
 
   DROP TABLE temp_spatial_plan;
 
 
-  CREATE TEMPORARY TABLE temp_zoning_element AS
-  SELECT
-    ze.local_id AS local_id,
-    ze.geom AS geom,
-    ze.valid_from AS valid_from,
-    ze.lifecycle_status AS lifecycle_status,
-    ze.spatial_plan AS spatial_plan
-  FROM SCHEMANAME.zoning_element ze
-  WHERE ze.valid_from IS NOT NULL
-    AND ze.validity NOT IN ('07', '09', '12', '13', '14', '15')
-    AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date);
+  CREATE TEMPORARY TABLE temp_zoning_element AS (
+    WITH valid_zoning_elements AS (
+      SELECT
+        local_id,
+        SCHEMANAME.get_valid_zoning_element_area(local_id) AS geom,
+      FROM SCHEMANAME.zoning_element
+      WHERE lifecycle_status IN ('10', '11')
+        AND validity_time @> CURRENT_DATE
+    )
+    SELECT
+      ze.local_id AS local_id,
+      vze.geom AS geom,
+      ze.validity_time AS validity_time,
+      ze.lifecycle_status AS lifecycle_status,
+      ze.spatial_plan AS spatial_plan
+    FROM valid_zoning_elements vze
+      JOIN SCHEMANAME.zoning_element ze ON ze.local_id = vze.local_id
+    WHERE vze.geom IS NOT NULL;
+  )
 
   WITH zoning_element_valid_from AS (
     SELECT
@@ -135,9 +253,8 @@ BEGIN
       valid_to = zevf.max_valid_from
   FROM zoning_element_valid_from zevf
   WHERE ze.local_id = zevf.local_id
-    AND ze.lifecycle_status NOT IN ('12', '13', '14', '15')
-    AND (ze.valid_to IS NULL OR
-      ze.valid_to >= Current_Date)
+    AND ze.lifecycle_status NOT IN ('10', '11')
+    AND ze.validity_time @> CURRENT_DATE
     AND st_within(
       ze.geom,
       ST_Buffer(
@@ -145,15 +262,14 @@ BEGIN
           SELECT ST_Union(tze.geom)
           FROM temp_zoning_element tze
           WHERE tze.local_id <> ze.local_id
-            AND tze.valid_from > ze.valid_from),
+            AND tze.validity_time &> ze.validity_time),
         0.1
       ));
 
   UPDATE SCHEMANAME.zoning_element ze
   SET lifecycle_status = '10'
   WHERE ze.lifecycle_status = '11'
-    AND (ze.valid_to IS NULL OR
-        ze.valid_to >= Current_Date)
+    AND ze.validity_time @> CURRENT_DATE
     AND ST_Overlaps(
       ze.geom,
       ST_Buffer(
@@ -162,7 +278,7 @@ BEGIN
           FROM temp_zoning_element tze
           WHERE tze.local_id <> ze.local_id
             AND tze.spatial_plan <> ze.spatial_plan
-            AND tze.valid_from > ze.valid_from
+            AND tze.validity_time &> ze.validity_time
             AND tze.lifecycle_status = '11'
         ), -0.1
       ));
@@ -178,21 +294,20 @@ BEGIN
           (WITH RECURSIVE zoning_elements(local_id) AS (
             SELECT ze.local_id
             FROM SCHEMANAME.zoning_element ze
-            WHERE ze.valid_from IS NOT NULL
-              AND ze.lifecycle_status NOT IN ('12', '13', '14', '15')
-              AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
+            WHERE ze.validity_time @> CURRENT_DATE
+              AND ze.lifecycle_status NOT ('10', '11')
             EXCEPT
             SELECT ze_ps.zoning_element_local_id
             FROM SCHEMANAME.zoning_element_planned_space ze_ps
             WHERE ze_ps.planned_space_local_id = ps.local_id
         )
-          SELECT ST_Union(ze.geom)
+          SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
           FROM SCHEMANAME.zoning_element ze,
                 zoning_elements zes
           WHERE ze.local_id = zes.local_id),
         0.1)
       )
-      AND ps.lifecycle_status NOT IN ('12', '13', '14', '15');
+      AND ps.lifecycle_status IN ('10', '11');
 
     UPDATE SCHEMANAME.planned_space ps
     SET lifecycle_status = '10'
@@ -202,15 +317,14 @@ BEGIN
       (WITH RECURSIVE zoning_elements(local_id) AS (
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
-        WHERE ze.valid_from IS NOT NULL
+        WHERE ze.validity_time @> CURRENT_DATE
           AND ze.lifecycle_status = '11'
-          AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
             EXCEPT
         SELECT ze_ps.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_planned_space ze_ps
         WHERE ze_ps.planned_space_local_id = ps.local_id
       )
-        SELECT ST_Union(ze.geom)
+        SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE zes.local_id = ze.local_id
@@ -226,22 +340,21 @@ BEGIN
       (WITH RECURSIVE zoning_elements(local_id) AS (
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
-        WHERE ze.valid_from IS NOT NULL
-          AND ze.lifecycle_status NOT IN ('12', '13', '14', '15')
-          AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
+        WHERE ze.validity_time @> CURRENT_DATE
+          AND ze.lifecycle_status NOT ('10', '11')
             EXCEPT
         SELECT ze_pdl.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_plan_detail_line ze_pdl
         WHERE ze_pdl.planning_detail_line_local_id = pdl.local_id
       )
-        SELECT ST_Union(ze.geom)
+        SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
       ),
         0.1)
       )
-      AND pdl.lifecycle_status NOT IN ('12', '13', '14', '15');
+      AND pdl.lifecycle_status IN ('10', '11');
 
     UPDATE SCHEMANAME.planning_detail_line pdl
     SET lifecycle_status = '10'
@@ -251,15 +364,14 @@ BEGIN
       (WITH RECURSIVE zoning_elements(local_id) AS (
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
-        WHERE ze.valid_from IS NOT NULL
+        WHERE ze.validity_time @> CURRENT_DATE
           AND ze.lifecycle_status = '11'
-          AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
         EXCEPT
         SELECT ze_pdl.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_plan_detail_line ze_pdl
         WHERE ze_pdl.planning_detail_line_local_id = pdl.local_id
       )
-        SELECT ST_Union(ze.geom)
+        SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
@@ -276,21 +388,20 @@ BEGIN
       (WITH RECURSIVE zoning_elements(local_id) AS (
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
-        WHERE ze.valid_from IS NOT NULL
-          AND ze.lifecycle_status <> '12'
-          AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
+        WHERE ze.validity_time @> CURRENT_DATE
+          AND ze.lifecycle_status IN ('10', '11')
             EXCEPT
         SELECT ze_dl.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_describing_line ze_dl
         WHERE ze_dl.describing_line_id = dl.identifier
       )
-        SELECT ST_Union(ze.geom)
+        SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
       ),
       0.1))
-      AND dl.lifecycle_status <> '12';
+      AND dl.lifecycle_status IN ('10', '11');
 
     UPDATE SCHEMANAME.describing_line dl
     SET lifecycle_status = '10'
@@ -300,15 +411,14 @@ BEGIN
       (WITH RECURSIVE zoning_elements(local_id) AS (
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
-        WHERE ze.valid_from IS NOT NULL
+        WHERE ze.validity_time @> CURRENT_DATE
           AND ze.lifecycle_status = '11'
-          AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
         EXCEPT
         SELECT ze_dl.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_describing_line ze_dl
         WHERE ze_dl.describing_line_id = dl.identifier
       )
-        SELECT ST_Union(ze.geom)
+        ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
@@ -325,21 +435,20 @@ BEGIN
       (WITH RECURSIVE zoning_elements(local_id) AS (
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
-        WHERE ze.valid_from IS NOT NULL
-          AND ze.lifecycle_status NOT IN ('12', '13', '14', '15')
-          AND (ze.valid_to IS NULL OR ze.valid_to >= Current_Date)
+        WHERE ze.validity_time @> CURRENT_DATE
+          AND ze.lifecycle_status IN ('10', '11')
         EXCEPT
         SELECT ze_dt.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_describing_text ze_dt
         WHERE ze_dt.describing_text_id = dt.identifier
       )
-        SELECT ST_Union(ze.geom)
+        ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
       ),
       0.1))
-      AND dt.lifecycle_status <> '12';
+      AND dt.lifecycle_status IN ('10', '11');
 
     PERFORM SCHEMANAME.refresh_validity();
     RETURN NULL;
@@ -358,17 +467,22 @@ BEGIN
 
   UPDATE SCHEMANAME.spatial_plan sp
   SET lifecycle_status = '11'
-  WHERE sp.lifecycle_status IN ('06', '07', '08')
+  WHERE sp.lifecycle_status = '06'
+    AND sp.validity_time @> Current_Date;
+
+  UPDATE SCHEMANAME.spatial_plan sp
+  SET lifecycle_status = '10'
+  WHERE sp.lifecycle_status = '08'
     AND sp.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.spatial_plan sp
   SET lifecycle_status = '12'
   WHERE sp.lifecycle_status IN ('10', '11')
-    AND upper(sp.validity_time) < Current_Date;
+    AND NOT sp.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.zoning_element ze
   SET lifecycle_status = '11'
-  WHERE ze.lifecycle_status IN ('06', '07', '08')
+  WHERE ze.lifecycle_status = '06'
     AND ze.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.zoning_element ze
@@ -378,13 +492,13 @@ BEGIN
     valid_to = LEAST(ze.valid_to, sp.valid_to)
   FROM SCHEMANAME.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
-    AND ze.lifecycle_status IN ('06', '07', '08')
+    AND ze.lifecycle_status IN ('06', '07', '08', '09')
     AND sp.lifecycle_status = '11';
 
   UPDATE SCHEMANAME.zoning_element ze
   SET lifecycle_status = '12'
   WHERE ze.lifecycle_status IN ('10', '11')
-    AND upper(ze.validity_time) < Current_Date;
+    AND NOT ze.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.zoning_element ze
   SET lifecycle_status = '12',
@@ -396,7 +510,7 @@ BEGIN
 
   UPDATE SCHEMANAME.planned_space ps
   SET lifecycle_status = '11'
-  WHERE ps.lifecycle_status IN ('06', '07', '08')
+  WHERE ps.lifecycle_status IN ('06', '07', '08', '09')
     AND ps.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.planned_space ps
@@ -409,12 +523,12 @@ BEGIN
     ON ze_ps.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '11'
   WHERE ps.local_id = ze_ps.planned_space_local_id
-    AND ps.lifecycle_status IN ('06', '07', '08');
+    AND ps.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE SCHEMANAME.planned_space ps
   SET lifecycle_status = '12'
   WHERE ps.lifecycle_status IN ('10', '11')
-    AND upper(ps.validity_time) < Current_Date;
+    AND ps.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.planned_space ps
   SET lifecycle_status = '12',
@@ -433,7 +547,7 @@ BEGIN
     ON ze_pdl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '11'
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
-    AND pdl.lifecycle_status IN ('06', '07', '08');
+    AND pdl.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE SCHEMANAME.planning_detail_line pdl
   SET lifecycle_status = '12'
@@ -451,7 +565,7 @@ BEGIN
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '11'
   WHERE dl.identifier = ze_dl.describing_line_id
-    AND dl.lifecycle_status IN ('06', '07', '08');
+    AND dl.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE SCHEMANAME.describing_line dl
   SET lifecycle_status = '12'
@@ -469,7 +583,7 @@ BEGIN
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '11'
   WHERE dt.identifier = ze_dt.describing_text_id
-    AND dt.lifecycle_status IN ('06', '07', '08');
+    AND dt.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE SCHEMANAME.describing_text dt
   SET lifecycle_status = '12'
@@ -499,11 +613,33 @@ BEGIN
   FROM valid_spatial_plans vsp
   WHERE sp.local_id = vsp.local_id;
 
-  UPDATE SCHEMANAME.spatial_plan sp
-  SET lifecycle_status = '10'
-  FROM SCHEMANAME.zoning_element ze
-  WHERE sp.local_id = ze.spatial_plan
-    AND ze.lifecycle_status <> ('06', '07', '08', '10', '12')
-    AND sp.lifecycle_status = '11';
+  UPDATE SCHEMANAME.spatial_plan 
+  SET lifecycle_status = '11' 
+  WHERE local_id IN (
+    SELECT sp.local_id 
+    FROM SCHEMANAME.spatial_plan sp
+    WHERE NOT EXISTS (
+      SELECT 1 
+      FROM SCHEMANAME.zoning_element ze 
+      WHERE ze.spatial_plan = sp.local_id 
+      AND ze.lifecycle_status != '11'
+    )
+  );
+
+  UPDATE SCHEMANAME.spatial_plan 
+  SET lifecycle_status = '10' 
+  WHERE local_id IN (
+    SELECT DISTINCT sp.local_id 
+    FROM SCHEMANAME.spatial_plan sp
+    JOIN SCHEMANAME.zoning_element ze ON ze.spatial_plan = sp.local_id 
+    WHERE zoning_element.lifecycle_status = '11'
+    AND EXISTS (
+      SELECT 1 
+      FROM SCHEMANAME.zoning_element ze2 
+      WHERE ze2.spatial_plan = sp.local_id 
+      AND ze2.lifecycle_status != '11'
+    )
+  );
+
 END;
 $BODY$;
