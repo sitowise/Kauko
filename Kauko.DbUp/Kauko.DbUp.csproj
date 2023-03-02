@@ -22,7 +22,6 @@
     <None Remove="Scripts\012_update_schema_information_table.sql" />
     <None Remove="Scripts\013_code_lists_for_master_plan.sql" />
     <None Remove="Scripts\014_fix_for_schemainformation_table.sql" />
-    <None Remove="Scripts\015_create_inclusive_daterange.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,7 +39,6 @@
     <EmbeddedResource Include="Scripts\012_update_schema_information_table.sql" />
     <EmbeddedResource Include="Scripts\013_code_lists_for_master_plan.sql" />
     <EmbeddedResource Include="Scripts\014_fix_for_schemainformation_table.sql" />
-    <EmbeddedResource Include="Scripts\015_create_inclusive_daterange.sql" />
   </ItemGroup>
 
   <ItemGroup>
