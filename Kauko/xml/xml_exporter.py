@@ -119,9 +119,8 @@ def get_gml_id(entry: Union[DictRow, Dict]) -> Union[str, None]:
     # cannot start with a number, since it will not fulfill the \\\\i-[:]][\\\\c-[:]]* XSD regex,
     # as reported by the Kaatio API.
     #
-    # This means we cannot use the bare local id here. The id will be thrown
-    # away by the API when POSTing, but it still has to pass validation. We are
-    # free to use local_id for gml id at each save.
+    # This means we cannot use the bare local id here. Kaatio API uses the GML id (not planIdentifier)
+    # to generate version identifier and object identifier.
     local_id = entry["local_id"]
     return "id-" + local_id if local_id else None
 
@@ -445,7 +444,9 @@ class XMLExporter:
         add_code_element(plan, TYPE, self.spatial_plan_kinds, plan_data["type"])
 
         plan_identifier = SubElement(plan, PLAN_IDENTIFIER)
-        plan_identifier.text = plan_data["local_id"]
+        # NOTE: This doesn't do anything. To create identifier and object identifier, Kaatio API seems to use
+        # the gml:id. This field is returned as is, so there is no need to update identity id after POST.
+        plan_identifier.text = plan_data["identity_id"]
     
         add_code_element(plan, LIFECYCLE_STATUS, self.lifecycle_statuses, plan_data["lifecycle_status"])
         add_code_element(plan, GROUND_RELATIVE_POSITION, self.ground_relativeness_kinds, plan_data["ground_relative_position"])
@@ -1041,11 +1042,14 @@ class XMLExporter:
         tree.write("/Users/riku/repos/Kauko/parsed_response.xml", "utf-8")
         spatial_plan = incoming_plan.find(".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan")
         reference_id = spatial_plan.get("{" + NAMESPACES["gml"] + "}id")
-        identity_id = incoming_plan.find(
-            ".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan/{" +
-            NAMESPACES[CORE_NS] + "}objectIdentifier").text
-        # get rid of id- string that is in front of UUID for some reason
-        identity_id = identity_id.split("id-")[1]
+        # NOTE: currently, Kaatio API always returns planIdentifier as is.
+        # Therefore, there is no need to update identity id.
+        # identity_id = incoming_plan.find(
+        #     ".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan/{" +
+        #     NAMESPACES[SPLAN_NS] + "}planIdentifier").text
+        # get rid of id- string that is in front of UUIDs for some reason
+        # identity_id = identity_id.split("id-")[1]
+        reference_id = reference_id.split("id-")[1]
         storage_time = incoming_plan.find(
             ".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan/{" +
             NAMESPACES[CORE_NS] + "}storageTime/{" +
@@ -1054,7 +1058,7 @@ class XMLExporter:
         storage_time = datetime.fromisoformat(storage_time)
 
         # Better be explicit and update fields separately. We don't want all plan fields to be editable.
-        set_spatial_plan_identity_id(plan_id, identity_id, self.db, self.schema)
+        # set_spatial_plan_identity_id(plan_id, identity_id, self.db, self.schema)
         set_spatial_plan_reference_id(plan_id, reference_id, self.db, self.schema)
         set_spatial_plan_storage_time(plan_id, storage_time, self.db, self.schema)
 
