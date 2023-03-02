@@ -481,6 +481,27 @@ BEGIN
     AND NOT sp.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.zoning_element ze
+  SET lifecycle_status = '13'
+  FROM SCHEMANAME.spatial_plan sp
+  WHERE sp.local_id = ze.spatial_plan
+    AND sp.lifecycle_status = '13'
+    AND ze.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE SCHEMANAME.zoning_element ze
+  SET lifecycle_status = '14'
+  FROM SCHEMANAME.spatial_plan sp
+  WHERE sp.local_id = ze.spatial_plan
+    AND sp.lifecycle_status = '14'
+    AND ze.lifecycle_status IN ('02', '03', '04', '05');
+
+  UPDATE SCHEMANAME.zoning_element ze
+  SET lifecycle_status = '15'
+  FROM SCHEMANAME.spatial_plan sp
+  WHERE sp.local_id = ze.spatial_plan
+    AND sp.lifecycle_status = '15'
+    AND ze.lifecycle_status = '01';
+
+  UPDATE SCHEMANAME.zoning_element ze
   SET lifecycle_status = '11'
   WHERE ze.lifecycle_status = '06'
     AND ze.validity_time @> Current_Date;
@@ -514,6 +535,33 @@ BEGIN
     AND ps.validity_time @> Current_Date;
 
   UPDATE SCHEMANAME.planned_space ps
+  SET lifecycle_status = '13'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_planned_space ze_ps
+    ON ze_ps.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '13'
+  WHERE ps.local_id = ze_ps.planned_space_local_id
+    AND ps.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE SCHEMANAME.planned_space ps
+  SET lifecycle_status = '14'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_planned_space ze_ps
+    ON ze_ps.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '14'
+  WHERE ps.local_id = ze_ps.planned_space_local_id
+    AND ps.lifecycle_status IN ('02', '03', '04', '05');
+
+  UPDATE SCHEMANAME.planned_space ps
+  SET lifecycle_status = '15'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_planned_space ze_ps
+    ON ze_ps.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '15'
+  WHERE ps.local_id = ze_ps.planned_space_local_id
+    AND ps.lifecycle_status = '01';
+  
+  UPDATE SCHEMANAME.planned_space ps
   SET
     lifecycle_status = '11',
     valid_from = GREATEST(ps.valid_from, ze.valid_from),
@@ -541,6 +589,33 @@ BEGIN
     AND ps.validity IN ('10', '11');
 
   UPDATE SCHEMANAME.planning_detail_line pdl
+  SET lifecycle_status = '13'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_plan_detail_line ze_pdl
+    ON ze_pdl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '13'
+  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
+    AND pdl.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE SCHEMANAME.planning_detail_line pdl
+  SET lifecycle_status = '14'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_plan_detail_line ze_pdl
+    ON ze_pdl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '14'
+  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
+    AND pdl.lifecycle_status IN ('02', '03', '04', '05');
+
+  UPDATE SCHEMANAME.planning_detail_line pdl
+  SET lifecycle_status = '15'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_plan_detail_line ze_pdl
+    ON ze_pdl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '15'
+  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
+    AND pdl.lifecycle_status = '01';
+
+  UPDATE SCHEMANAME.planning_detail_line pdl
   SET lifecycle_status = '11'
   FROM SCHEMANAME.zoning_element ze
   JOIN SCHEMANAME.zoning_element_plan_detail_line ze_pdl
@@ -557,6 +632,33 @@ BEGIN
     AND ze.lifecycle_status = '12'
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
     AND pdl.lifecycle_status IN ('10', '11');
+
+  UPDATE SCHEMANAME.describing_line dl
+  SET lifecycle_status = '13'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_describing_line ze_dl
+    ON ze_dl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '13'
+  WHERE dl.identifier = ze_dl.describing_line_id
+    AND dl.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE SCHEMANAME.describing_line dl
+  SET lifecycle_status = '14'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_describing_line ze_dl
+    ON ze_dl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '14'
+  WHERE dl.identifier = ze_dl.describing_line_id
+    AND dl.lifecycle_status IN ('02', '03', '04', '05');
+
+  UPDATE SCHEMANAME.describing_line dl
+  SET lifecycle_status = '15'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_describing_line ze_dl
+    ON ze_dl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '15'
+  WHERE dl.identifier = ze_dl.describing_line_id
+    AND dl.lifecycle_status = '01';
 
   UPDATE SCHEMANAME.describing_line dl
   SET lifecycle_status = '11'
@@ -584,6 +686,33 @@ BEGIN
     AND ze.lifecycle_status = '11'
   WHERE dt.identifier = ze_dt.describing_text_id
     AND dt.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE SCHEMANAME.describing_text dt
+  SET lifecycle_status = '13'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_describing_text ze_dt
+    ON ze_dt.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '13'
+  WHERE dt.identifier = ze_dt.describing_text_id
+    AND dt.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE SCHEMANAME.describing_text dt
+  SET lifecycle_status = '14'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_describing_text ze_dt
+    ON ze_dt.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '14'
+  WHERE dt.identifier = ze_dt.describing_text_id
+    AND dt.lifecycle_status IN ('02', '03', '04', '05');
+
+  UPDATE SCHEMANAME.describing_text dt
+  SET lifecycle_status = '15'
+  FROM SCHEMANAME.zoning_element ze
+  JOIN SCHEMANAME.zoning_element_describing_text ze_dt
+    ON ze_dt.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '15'
+  WHERE dt.identifier = ze_dt.describing_text_id
+    AND dt.lifecycle_status = '01';
 
   UPDATE SCHEMANAME.describing_text dt
   SET lifecycle_status = '12'
