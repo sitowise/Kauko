@@ -541,7 +541,10 @@ class XMLExporter:
         """
         plan_object = self.add_lud_core_element(entry, PLAN_OBJECT)
         if "name" in entry and entry["name"]:
-            add_language_string_elements(plan_object, NAME_INSIDE_SPLAN, entry["name"])
+            # TODO: use this once name is proper jsonb field
+            # add_language_string_elements(plan_object, NAME_INSIDE_SPLAN, entry["name"])
+            element = SubElement(plan_object, NAME_INSIDE_SPLAN, {"xml:lang": "fin"})
+            element.text = entry["name"]
 
         geometry = SubElement(plan_object, GEOMETRY)
         if entry["gml"].startswith("<MultiSurface"):
@@ -585,7 +588,10 @@ class XMLExporter:
             plan_order = self.add_lud_core_element(entry, PLAN_ORDER)
 
         if "name" in entry and entry["name"]:
-            add_language_string_elements(plan_order, NAME_INSIDE_SPLAN, entry["name"])
+            # TODO: use this once name is proper jsonb field
+            # add_language_string_elements(plan_order, NAME_INSIDE_SPLAN, entry["name"])
+            element = SubElement(plan_order, NAME_INSIDE_SPLAN, {"xml:lang": "fin"})
+            element.text = entry["name"]
 
         for value_type, values in values.items():
             for value in values:
