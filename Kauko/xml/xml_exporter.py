@@ -1038,8 +1038,6 @@ class XMLExporter:
         :param xml: XML response from Kaatio server
         """
         incoming_plan = fromstring(response)
-        tree = ElementTree(incoming_plan)
-        tree.write("/Users/riku/repos/Kauko/parsed_response.xml", "utf-8")
         spatial_plan = incoming_plan.find(".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan")
         reference_id = spatial_plan.get("{" + NAMESPACES["gml"] + "}id")
         # NOTE: currently, Kaatio API always returns planIdentifier as is.
