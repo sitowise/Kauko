@@ -20,7 +20,7 @@ class ProjectDialog(QtWidgets.QDialog):
         """Add names of available database connections and databases to combobox"""
         self.dbComboBox.clear()
         connections = get_database_connections()
-        for (conn, db) in connections:
+        for (db, conn) in connections.items():
             self.dbComboBox.addItem(conn, db)
 
     def add_projectComboBox_items(self, projects: list[str]):

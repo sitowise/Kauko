@@ -1,11 +1,10 @@
-from typing import Dict
+from typing import Tuple
 
 from qgis.PyQt import QtWidgets
 from qgis.gui import QgisInterface
 
 from ..database.database import Database
 from ..database.database_handler import get_spatial_plan_ids_and_names
-from ..database.db_tools import get_database_connections
 
 class PlanDialog(QtWidgets.QDialog):
 
@@ -15,13 +14,6 @@ class PlanDialog(QtWidgets.QDialog):
         self.iface = iface
         self.spatialPlanNameComboBox.currentTextChanged.connect(
             self.enable_accept_button)
-
-    def add_dbComboBox_items(self):
-        """Add names of available database connections and databases to combobox"""
-        self.dbComboBox.clear()
-        connections = get_database_connections()
-        for (conn, db) in connections:
-            self.dbComboBox.addItem(conn, db)
     
     def add_spatial_plans(self, db: Database, schema: str = None) -> None:
         """Add spatial plans to combobox"""

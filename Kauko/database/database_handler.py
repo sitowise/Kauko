@@ -16,7 +16,7 @@ from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
 from ..data.schema import PlanType, Schema
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import get_active_db_and_schema
+from ..database.db_tools import get_active_connection_and_schema
 from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
 from ..errors import SchemaError
@@ -592,7 +592,7 @@ def get_spatial_plan_ids_and_names(db: Database, schema=None) -> Dict[int, str]:
 def get_identifiers_for_plan(project: QgsProject, plan_name: str, db: Database,
                              schema: str = None) -> dict:
     if not schema:
-        _, schema = get_active_db_and_schema()
+        _, schema = get_active_connection_and_schema()
 
     expression_context = QgsExpressionContextUtils()
     project_name = expression_context.projectScope(

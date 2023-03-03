@@ -38,7 +38,7 @@ from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS, KAATIO_API_URL
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
                                         get_projects, get_spatial_plan_ids_and_names)
 from .database.db_initializer import DatabaseInitializer
-from .database.db_tools import get_active_db_and_schema, get_database_connections
+from .database.db_tools import get_active_connection_and_schema, get_database_connections
 from .database.project_updater.project_template_writer import write_template
 from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
@@ -106,7 +106,7 @@ class Kauko:
         # self.first_start = None
 
         self.database_initializer = None
-        self.dbname = None
+        self.connection = None
         self.schema = None
 
     def add_action(
@@ -280,20 +280,20 @@ class Kauko:
         :param require_db: Determines if the command requires an open project.
         """
         if require_db:
-            self.dbname, self.schema = get_active_db_and_schema()
-            if not self.dbname or not self.schema:
+            self.connection, self.schema = get_active_connection_and_schema()
+            if not self.connection or not self.schema:
                 self.iface.messageBar().pushMessage("Virhe!",
                                                 "Yksikään projekti ei ole avoinna.",
                                                 level=Qgis.Warning, duration=5)
         else:
-            self.dbname = None
+            self.connection = None
             self.schema = None
         self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), self.dbname, self.schema)
+            DatabaseInitializer(self.iface, QgsApplication.instance(), self.connection, self.schema)
 
     def _initialize_database(self, dlg: ProjectDialog):
         connection_name, db_name = dlg.get_connection_and_db()
-        self.database_initializer.initialize_database(connection_name, db_name)
+        self.database_initializer.initialize_database(connection_name)
         database = self.database_initializer.database
         try:
             dlg.add_projectComboBox_items(get_projects(database))
@@ -311,7 +311,7 @@ class Kauko:
         # See if OK was pressed
         if result:
             connection_name, db_name = dlg.get_connection_and_db() 
-            if self.database_initializer.initialize_database(connection_name, db_name):
+            if self.database_initializer.initialize_database(connection_name):
                 database = self.database_initializer.database
                 dlg.create_schema(database)
 
@@ -347,7 +347,7 @@ class Kauko:
     def get_regulations(self):
         self._start(True)
         dlg = InitiateRegulationsDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
@@ -363,7 +363,7 @@ class Kauko:
     def show_selected_plan(self):
         self._start(True)
         dlg = InitiateSelectPlanNameDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
@@ -381,7 +381,7 @@ class Kauko:
     def validity_to_unfinished(self):
         self._start(True)
         dlg = ChangeToUnfinished(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
@@ -430,7 +430,7 @@ class Kauko:
                                                 level=Qgis.Warning, duration=5)
             return
         dlg = ExportPlanDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
