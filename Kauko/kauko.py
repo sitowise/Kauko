@@ -424,11 +424,6 @@ class Kauko:
 
     def export_plan(self):
         self._start(True)
-        if self.schema[-1] == 'y':
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Työtila on asemakaavayhdistelmä",
-                                                level=Qgis.Warning, duration=5)
-            return
         dlg = ExportPlanDialog(self.iface)
         if not self.database_initializer.initialize_database(self.connection):
             return
