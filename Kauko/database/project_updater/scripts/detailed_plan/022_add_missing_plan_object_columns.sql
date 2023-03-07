@@ -17,7 +17,6 @@ SET bindingness_of_location =
   CASE
     WHEN obligatory IS TRUE THEN '01'
     WHEN obligatory IS FALSE THEN '02'
-    ELSE RAISE EXCEPTION 'Invalid value for obligatory'
   END;
 
 ALTER TABLE SCHEMANAME.planning_detail_line
