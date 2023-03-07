@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/Kauko">
         <file>icons/mActionFileOpen.svg</file>
+        <file>icons/mActionSharingExport.svg</file>
     </qresource>
 </RCC>
