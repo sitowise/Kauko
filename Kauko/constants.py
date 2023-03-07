@@ -1,5 +1,7 @@
 PG_CONNECTIONS = "PostgreSQL/connections"
 
+KAATIO_API_URL = "https://kaatio.spatineo-devops.com/v1/"
+
 QGS_SETTINGS_PSYCOPG2_PARAM_MAP = {
     'database': 'dbname',
     'host': 'host',
@@ -21,6 +23,19 @@ QGS_DEFAULT_DB_SETTINGS = {
     'service': '',
     'sslmode': 'SslDisable',
 }
+
+VALUE_TYPES = [
+    "code_value",
+    "geometry_area_value",
+    "geometry_line_value",
+    "geometry_point_value",
+    "identifier_value",
+    "numeric_double_value",
+    "numeric_range",
+    "text_value",
+    "time_instant_value",
+    "time_period_value"
+]
 
 LAYERS = {
     "contact": {
@@ -359,4 +374,3 @@ SPATIALREFSYS = "<wkt>WKT</wkt>\n" \
                 "<geographicflag>GEOGRAPHICFLAG</geographicflag>"
 
 REFRESH_MATERIALIZED_VIEWS = "/sql_scripts/refresh_materialised_views.sql"
-

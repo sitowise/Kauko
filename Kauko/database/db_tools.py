@@ -1,4 +1,5 @@
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
+from urllib.parse import parse_qs, urlparse
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsAuthMethodConfig, QgsProject
@@ -7,21 +8,21 @@ from .database import Database
 from ..constants import *
 
 
-def get_database_connections() -> Set[Tuple]:
-    """Returns names of all PostGis connections and their databases saved to QGis
+def get_database_connections() -> Dict[str, str]:
+    """Returns names of all PostGIS databases and their connections saved to QGIS
 
-    :return: set[Tuple]
+    :return: Dictionary of database name (key) and corresponding connection (value)
     """
     s = QSettings()
     s.beginGroup(PG_CONNECTIONS)
     connections = s.childGroups()
-    tuples = set()
+    connection_dict = {}
     for connection in connections:
         s.beginGroup(connection)
-        tuples.add((connection, s.value("database")))
+        connection_dict[s.value("database")] = connection
         s.endGroup()
     s.endGroup()
-    return tuples
+    return connection_dict
 
 
 def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool) -> str:
@@ -36,26 +37,13 @@ def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool
     return f'{schema_name}_y'.lower() if is_master_plan else schema_name.lower()
 
 
-def set_connection(db_name: str) -> None:
-    """ Sets connection based on used database name
+def set_connection(connection_name: str) -> None:
+    """ Sets connection based on used connection name
 
-    :param db_name: str
+    :param connection_name: str
     :return: None
     """
-    # We have to find the connection with the right database name.
-    # TODO: If there are several connections with a database of the same name,
-    # then we're out of luck. There's no way to find out the right
-    # connection and auth settings based on database name alone :(
-    s = QSettings()
-    s.beginGroup(PG_CONNECTIONS)
-    for connection in s.childGroups():
-        s.beginGroup(f"{PG_CONNECTIONS}/{connection}")
-        database = s.value("database")
-        s.endGroup()
-        if database == db_name:
-            # found the connection with the right database
-            break
-    QSettings().setValue("connection", connection)
+    QSettings().setValue("connection", connection_name)
 
 
 def get_connection_name() -> str:
@@ -109,38 +97,28 @@ def get_connection_params(qgs_app: QCoreApplication) -> Dict[str, Any]:
     return params
 
 
-def get_active_db_and_schema() -> Tuple[str, str]:
-    """Get database and schema name for current project
+def get_active_connection_and_schema() -> Tuple[str, str]:
+    """Get connection and schema name for current project
 
-    :return: database name, schema name
+    :return: connection name, schema name
     """
     path = QgsProject().instance().fileName()
-
-    if len(path) <= 0:
-        return "", ""
-
-    start = path.find("dbname=")
-    start += len("dbname=")
-    end = path.find('&', start)
-    dbname = path[start:end] if end != -1 else path[start:]
-    start = path.find("project=")
-    start += len("project=")
-    end = path.find('&', start)
-    schema = path[start:end] if end != -1 else path[start:]
-    return dbname, schema
+    
+    parsed_path = urlparse(path)
+    params = parse_qs(parsed_path.query)
+    dbname = params.get("dbname", [""])[0]
+    project = params.get("project", [""])[0]
+    return get_database_connections()[dbname], project
 
 
 def get_all_project_schemas(db: Database) -> list:
-    """Get the name of schemas which contain project
+    """Get the names of schemas containing project in their names.
 
-    :param db: Database object
-    :return: list of schema names
+    :param db: A Database object to connect to the database.
+    :return: A list of schema names.
     """
-    schemas = []
-    query = "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name"
-    raw_schemas = db.select(query)
-    for schema in raw_schemas:
-        schema = ''.join(schema)
-        if "_gk" in schema or "_kkj" in schema:
-            schemas.append(schema)
+    query = "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE '%\_gk%' OR schema_name LIKE '%\_kkj%' ORDER BY schema_name"
+    result_set = db.select(query)
+    schemas = [schema[0] for schema in result_set]
     return schemas
+

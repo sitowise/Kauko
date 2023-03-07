@@ -221,3 +221,4 @@ settings.json
 
 zip_build/
 resources.py
+Kauko/rc_resources.py

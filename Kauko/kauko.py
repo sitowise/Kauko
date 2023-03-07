@@ -32,24 +32,31 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QWidget
 
-from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS
+from .ui.project_dialog import ProjectDialog
+
+from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS, KAATIO_API_URL
 from .database.database_handler import (add_geom_checks, drop_geom_checks,
-                                        get_projects, get_spatial_plan_names)
+                                        get_projects, get_spatial_plan_ids_and_names)
 from .database.db_initializer import DatabaseInitializer
-from .database.db_tools import get_active_db_and_schema, get_database_connections
+from .database.db_tools import get_active_connection_and_schema, get_database_connections
 from .database.project_updater.project_template_writer import write_template
 from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
 from .project_handler import open_project
+from .qgis_plugin_tools.tools.custom_logging import setup_logger
 from .resources import *
 from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
+from .ui.export_plan_dialog import ExportPlanDialog
 from .ui.get_regulations_dialog import InitiateRegulationsDialog
 from .ui.move_plan_dialog import MovePlanDialog
 from .ui.open_project_dialog import InitiateOpenProjectDialog
 from .ui.schema_creator_dialog import InitiateSchemaDialog
 from .ui.select_plan_name_dialog import InitiateSelectPlanNameDialog
 from .ui.update_project_dialog import InitiateUpdateProjectDialog
+
+
+setup_logger("kauko")
 
 
 def is_admin():
@@ -99,7 +106,7 @@ class Kauko:
         # self.first_start = None
 
         self.database_initializer = None
-        self.dbname = None
+        self.connection = None
         self.schema = None
 
     def add_action(
@@ -219,6 +226,12 @@ class Kauko:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False)
 
+        self.add_action(
+            ':/Kauko/icons/mActionSharingExport.svg',
+            text='Vie tallennuspalveluun',
+            callback=self.export_plan,
+            parent=self.iface.mainWindow(),
+            add_to_toolbar=False)
 
         """ self.add_action(
             icon_path,
@@ -227,21 +240,6 @@ class Kauko:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False) """
 
-        """ self.add_action(
-            icon_path,
-            text="Aseta asemakaavayhdistelmän muokkaus päälle/pois päältä",
-            callback=self.set_editing,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False
-        ) """
-
-        """ self.add_action(
-            icon_path,
-            text="Siirrä asemakaavayhdistelmään",
-            callback=self.move_plan,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False
-        ) """
 
         """ self.add_action(
             icon_path,
@@ -265,14 +263,6 @@ class Kauko:
             add_to_toolbar=False
         ) """
 
-        """ self.add_action(
-            icon_path,
-            text="Korjaa työtilan topologia",
-            callback=self.fix_topology,
-            parent=self.iface.mainWindow(),
-            add_to_toolbar=False
-        ) """
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         """ for action in self.actions:
@@ -290,19 +280,20 @@ class Kauko:
         :param require_db: Determines if the command requires an open project.
         """
         if require_db:
-            self.dbname, self.schema = get_active_db_and_schema()
-            if not self.dbname or not self.schema:
+            self.connection, self.schema = get_active_connection_and_schema()
+            if not self.connection or not self.schema:
                 self.iface.messageBar().pushMessage("Virhe!",
                                                 "Yksikään projekti ei ole avoinna.",
                                                 level=Qgis.Warning, duration=5)
         else:
-            self.dbname = None
+            self.connection = None
             self.schema = None
         self.database_initializer = \
-            DatabaseInitializer(self.iface, QgsApplication.instance(), self.dbname, self.schema)
+            DatabaseInitializer(self.iface, QgsApplication.instance(), self.connection, self.schema)
 
-    def _initialize_database(self, dlg: QDialog):
-        self.database_initializer.initialize_database(dlg.get_db())
+    def _initialize_database(self, dlg: ProjectDialog):
+        connection_name, db_name = dlg.get_connection_and_db()
+        self.database_initializer.initialize_database(connection_name)
         database = self.database_initializer.database
         try:
             dlg.add_projectComboBox_items(get_projects(database))
@@ -318,9 +309,11 @@ class Kauko:
         # Run the dialog event loop
         result = dlg.exec_()
         # See if OK was pressed
-        if result and self.database_initializer.initialize_database(dlg.get_db()):
-            database = self.database_initializer.database
-            dlg.create_schema(database)
+        if result:
+            connection_name, db_name = dlg.get_connection_and_db() 
+            if self.database_initializer.initialize_database(connection_name):
+                database = self.database_initializer.database
+                dlg.create_schema(database)
 
     def open_project(self):
         self._start()
@@ -354,10 +347,11 @@ class Kauko:
     def get_regulations(self):
         self._start(True)
         dlg = InitiateRegulationsDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
-        dlg.add_spatial_plan_names(get_spatial_plan_names(db, self.schema))
+
+        dlg.add_spatial_plans(db, self.schema)
 
         dlg.show()
 
@@ -369,12 +363,11 @@ class Kauko:
     def show_selected_plan(self):
         self._start(True)
         dlg = InitiateSelectPlanNameDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
+        dlg.add_spatial_plans(db, self.schema)
 
         dlg.show()
 
@@ -385,59 +378,14 @@ class Kauko:
             dlg.write_spatial_plan_name_filters(db, QgsProject().instance(),
                                                 self.schema)
 
-    def set_editing(self):
-        self._start(True)
-        if self.schema[-1] != 'y':
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Työtila ei ole asemakaavayhdistelmä",
-                                                level=Qgis.Warning, duration=5)
-            return
-        db = self.database_initializer.database
-        query = NUMBER_OF_GEOM_CHECKS_SQL.replace("schemaname", self.schema)
-        checks = db.select(query)[0][0]
-        msg = QMessageBox()
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg.setIcon(QMessageBox.Question)
-        if checks == 0:
-            msg.setText("Haluatko laittaa muokkauksen päälle?")
-            if msg.exec_():
-                drop_geom_checks(self.schema, db)
-        else:
-            msg.setText("Haluatko lopettaa muokkauksen?")
-            if msg.exec_():
-                add_geom_checks(self.schema, db)
-
-    def move_plan(self):
-        self._start(True)
-        if self.schema[-1] == 'y':
-            self.iface.messageBar().pushMessage("Virhe!",
-                                                "Työtila on asemakaavayhdistelmä",
-                                                level=Qgis.Warning, duration=5)
-            return
-        dlg = MovePlanDialog(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
-            return
-        db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
-        dlg.show()
-        if dlg.exec_():
-            if not drop_geom_checks(f"{self.schema}_y", db):
-                return
-            dlg.move_plan(db, self.schema)
-            srid = self.iface.mapCanvas().mapSettings().destinationCrs().authid()[5:]
-            if open_project(f"{self.schema}_y"):
-                QgsProject().instance().setCrs(
-                    QgsCoordinateReferenceSystem(int(srid)))
-
     def validity_to_unfinished(self):
         self._start(True)
         dlg = ChangeToUnfinished(self.iface)
-        if not self.database_initializer.initialize_database(self.dbname):
+        if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
-        spatial_plans = get_spatial_plan_names(db, self.schema)
-        dlg.add_spatial_plan_names(spatial_plans)
+
+        dlg.add_spatial_plans(db, self.schema)
         dlg.show()
         if dlg.exec_():
             plan_name = dlg.get_spatial_plan_name()
@@ -446,13 +394,6 @@ class Kauko:
             db.insert(query)
             self.iface.messageBar().pushMessage(f"Kaava {plan_name} muutettu keskeneräiseksi", level=Qgis.Success, duration=5)
 
-    def fix_topology(self):
-        self._start(True)
-        db = self.database_initializer.database
-        query = get_query(self.schema, "/sql_scripts/fix_topology.sql")
-        db.insert(query)
-        self.iface.messageBar().pushMessage("Kaavan topologia korjattu.",
-                                            level=Qgis.Success, duration=5)
 
     def update_projects(self):
         self.database_initializer = \
@@ -480,3 +421,23 @@ class Kauko:
         self.iface.messageBar().pushMessage(
             "Projekti malli luotu.",
             level=Qgis.Success, duration=5)
+
+    def export_plan(self):
+        self._start(True)
+        dlg = ExportPlanDialog(self.iface)
+        if not self.database_initializer.initialize_database(self.connection):
+            return
+        db = self.database_initializer.database
+
+        dlg.add_spatial_plans(db, self.schema)
+        dlg.show()
+
+        plan_store_url = KAATIO_API_URL + "store"
+        self.iface.messageBar().pushMessage(plan_store_url,
+                                            level=Qgis.Warning, duration=5)
+        if dlg.exec_():
+            bar_msg = dlg.export_plan(db, self.schema)
+            self.iface.messageBar().pushMessage(
+                bar_msg["details"],
+                level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
+                duration=bar_msg["duration"])

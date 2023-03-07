@@ -1,21 +1,28 @@
-from typing import List
+import logging
+from collections import defaultdict
+from collections.abc import Iterable
+from datetime import datetime
+from typing import DefaultDict, Dict, List, Literal
 
 import psycopg2
+from psycopg2.extras import DictRow
 from qgis.core import (Qgis, QgsExpressionContextUtils,
                        QgsProject)
 from qgis.PyQt.QtWidgets import QMessageBox
 from qgis.utils import iface
 
 from ..constants import (ADD_GEOM_CHECK_SQL, DROP_GEOM_CHECK_SQL,
-                         REFRESH_MATERIALIZED_VIEWS)
+                         REFRESH_MATERIALIZED_VIEWS, VALUE_TYPES)
 from ..data.schema import PlanType, Schema
 from ..data.tools import parse_filter_ids, parse_value, save_alert_msg
 from ..database.database import Database
-from ..database.db_tools import (get_active_db_and_schema)
+from ..database.db_tools import get_active_connection_and_schema
 from ..database.project_updater.project_updater import ProjectUpdater
 from ..database.query_builder import get_query
 from ..errors import SchemaError
 
+
+LOGGER = logging.getLogger("kauko")
 
 def create_new_schema_and_project(
     projection: str,
@@ -159,21 +166,418 @@ def get_projects(db: Database, only_web=False) -> List[str]:
             project = ''.join(project)
             projects.append(project)
         return projects
+    except AttributeError:
+        return []
     except psycopg2.errors.UndefinedTable:
         return []
 
 
-def get_spatial_plan_names(db: Database, schema=None) -> list:
+def get_code_list(code_list: str, db: Database, value_field: str = "codevalue") -> Dict[int, DictRow]:
+    """
+    Returns contents of the desired code list table indexed with code value.
+
+    :param code_list: Name of the code list table in code_lists schema
+    :param db: Database to use
+    :param value_field: Name of the code field, if it is not the standard "codevalue".
+    :return: Dictionary of all code list rows, indexed with foreign key (code value).
+    """
+    query = f"Select * FROM code_lists.{code_list}"
+    rows = db.select(query)
+    return {row[value_field]: row for row in rows}
+
+
+def get_zoning_elements(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all zoning elements linked to a desired plan. Also provide GML representation of
+    geom field.
+    """
     if schema == "":
         return
     try:
-        names = []
-        query = f"Select {schema}.spatial_plan.name FROM {schema}.spatial_plan ORDER BY name"
-        raw_names = db.select(query)
-        for name in raw_names:
-            name = ''.join(name)
-            names.append(name)
-        return names
+        query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.zoning_element WHERE spatial_plan='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_planned_spaces(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all planned spaces inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, planned_space.geom, 15, 1, '', null) as gml FROM {schema}.planned_space JOIN {schema}.zoning_element_planned_space ON planned_space.local_id=planned_space_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_plan_detail_lines(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all detail lines inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, planning_detail_line.geom, 15, 1, '', null) as gml FROM {schema}.planning_detail_line JOIN {schema}.zoning_element_plan_detail_line ON planning_detail_line.local_id=planning_detail_line_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_describing_lines(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all describing lines inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, describing_line.geom, 15, 1, '', null) as gml FROM {schema}.describing_line JOIN {schema}.zoning_element_describing_line ON describing_line.identifier=describing_line_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["identifier"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_describing_texts(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all describing texts inside the desired plan. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select DISTINCT *, ST_asGML(3, describing_text.geom, 15, 1, '', null) as gml FROM {schema}.describing_text JOIN {schema}.zoning_element_describing_text ON describing_text.identifier=describing_text_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        rows = db.select(query)
+        return {row["identifier"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_plan_regulations(
+        object_table: Literal["spatial_plan", "zoning_element", "planned_space", "planning_detail_line"],
+        object_ids: Iterable[str],
+        db: Database,
+        schema=None,
+        guidance=False
+    ) -> DefaultDict[str, Dict[str, DictRow]]:
+    """
+    Returns all regulations (or guidances) linked to desired objects. Regulations are returned separated by regulation id
+    and target id. Same regulation may be present in multiple targets.
+
+    :param object_table: Table to query for linked regulations
+    :param object_ids: Ids to query for linked regulations
+    :param db: Database to query
+    :param schema: Schema to query
+    :param guidance: Query guidances instead of regulations. Default is False.
+    :return: Regulations by regulation id and target id. Each regulation dict will contain one row for each regulation target.
+    """
+    if schema == "" or not object_ids:
+        return defaultdict()
+    fk_string = "','".join(object_ids)
+    try:
+        regulation = "regulation" if not guidance else "guidance"
+        query = f"Select * FROM {schema}.plan_{regulation} JOIN {schema}.{object_table}_plan_{regulation} ON local_id=plan_{regulation}_local_id WHERE {object_table}_local_id in ('{fk_string}')"
+        rows = db.select(query)
+        regulations_by_regulation_id = defaultdict(dict)
+        for row in rows:
+            regulations_by_regulation_id[row["local_id"]][row[f"{object_table}_local_id"]] = row
+        return regulations_by_regulation_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
+def get_regulation_groups(
+        object_table: Literal["zoning_element", "planned_space", "planning_detail_line"],
+        object_ids: Iterable[str],
+        db: Database,
+        schema=None
+    ) -> DefaultDict[str, Dict[str, DictRow]]:
+    """
+    Returns all regulation groups linked to desired objects. Regulation groups are returned separated by group id
+    and target id. Same group may be present in multiple targets.
+
+    :param object_table: Table to query for linked groups
+    :param object_ids: Ids to query for linked groups
+    :param db: Database to query
+    :param schema: Schema to query
+    :return: Groups by group id and target id. Each group dict will contain one row for each group target.
+    """
+    if schema == "" or not object_ids:
+        return defaultdict()
+    fk_string = "','".join(object_ids)
+    try:
+        query = f"Select DISTINCT * FROM {schema}.plan_regulation_group JOIN {schema}.{object_table}_plan_regulation_group ON plan_regulation_group.local_id=plan_regulation_group_local_id WHERE {object_table}_local_id in ('{fk_string}')"
+        rows = db.select(query)
+        groups_by_group_id = defaultdict(dict)
+        for row in rows:
+            groups_by_group_id[row["local_id"]][row[f"{object_table}_local_id"]] = row
+        return groups_by_group_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_group_regulations(regulation_group_ids: Iterable[str], db: Database, schema=None, guidance=False) -> Dict[str, Dict[str, DictRow]]:
+    """
+    Returns all regulations (or guidances) in desired regulation groups. Regulations are returned
+    separated by group id and regulation id. Same regulation may be present in multiple groups.
+    """
+    if guidance:
+        # TODO: remove this once db contains plan_regulation_group_guidance table
+        return
+    if schema == "":
+        return
+    regulation = "regulation" if not guidance else "guidance"
+    fk_string = "','".join(regulation_group_ids)
+    try:
+        query = f"Select * FROM {schema}.plan_{regulation} JOIN {schema}.plan_regulation_group_{regulation} ON local_id=plan_{regulation}_local_id WHERE plan_regulation_group_local_id in ('{fk_string}')"
+        rows = db.select(query)
+        regulations_by_group_id = defaultdict(dict)
+        for row in rows:
+            regulations_by_group_id[row["plan_regulation_group_local_id"]][row["local_id"]] = row
+        return regulations_by_group_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
+def get_values(
+        object_table: Literal["plan_regulation", "plan_guidance", "supplementary_information"],
+        object_ids: Iterable[str],
+        db: Database,
+        schema=None
+    ) -> Dict[str, Dict[str, List[DictRow]]]:
+    """
+    Returns all values for a list of zoning regulation (or guidance, or supplemntary information) ids.
+    Values are returned separated by regulation (or guidance, or supplementary information) and type.
+    Also provide GML representation of geometry values.
+    """
+    if schema == "" or not object_ids:
+        return dict()
+    values = {fk: {value_type: [] for value_type in VALUE_TYPES} for fk in object_ids}
+    fk_string = "','".join(object_ids)
+    for value_type in VALUE_TYPES:
+        fields = "*"
+        if "geometry" in value_type:
+            fields += ", ST_asGML(3, value, 15, 1, '', null) as gml"
+        uuid_field = f"{value_type}_uuid"
+        query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.{object_table}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_{object_table} in ('{fk_string}')"
+        # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
+        # and time_period_value tables have uuids without the word "value" in them, even though "value" is still
+        # found in the names of those tables. Numeric range is missing "value" everywhere, that is handled in constants.
+        try:
+            rows = db.select(query)
+        except psycopg2.errors.UndefinedColumn:
+            uuid_field = value_type.replace("_value", "_uuid")
+            query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.{object_table}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_{object_table} in ('{fk_string}')"
+            rows = db.select(query)
+        for row in rows:
+            values[row[f"fk_{object_table}"]][value_type].append(row)
+    return values
+
+
+def get_supplementary_information(fks: List[str], db: Database, schema=None) -> DefaultDict[str, Dict[str, DictRow]]:
+    """
+    Returns supplementary information for a list of zoning regulation ids. Values are returned
+    separated by regulation id and information id.
+    """
+    if schema == "":
+        return
+    fk_string = "','".join(fks)
+    try:
+        query = f"Select * FROM {schema}.supplementary_information WHERE fk_plan_regulation in ('{fk_string}')"
+        rows = db.select(query)
+        information_by_regulation_id = defaultdict(dict)
+        for row in rows:
+            information_by_regulation_id[row["fk_plan_regulation"]][row["producer_specific_id"]] = row
+        return information_by_regulation_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
+def get_plan_commentaries(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all commentaries linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.spatial_plan_commentary WHERE spatial_plan='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_participation_and_evaluation_plan(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns participation and evaluation plan linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.participation_and_evalution_plan WHERE spatial_plan='{fk}'"
+        rows = db.select(query)
+        return {row["local_id"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_planners(fk: str, db: Database, schema=None) -> Dict[str, DictRow]:
+    """
+    Returns all planners linked to a desired plan.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select * FROM {schema}.planner WHERE fk_spatial_plan='{fk}'"
+        rows = db.select(query)
+        # TODO: Fix this once planners have more id fields
+        return {row["identifier"]: row for row in rows}
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+def get_documents(
+        object_table: Literal[
+            "document",
+            "patricipation_evalution_plan",
+            "plan_guidance",
+            "plan_regulation",
+            "spatial_plan_commentary"],
+        object_ids: Iterable[str],
+        db: Database,
+        schema=None
+    ) -> DefaultDict[str, Dict[str, DictRow]]:
+    """
+    Returns all documents linked to desired objects. Documents are returned separated by target id
+    and document id. Same document may be present in multiple targets.
+
+    :param object_table: Table to query for linked document
+    :param object_ids: Ids to query for linked document
+    :param db: Database to query
+    :param schema: Schema to query
+    :return: Documents by document id and target id. Each document dict will contain one row for each document target.
+    """
+    if schema == "" or not object_ids:
+        return defaultdict()
+    fk_string = "','".join(object_ids)
+    try:
+        # TODO: There are some typos etc. in some of the table names, this can be removed when they are fixed
+        if object_table == "patricipation_evalution_plan":
+            object_fk_prefix = "participation_and_evalution_plan"
+        else:
+            object_fk_prefix = object_table
+        if object_table == "document":
+            document_fk_prefix = "referenced_document"
+            object_fk_prefix = "referencing_document"
+        else:
+            document_fk_prefix = "document"
+
+        query = f"Select * FROM {schema}.document JOIN {schema}.{object_table}_document ON local_id={document_fk_prefix}_local_id WHERE {object_fk_prefix}_local_id in ('{fk_string}')"
+        rows = db.select(query)
+        documents_by_document_id = defaultdict(dict)
+        for row in rows:
+            documents_by_document_id[row[f"{object_fk_prefix}_local_id"]][row["local_id"]] = row
+        return documents_by_document_id
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                    f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                    level=Qgis.Warning, duration=5)
+
+
+def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
+    """
+    Returns all fields from the plan table. Also provide GML representation of
+    geom field.
+    """
+    if schema == "":
+        return
+    try:
+        query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.spatial_plan WHERE identifier={identifier}"
+        return db.select(query)[0]
+    except psycopg2.errors.UndefinedTable:
+        iface.messageBar().pushMessage("Virhe!",
+                                       f"Skeemaa {schema} ei löytynyt tietokannasta {db.get_database_name()}.",
+                                       level=Qgis.Warning, duration=5)
+
+
+# Better be explicit here. We don't want all plan fields to be editable.
+def set_spatial_plan_identity_id(identifier: int, identity_id: str, db: Database, schema=None):
+    """
+    Sets the desired identity id for a saved plan.
+    """
+    if schema == "":
+        return
+    query = f"Update {schema}.spatial_plan set identity_id='{identity_id}' where identifier={identifier}"
+    db.update(query)
+
+
+# Better be explicit here. We don't want all plan fields to be editable.
+def set_spatial_plan_reference_id(identifier: int, reference_id: str, db: Database, schema=None):
+    """
+    Sets the desired reference id for a saved plan.
+    """
+    if schema == "":
+        return
+    query = f"Update {schema}.spatial_plan set reference_id='{reference_id}' where identifier={identifier}"
+    db.update(query)
+
+
+# Better be explicit here. We don't want all plan fields to be editable.
+def set_spatial_plan_storage_time(identifier: int, storage_time: datetime, db: Database, schema=None):
+    """
+    Sets the desired storage time for a saved plan.
+    """
+    if schema == "":
+        return
+    query = f"Update {schema}.spatial_plan set storage_time='{storage_time}' where identifier={identifier}"
+    db.update(query)
+
+
+def get_spatial_plan_ids_and_names(db: Database, schema=None) -> Dict[int, str]:
+    if schema == "":
+        return
+    try:
+        plans = {}
+        query = f"Select {schema}.spatial_plan.identifier, {schema}.spatial_plan.name FROM {schema}.spatial_plan ORDER BY name"
+        raw_ids_and_names = db.select(query)
+        for row in raw_ids_and_names:
+            id = row[0]
+            name = row[1]
+            name = ' - '.join(name.values())
+            plans[id] = name
+        return plans
     except psycopg2.errors.UndefinedColumn:
         iface.messageBar().pushMessage("Virhe!",
                                        f"Skeemassa {schema} ei ole saraketta 'nimi'",
@@ -188,7 +592,7 @@ def get_spatial_plan_names(db: Database, schema=None) -> list:
 def get_identifiers_for_plan(project: QgsProject, plan_name: str, db: Database,
                              schema: str = None) -> dict:
     if not schema:
-        _, schema = get_active_db_and_schema()
+        _, schema = get_active_connection_and_schema()
 
     expression_context = QgsExpressionContextUtils()
     project_name = expression_context.projectScope(

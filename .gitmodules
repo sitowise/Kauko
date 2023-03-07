@@ -1,0 +1,3 @@
+[submodule "Kauko/qgis_plugin_tools"]
+	path = Kauko/qgis_plugin_tools
+	url = https://github.com/gispoCoding/qgis_plugin_tools
