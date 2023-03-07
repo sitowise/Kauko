@@ -1,6 +1,6 @@
 from qgis.PyQt.QtWidgets import QMessageBox
 from typing import List
-from ..database.db_tools import get_active_db_and_schema
+from ..database.db_tools import get_active_connection_and_schema
 
 
 def parse_value(value):
@@ -49,7 +49,7 @@ def parse_filter_ids(results: dict):
 
 
 def save_alert_msg():
-    db, project = get_active_db_and_schema()
+    _, project = get_active_connection_and_schema()
     msg = QMessageBox()
     msg.setText("Haluatko tallentaa työtilan " + project + "?")
     msg.setIcon(QMessageBox.Warning)

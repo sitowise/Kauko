@@ -1,4 +1,4 @@
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 from urllib.parse import parse_qs, urlparse
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication
@@ -8,21 +8,21 @@ from .database import Database
 from ..constants import *
 
 
-def get_database_connections() -> Set[Tuple]:
-    """Returns names of all PostGis connections and their databases saved to QGis
+def get_database_connections() -> Dict[str, str]:
+    """Returns names of all PostGIS databases and their connections saved to QGIS
 
-    :return: set[Tuple]
+    :return: Dictionary of database name (key) and corresponding connection (value)
     """
     s = QSettings()
     s.beginGroup(PG_CONNECTIONS)
     connections = s.childGroups()
-    tuples = set()
+    connection_dict = {}
     for connection in connections:
         s.beginGroup(connection)
-        tuples.add((connection, s.value("database")))
+        connection_dict[s.value("database")] = connection
         s.endGroup()
     s.endGroup()
-    return tuples
+    return connection_dict
 
 
 def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool) -> str:
@@ -38,9 +38,9 @@ def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool
 
 
 def set_connection(connection_name: str) -> None:
-    """ Sets connection based on used database name
+    """ Sets connection based on used connection name
 
-    :param connnection_name: str
+    :param connection_name: str
     :return: None
     """
     QSettings().setValue("connection", connection_name)
@@ -97,10 +97,10 @@ def get_connection_params(qgs_app: QCoreApplication) -> Dict[str, Any]:
     return params
 
 
-def get_active_db_and_schema() -> Tuple[str, str]:
-    """Get database and schema name for current project
+def get_active_connection_and_schema() -> Tuple[str, str]:
+    """Get connection and schema name for current project
 
-    :return: database name, schema name
+    :return: connection name, schema name
     """
     path = QgsProject().instance().fileName()
     
@@ -108,7 +108,8 @@ def get_active_db_and_schema() -> Tuple[str, str]:
     params = parse_qs(parsed_path.query)
     dbname = params.get("dbname", [""])[0]
     project = params.get("project", [""])[0]
-    return dbname, project
+    return get_database_connections()[dbname], project
+
 
 def get_all_project_schemas(db: Database) -> list:
     """Get the names of schemas containing project in their names.

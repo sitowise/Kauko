@@ -2,35 +2,23 @@ import os
 from typing import List
 
 from qgis.PyQt.QtWidgets import QFileDialog
-from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt import uic
 from qgis.gui import QgisInterface
 
 from ..data.regulations_writer import write_regulations_file
+from .plan_dialog import PlanDialog
 
 FROM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'get_regulations_dialog.ui'))
 
 
-class InitiateRegulationsDialog(QtWidgets.QDialog, FROM_CLASS):
+class InitiateRegulationsDialog(PlanDialog, FROM_CLASS):
 
     def __init__(self, iface: QgisInterface, parent=None):
-        super(InitiateRegulationsDialog, self).__init__(parent)
-        self.setupUi(self)
-        self.iface = iface
-        self.spatialPlanNameComboBox.currentTextChanged.connect(self.enable_accept_button)
+        super(InitiateRegulationsDialog, self).__init__(iface, parent)
         self.filePathLineEdit.textChanged.connect(self.enable_accept_button)
         self.filePathLineEdit.clear()
         self.fileDialogPushButton.clicked.connect(self.select_output_file)
-
-    def add_spatial_plan_names(self, items: List[str]) -> None:
-        """Adds names of given spatial plans to combobox
-
-        :param items: list of spatial plan names
-        :return: None
-        """
-        self.spatialPlanNameComboBox.clear()
-        for item in items:
-            self.spatialPlanNameComboBox.addItem(item)
 
     def select_output_file(self):
         """Used to set save directory for the output file"""
@@ -39,17 +27,6 @@ class InitiateRegulationsDialog(QtWidgets.QDialog, FROM_CLASS):
                                                    options=options)
         if file_name:
             self.filePathLineEdit.setText(file_name)
-
-    def enable_accept_button(self):
-        """Set accept button enabled if spatial plan name is selected"""
-        if self.spatialPlanNameComboBox.currentText() != "" and \
-                self.filePathLineEdit.text() != "":
-            self.acceptPushButton.setEnabled(True)
-        else:
-            self.acceptPushButton.setEnabled(False)
-
-    def get_spatial_plan_name(self) -> str:
-        return self.spatialPlanNameComboBox.currentText()
 
     def get_file_path(self) -> str:
         return self.filePathLineEdit.text()
