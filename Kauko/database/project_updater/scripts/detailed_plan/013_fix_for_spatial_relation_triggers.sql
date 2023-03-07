@@ -265,10 +265,6 @@ END;
 $BODY$;
 
 
-GRANT EXECUTE ON FUNCTION SCHEMANAME.geom_relations() TO qgis_editor;
-
-GRANT EXECUTE ON FUNCTION SCHEMANAME.geom_relations() TO qgis_admin;
-
 DROP TRIGGER IF EXISTS geom_relations ON SCHEMANAME.spatial_plan;
 CREATE TRIGGER geom_relations
     AFTER INSERT OR UPDATE OF geom

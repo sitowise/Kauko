@@ -2,21 +2,27 @@ ALTER TABLE SCHEMANAME.spatial_plan
   DROP COLUMN validity;
 
 DO $$
-LANGUAGE plpgsql
 DECLARE
+    _table_names text[] := ARRAY[
+        'zoning_element',
+        'planned_space',
+        'planning_detail_line',
+        'describing_line',
+        'describing_text'
+    ];
     table_name text;
 BEGIN
     SET session_replication_role = replica;
-    FOR table_name IN ('zoning_element', 'planned_space', 'planning_detail_line', 'describing_line', 'describing_text')
+    FOREACH table_name IN ARRAY _table_names
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
                           ADD COLUMN lifecycle_status VARCHAR(3);',
-                      table_name);
+                      quote_ident(table_name));
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
                           ADD CONSTRAINT %1$I_lifecycle_status_fkey
                           FOREIGN KEY (lifecycle_status)
-                          REFERENCES code_lists.spatial_plan_lifecycle_status (code_value);',
-                      table_name);
+                          REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue);',
+                      quote_ident(table_name));
         EXECUTE format('UPDATE SCHEMANAME.%I
                           SET lifecycle_status =
                             CASE
@@ -25,20 +31,20 @@ BEGIN
                               WHEN validity = 3 THEN ''12''
                               WHEN validity = 4 THEN ''01''
                             END;',
-                      table_name);
+                      quote_ident(table_name));
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
                           DROP COLUMN validity,
                           ALTER COLUMN lifecycle_status SET NOT NULL;',
-                      table_name);
+                      quote_ident(table_name));
     END LOOP;
     SET session_replication_role = DEFAULT;
-END $$ DISABLE TRIGGER ALL;
+END $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_spatial_plan_area(spatial_local_id VARCHAR)
 RETURNS geometry
 LANGUAGE plpgsql
 STRICT
-AS $function$
+AS $$
 DECLARE
   spatial_plan_geometry geometry;
   _spatial_plan RECORD;
@@ -66,7 +72,7 @@ BEGIN
       WHERE spatial_plan = spatial_local_id
         AND lifecycle_status IN ('10', '11')
     ) THEN
-      RETURN NULL
+      RETURN NULL;
     END IF;
   END IF;
   
@@ -85,16 +91,17 @@ BEGIN
   -- compute the union of all zoning element geometries
   RETURN ST_Union(_zoning_element_geoms);
 END;
+$$;
 
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_zoning_element_area(zoning_local_id VARCHAR)
   RETURNS geometry
   LANGUAGE plpgsql STRICT
-AS $function$
+AS $$
 DECLARE
   _local_id varchar;
   _geom geometry;
-  _validity_time datarange;
+  _validity_time daterange;
   _lifecycle_status varchar;
   _spatial_plan varchar;
   zoning_element_geometry geometry;
@@ -131,14 +138,12 @@ BEGIN
 
   RETURN zoning_element_geometry;
 END;
-
-
-  
+$$;  
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.update_validity()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$
+AS $$
 BEGIN
   PERFORM SCHEMANAME.refresh_validity();
 
@@ -158,7 +163,7 @@ BEGIN
       sp.validity_time
     FROM valid_geom vg
       JOIN SCHEMANAME.spatial_plan sp on sp.local_id = vg.local_id
-    WHERE vg.geom IS NOT NULL;
+    WHERE vg.geom IS NOT NULL
   );
 
 
@@ -218,7 +223,7 @@ BEGIN
     WITH valid_zoning_elements AS (
       SELECT
         local_id,
-        SCHEMANAME.get_valid_zoning_element_area(local_id) AS geom,
+        SCHEMANAME.get_valid_zoning_element_area(local_id) AS geom
       FROM SCHEMANAME.zoning_element
       WHERE lifecycle_status IN ('10', '11')
         AND validity_time @> CURRENT_DATE
@@ -231,8 +236,8 @@ BEGIN
       ze.spatial_plan AS spatial_plan
     FROM valid_zoning_elements vze
       JOIN SCHEMANAME.zoning_element ze ON ze.local_id = vze.local_id
-    WHERE vze.geom IS NOT NULL;
-  )
+    WHERE vze.geom IS NOT NULL
+  );
 
   WITH zoning_element_valid_from AS (
     SELECT
@@ -295,7 +300,7 @@ BEGIN
             SELECT ze.local_id
             FROM SCHEMANAME.zoning_element ze
             WHERE ze.validity_time @> CURRENT_DATE
-              AND ze.lifecycle_status NOT ('10', '11')
+              AND ze.lifecycle_status NOT IN ('10', '11')
             EXCEPT
             SELECT ze_ps.zoning_element_local_id
             FROM SCHEMANAME.zoning_element_planned_space ze_ps
@@ -341,7 +346,7 @@ BEGIN
         SELECT ze.local_id
         FROM SCHEMANAME.zoning_element ze
         WHERE ze.validity_time @> CURRENT_DATE
-          AND ze.lifecycle_status NOT ('10', '11')
+          AND ze.lifecycle_status NOT IN ('10', '11')
             EXCEPT
         SELECT ze_pdl.zoning_element_local_id
         FROM SCHEMANAME.zoning_element_plan_detail_line ze_pdl
@@ -418,7 +423,7 @@ BEGIN
         FROM SCHEMANAME.zoning_element_describing_line ze_dl
         WHERE ze_dl.describing_line_id = dl.identifier
       )
-        ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
+        SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
@@ -442,7 +447,7 @@ BEGIN
         FROM SCHEMANAME.zoning_element_describing_text ze_dt
         WHERE ze_dt.describing_text_id = dt.identifier
       )
-        ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
+        SELECT ST_Union(SCHEMANAME.get_valid_zoning_element_area(ze.local_id))
         FROM SCHEMANAME.zoning_element ze,
               zoning_elements zes
         WHERE ze.local_id = zes.local_id
@@ -453,12 +458,12 @@ BEGIN
     PERFORM SCHEMANAME.refresh_validity();
     RETURN NULL;
 END;
-$function$;
+$$;
 
 CREATE OR REPLACE FUNCTION "SCHEMANAME".refresh_validity()
     RETURNS void
     LANGUAGE plpgsql
-AS $BODY$
+AS $$
 BEGIN
   UPDATE SCHEMANAME.spatial_plan sp
   SET lifecycle_status = '06'
@@ -771,4 +776,4 @@ BEGIN
   );
 
 END;
-$BODY$;
+$$;

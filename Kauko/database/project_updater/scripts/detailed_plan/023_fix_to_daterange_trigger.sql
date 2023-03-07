@@ -1,24 +1,24 @@
 DO $$
-LANGUAGE plpgsql
 DECLARE
-    table_name text;
-BEGIN
-    SET session_replication_role = replica;
-    FOR table_name IN (
+    _table_name text[] := ARRAY[
         'spatial_plan',
         'zoning_element',
         'planned_space',
         'plan_regulation',
         'plan_guidance'
-    )
+    ];
+    table_name text;
+BEGIN
+    SET session_replication_role = replica;
+    FOREACH table_name IN ARRAY _table_name
     LOOP
         EXECUTE format('UPDATE SCHEMANAME.%I
                           SET validity_time = DATERANGE(lower(validity_time), upper(validity_time), ''[]'')
                           WHERE validity_time IS NOT NULL',
-                      table_name);
+                      quote_ident(table_name));
     END LOOP;
     SET session_replication_role = DEFAULT;
-END $$ DISABLE TRIGGER ALL;
+END $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.validity_to_daterange()
 RETURNS TRIGGER
