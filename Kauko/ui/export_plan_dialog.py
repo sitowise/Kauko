@@ -45,5 +45,5 @@ class ExportPlanDialog(PlanDialog, FROM_CLASS):
             return bar_msg(e.message, duration=10, success=False)
         xml_exporter.save_response(xml_response, local_directory)
         LOGGER.info('Vastaus tallennettu', extra=bar_msg(xml_response, duration=10))
-        xml_exporter.update_plan_in_db(plan_id, xml_response)
+        xml_exporter.update_ids_in_db(xml_response)
         return bar_msg("Tunnisteet tallennettu tietokantaan.", duration=10, success=True)

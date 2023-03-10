@@ -32,24 +32,20 @@ from ..database.database_handler import (
     get_supplementary_information,
     get_values,
     get_zoning_elements,
-    set_spatial_plan_reference_id,
-    set_spatial_plan_identity_id,
-    set_spatial_plan_storage_time,
+    set_object_reference_id,
+    set_object_storage_time,
+)
+from .tools import (
+    flatten_and_flip,
+    get_destination_table,
+    CORE_NS,
+    SPLAN_NS,
+    NAMESPACES,
+    XML_VALUE_MAP,
 )
 
 LOGGER = logging.getLogger("kauko")
 
-CORE_NS = "lud-core"
-SPLAN_NS = "splan"
-NAMESPACES = {
-    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
-    "xlink": "http://www.w3.org/1999/xlink",
-    "gml": "http://www.opengis.net/gml/3.2",
-    "gmlexr": "http://www.opengis.net/gml/3.3/exr",
-    "lsp": "http://tietomallit.ymparisto.fi/ry-yhteiset/kielituki/xml/1.0",
-    CORE_NS: "http://tietomallit.ymparisto.fi/mkp-ydin/xml/1.2",
-    SPLAN_NS: "http://tietomallit.ymparisto.fi/kaavatiedot/xml/1.2",
-}
 FEATURECOLLECTION = CORE_NS + ":LandUseFeatureCollection"
 FEATURECOLLECTION_ATTRIBUTES = {
     "xmlns:" + namespace: uri for namespace, uri in NAMESPACES.items()
@@ -63,6 +59,7 @@ FEATUREMEMBER = CORE_NS + ":featureMember"
 PRODUCER_SPECIFIC_IDENTIFIER = CORE_NS + ":producerSpecificIdentifier"
 OBJECT_IDENTIFIER = CORE_NS + ":objectIdentifier"
 LATEST_CHANGE = CORE_NS + ":latestChange"
+STORAGE_TIME = CORE_NS + ":storageTime"
 NAME = CORE_NS + ":loc_name"
 BOUNDARY = CORE_NS + ":boundary"
 LEGAL_EFFECTIVENESS = CORE_NS + ":legalEffectiveness"
@@ -79,11 +76,13 @@ SPATIAL_PLAN = SPLAN_NS + ":SpatialPlan"
 SPATIAL_PLAN_REF = SPLAN_NS + ":spatialPlan"
 VALIDITY_TIME_INSIDE_SPLAN = SPLAN_NS + ":validityTime"
 NAME_INSIDE_SPLAN = SPLAN_NS + ":loc_name"
+PLAN_IDENTIFIER = SPLAN_NS + ":planIdentifier"
 PLAN_OBJECT = SPLAN_NS + ":PlanObject"
 PLAN_ORDER = SPLAN_NS + ":PlanOrder"
 GENERAL_ORDER = SPLAN_NS + ":generalOrder"
 PLAN_RECOMMENDATION = SPLAN_NS + ":PlanRecommendation"
 GENERAL_RECOMMENDATION = SPLAN_NS + ":generalRecommendation"
+VALUE = SPLAN_NS + ":value"
 PLAN_ORDER_GROUP = SPLAN_NS + ":PlanOrderGroup"
 SUPPLEMENTARY_INFO = SPLAN_NS + ":supplementaryInfo"
 SUPPLEMENTARY_INFORMATION = SPLAN_NS + ":SupplementaryInformation"
@@ -120,6 +119,9 @@ TIME_PERIOD = "gml:TimePeriod"
 BEGIN_POSITION = "gml:beginPosition"
 END_POSITION = "gml:endPosition"
 REFERENCE_IDENTIFIER = "gml:identifier"
+
+
+VALUE_TYPE_MAP = flatten_and_flip(XML_VALUE_MAP)
 
 
 def get_gml_id(entry: Union[DictRow, Dict]) -> Union[str, None]:
@@ -306,19 +308,6 @@ def add_value_element(parent: Element, value_type: str, value: DictRow) -> Eleme
     :param value: Value contents to add
     :return: Created element
     """
-    VALUE = SPLAN_NS + ":value"
-    VALUE_TYPE_MAP = {
-        "code_value": SPLAN_NS + ":CodeValue",
-        "geometry_area_value": SPLAN_NS + ":GeometryValue",
-        "geometry_line_value": SPLAN_NS + ":GeometryValue",
-        "geometry_point_value": SPLAN_NS + ":GeometryValue",
-        "identifier_value": SPLAN_NS + ":IdentityValue",
-        "numeric_double_value": SPLAN_NS + ":NumericValue",
-        "numeric_range": SPLAN_NS + ":NumericRange",
-        "text_value": SPLAN_NS + ":TextValue",
-        "time_instant_value": SPLAN_NS + ":TimeInstantValue",
-        "time_period_value": SPLAN_NS + ":TimePeriodValue",
-    }
     UNIT_OF_MEASURE = SPLAN_NS + ":unitOfMeasure"
     container_element = SubElement(parent, VALUE)
     type_element = SubElement(container_element, VALUE_TYPE_MAP[value_type])
@@ -916,10 +905,10 @@ class XMLExporter:
             # Each zoning element must have planOrder linked to planObject.
             zoning_order = zoning_element.copy()
             # This order must have unique ids though.
-            zoning_order["local_id"] += ".zoning_order"
-            zoning_order["producer_specific_id"] += ".zoning_order"
+            zoning_order["local_id"] += "-zoning_order"
+            zoning_order["producer_specific_id"] += "-zoning_order"
             if zoning_order["reference_id"]:
-                zoning_order["reference_id"] += ".zoning_order"
+                zoning_order["reference_id"] += "-zoning_order"
             # The zoning order type is the land use kind. Element type does not apply to order.
             zoning_order["type"] = zoning_order["land_use_kind"]
             # TODO: Each zoning element may only have text values and supplementary information with code values
@@ -1234,34 +1223,58 @@ class XMLExporter:
         tree = ElementTree(incoming_plan)
         tree.write(f"{save_path}/{self.plan_name}.response.xml", "utf-8")
 
-    def update_plan_in_db(self, plan_id: int, response: str):
+    def update_ids_in_db(self, response: str):
         """
         Update existing plan based on XML response from Kaatio server.
 
-        :param plan_id: Plan identifier in Kauko database
         :param xml: XML response from Kaatio server
         """
         incoming_plan = fromstring(response)
-        spatial_plan = incoming_plan.find(".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan")
-        reference_id = spatial_plan.get("{" + NAMESPACES["gml"] + "}id")
-        # NOTE: currently, Kaatio API always returns planIdentifier as is.
-        # Therefore, there is no need to update identity id.
-        # identity_id = incoming_plan.find(
-        #     ".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan/{" +
-        #     NAMESPACES[SPLAN_NS] + "}planIdentifier").text
-        # get rid of id- string that is in front of UUIDs for some reason
-        # identity_id = identity_id.split("id-")[1]
-        reference_id = reference_id.split("id-")[1]
-        storage_time = incoming_plan.find(
-            ".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan/{" +
-            NAMESPACES[CORE_NS] + "}storageTime/{" +
-            NAMESPACES["gml"] + "}TimeInstant/{" +
-            NAMESPACES["gml"] + "}timePosition").text
-        storage_time = datetime.fromisoformat(storage_time)
+        feature_members = incoming_plan.findall(f".//{FEATUREMEMBER}", NAMESPACES)
+        # spatial_plan = incoming_plan.find(".//{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan")
+        for member in feature_members:
+            member_element = member.find(".//")
+            LOGGER.info("saving id for element")
+            LOGGER.info(member_element.tag)
+            producer_id_element = member.find(
+                ".//{" + NAMESPACES[CORE_NS] + "}producerSpecificIdentifier"
+            )
+            # TODO: remove this check once planner table has producer specific id
+            if producer_id_element is None:
+                LOGGER.info("object has no producer id, skipping...")
+                continue
+            producer_id = producer_id_element.text
+            # if the element is an order created from zoning element type, it has no separate
+            # entry in Kauko database:
+            if producer_id.endswith("-zoning_order"):
+                LOGGER.info("zoning order element found, skipping...")
+                continue
+            table_name = get_destination_table(incoming_plan, member_element)
 
-        # Better be explicit and update fields separately. We don't want all plan fields to be editable.
-        # set_spatial_plan_identity_id(plan_id, identity_id, self.db, self.schema)
-        set_spatial_plan_reference_id(plan_id, reference_id, self.db, self.schema)
-        set_spatial_plan_storage_time(plan_id, storage_time, self.db, self.schema)
+            reference_id = member_element.get("{" + NAMESPACES["gml"] + "}id")
+            # NOTE: currently, Kaatio API always returns planIdentifier as is.
+            # Therefore, there is no need to update identity id.
+            # identity_id = incoming_plan.find(
+            #     ".//{SPATIAL_PLAN}/{PLAN_IDENTIFIER}", NAMESPACES).text
+            # get rid of id- string that is in front of UUIDs for some reason
+            # identity_id = identity_id.split("id-")[1]
+            reference_id = reference_id.split("id-")[1]
+            # Better be explicit and update fields separately. We don't want all plan fields to be editable.
+            # set_spatial_plan_identity_id(plan_id, identity_id, self.db, self.schema)
+            set_object_reference_id(
+                table_name, producer_id, reference_id, self.db, self.schema
+            )
 
-        # TODO: also update ids for plan objects, plan orders etc.
+            storage_time_element = member.find(
+                f".//{STORAGE_TIME}/{TIME_INSTANT}/{TIME_POSITION}", NAMESPACES
+            )
+            # TODO: For unknown reasons, PlanRecommendation, PlanOrderGroup and SpatialPlanCommentary
+            # are currently missing storage time in the Kaatio API.
+            if storage_time_element is None:
+                LOGGER.info("storage time missing, skipping...")
+                continue
+            storage_time = storage_time_element.text
+            storage_time = datetime.fromisoformat(storage_time)
+            set_object_storage_time(
+                table_name, producer_id, storage_time, self.db, self.schema
+            )
