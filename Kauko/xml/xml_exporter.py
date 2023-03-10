@@ -996,7 +996,7 @@ class XMLExporter:
 
         # 10) Regulation groups may only be added after all regulations have been added. They refer
         # to existing regulations.
-        self.add_regulation_groups(zoning_element_regulation_groups, regulations_by_group)
+        self.add_regulation_groups(regulation_groups, regulations_by_group)
 
         # 11) Fetch and create all commentaries
         commentaries = get_plan_commentaries(plan_data["local_id"], self.db, self.schema)
