@@ -533,35 +533,24 @@ def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
 
 
 # Better be explicit here. We don't want all plan fields to be editable.
-def set_spatial_plan_identity_id(identifier: int, identity_id: str, db: Database, schema=None):
+def set_object_reference_id(table_name: str, producer_specific_id: str, reference_id: str, db: Database, schema=None):
     """
-    Sets the desired identity id for a saved plan.
+    Sets the desired reference id for a saved object with known producer_specific_id.
     """
     if schema == "":
         return
-    query = f"Update {schema}.spatial_plan set identity_id='{identity_id}' where identifier={identifier}"
+    query = f"Update {schema}.{table_name} set reference_id='{reference_id}' where producer_specific_id='{producer_specific_id}'"
     db.update(query)
 
 
 # Better be explicit here. We don't want all plan fields to be editable.
-def set_spatial_plan_reference_id(identifier: int, reference_id: str, db: Database, schema=None):
+def set_object_storage_time(table_name: str, producer_specific_id: str, storage_time: datetime, db: Database, schema=None):
     """
-    Sets the desired reference id for a saved plan.
-    """
-    if schema == "":
-        return
-    query = f"Update {schema}.spatial_plan set reference_id='{reference_id}' where identifier={identifier}"
-    db.update(query)
-
-
-# Better be explicit here. We don't want all plan fields to be editable.
-def set_spatial_plan_storage_time(identifier: int, storage_time: datetime, db: Database, schema=None):
-    """
-    Sets the desired storage time for a saved plan.
+    Sets the desired storage time for a saved object with known producer_specific_id.
     """
     if schema == "":
         return
-    query = f"Update {schema}.spatial_plan set storage_time='{storage_time}' where identifier={identifier}"
+    query = f"Update {schema}.{table_name} set storage_time='{storage_time}' where producer_specific_id='{producer_specific_id}'"
     db.update(query)
 
 
