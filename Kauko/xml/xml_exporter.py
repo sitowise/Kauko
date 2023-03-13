@@ -588,10 +588,12 @@ class XMLExporter:
             plan_order = self.add_lud_core_element(entry, PLAN_ORDER)
 
         if "name" in entry and entry["name"]:
-            # TODO: use this once name is proper jsonb field
-            # add_language_string_elements(plan_order, NAME_INSIDE_SPLAN, entry["name"])
-            element = SubElement(plan_order, NAME_INSIDE_SPLAN, {"xml:lang": "fin"})
-            element.text = entry["name"]
+            # TODO: remove this once zoning element name is proper jsonb field too
+            if isinstance(entry["name"], str):
+                element = SubElement(plan_order, NAME_INSIDE_SPLAN, {"xml:lang": "fin"})
+                element.text = entry["name"]
+            else:
+                add_language_string_elements(plan_order, NAME_INSIDE_SPLAN, entry["name"])
 
         for value_type, values in values.items():
             for value in values:
