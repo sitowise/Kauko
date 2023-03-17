@@ -1,10 +1,13 @@
 from typing import Any, Dict, Hashable, Literal, Set, Union
 from xml.etree.ElementTree import Element
 
+# This is probably the only sensible usage for import *
+# tags.py must *only* contain a consistent set of upper-case constants
+from .tags import *  # noqa: F403
 
-CORE_NS = "lud-core"
-SPLAN_NS = "splan"
+
 NAMESPACES = {
+    "xml": "http://www.w3.org/XML/1998/namespace",
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
     "xlink": "http://www.w3.org/1999/xlink",
     "gml": "http://www.opengis.net/gml/3.2",
@@ -14,23 +17,18 @@ NAMESPACES = {
     SPLAN_NS: "http://tietomallit.ymparisto.fi/kaavatiedot/xml/1.2",
 }
 
-XML_VALUE_MAP = {
-    SPLAN_NS + ":CodeValue": "code_value",
-    SPLAN_NS
-    + ":GeometryValue": {
-        SPLAN_NS + ":value": {
-            "gml:Polygon": "geometry_area_value",
-            "gml:LineString": "geometry_line_value",
-            "gml:Point": "geometry_point_value",
-        },
-    },
-    SPLAN_NS + ":IdentityValue": "identifier_value",
-    SPLAN_NS + ":NumericValue": "numeric_double_value",
-    SPLAN_NS + ":NumericRange": "numeric_range",
-    SPLAN_NS + ":TextValue": "text_value",
-    SPLAN_NS + ":TimeInstantValue": "time_instant_value",
-    SPLAN_NS + ":TimePeriodValue": "time_period_value",
-}
+
+def add_namespaces(dictionary: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add XML namespace URLs in place of namespace names for all dictionary keys.
+    """
+    namespaced_dict = dict()
+    for key, value in dictionary.items():
+        ns, name = key.split(":")
+        if isinstance(value, dict):
+            value = add_namespaces(value)
+        namespaced_dict["{" + NAMESPACES[ns] + "}" + name] = value
+    return namespaced_dict
 
 
 def get_polygon_type(
@@ -46,28 +44,45 @@ def get_polygon_type(
     return "zoning_element" if get_zoning_order(root, element) else "planned_space"
 
 
-XML_TABLE_MAP = {
-    "{" + NAMESPACES[SPLAN_NS] + "}SpatialPlan": "spatial_plan",
-    "{"
-    + NAMESPACES[SPLAN_NS]
-    + "}PlanObject": {
-        "{"
-        + NAMESPACES[SPLAN_NS]
-        + "}geometry": {
-            "{" + NAMESPACES["gml"] + "}Polygon": get_polygon_type,
-            "{" + NAMESPACES["gml"] + "}LineString": "planning_detail_line",
+XML_VALUE_MAP_SIMPLE = {
+    CODE_VALUE: "code_value",
+    GEOMETRY_VALUE: {
+        VALUE: {
+            GML_POLYGON: "geometry_area_value",
+            GML_LINESTRING: "geometry_line_value",
+            GML_POINT: "geometry_point_value",
+        },
+    },
+    IDENTITY_VALUE: "identifier_value",
+    NUMERIC_VALUE: "numeric_double_value",
+    NUMERIC_RANGE_VALUE: "numeric_range",
+    TEXT_VALUE: "text_value",
+    TIME_INSTANT_VALUE: "time_instant_value",
+    TIME_PERIOD_VALUE: "time_period_value",
+}
+
+XML_TABLE_MAP_SIMPLE = {
+    SPATIAL_PLAN: "spatial_plan",
+    PLAN_OBJECT: {
+        GEOMETRY: {
+            GML_POLYGON: get_polygon_type,
+            GML_LINESTRING: "planning_detail_line",
         }
     },
-    "{" + NAMESPACES[SPLAN_NS] + "}PlanOrder": "plan_regulation",
-    "{" + NAMESPACES[SPLAN_NS] + "}Planner": "planner",
-    "{" + NAMESPACES[SPLAN_NS] + "}PlanRecommendation": "plan_guidance",
-    "{" + NAMESPACES[SPLAN_NS] + "}PlanOrderGroup": "plan_regulation_group",
-    "{" + NAMESPACES[SPLAN_NS] + "}SpatialPlanCommentary": "spatial_plan_commentary",
-    "{"
-    + NAMESPACES[SPLAN_NS]
-    + "}ParticipationAndEvaluationPlan": "participation_and_evalution_plan",
-    "{" + NAMESPACES[CORE_NS] + "}Document": "document",
+    PLAN_ORDER: "plan_regulation",
+    PLANNER: "planner",
+    PLAN_RECOMMENDATION: "plan_guidance",
+    PLAN_ORDER_GROUP: "plan_regulation_group",
+    COMMENTARY: "spatial_plan_commentary",
+    PARTICIPATION_AND_EVALUATION_PLAN: "participation_and_evalution_plan",
+    DOCUMENT: "document",
+    VALUE: {
+        **XML_VALUE_MAP_SIMPLE
+    }, 
+    SUPPLEMENTARY_INFO: "supplementary_information",
 }
+
+XML_TABLE_MAP = add_namespaces(XML_TABLE_MAP_SIMPLE)
 
 
 def flip_dict(dictionary: Dict[Hashable, Any]) -> Dict[Hashable, Hashable]:

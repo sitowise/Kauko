@@ -2,9 +2,10 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime
-from typing import DefaultDict, Dict, List, Literal
+from typing import Any, DefaultDict, Dict, List, Literal
 
 import psycopg2
+from psycopg2.sql import Identifier, SQL
 from psycopg2.extras import DictRow
 from qgis.core import (Qgis, QgsExpressionContextUtils,
                        QgsProject)
@@ -539,8 +540,10 @@ def set_object_reference_id(table_name: str, producer_specific_id: str, referenc
     """
     if schema == "":
         return
-    query = f"Update {schema}.{table_name} set reference_id='{reference_id}' where producer_specific_id='{producer_specific_id}'"
-    db.update(query)
+    query = SQL("Update {}.{} set reference_id=%s where producer_specific_id={}").format(
+        Identifier(schema), Identifier(table_name), Identifier(producer_specific_id)
+    )
+    db.update(query, (reference_id,))
 
 
 # Better be explicit here. We don't want all plan fields to be editable.
@@ -550,8 +553,37 @@ def set_object_storage_time(table_name: str, producer_specific_id: str, storage_
     """
     if schema == "":
         return
-    query = f"Update {schema}.{table_name} set storage_time='{storage_time}' where producer_specific_id='{producer_specific_id}'"
-    db.update(query)
+    query = SQL("Update {}.{} set storage_time=%s where producer_specific_id={}").format(
+        Identifier(schema), Identifier(table_name), Identifier(producer_specific_id)
+    )
+    db.update(query, (storage_time,))
+
+
+# Only overwrite fields that are explicitly named in incoming row dict.
+def upsert_object(table_name: str, row: Dict[str, Any], db: Database, schema=None):
+    """
+    Inserts row with column names to table, or updates row if producer specific id already exists.
+    """
+    if schema == "":
+        return
+    keys = list(row.keys())
+    key_identifiers = [Identifier(key) for key in keys]
+    values = list(row.values())
+    # the amount of keys and values to be substituted may vary
+    key_placeholders = ", ".join(["{}"]*len(keys))
+    # GML geometry must be converted to ST_Geometry.
+    # geom function must be inserted at the right value.
+    value_placeholders = ", ".join(["ST_Multi(ST_SetSRID(ST_GeomFromGML(%s), 3879))" if key == "geom" else "%s" for key in keys])
+    query = SQL("Insert into {}.{} (" + key_placeholders + ") values (" + value_placeholders + ")").format(
+        Identifier(schema), Identifier(table_name), *key_identifiers
+    )
+    try:
+        db.insert(query, values)
+    except psycopg2.errors.UniqueViolation:
+        query = SQL("Update {}.{} set (" + key_placeholders + ")=(" + value_placeholders + ") where producer_specific_id=%s").format(
+        Identifier(schema), Identifier(table_name), *key_identifiers
+    )
+        db.update(query, (*values, row["producer_specific_id"]))
 
 
 def get_spatial_plan_ids_and_names(db: Database, schema=None) -> Dict[int, str]:

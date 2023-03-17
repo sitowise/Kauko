@@ -48,6 +48,7 @@ from .resources import *
 from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
 from .ui.export_plan_dialog import ExportPlanDialog
+from .ui.import_plan_dialog import ImportPlanDialog
 from .ui.get_regulations_dialog import InitiateRegulationsDialog
 from .ui.move_plan_dialog import MovePlanDialog
 from .ui.open_project_dialog import InitiateOpenProjectDialog
@@ -228,6 +229,13 @@ class Kauko:
             ':/Kauko/icons/mActionSharingExport.svg',
             text='Vie tallennuspalveluun',
             callback=self.export_plan,
+            parent=self.iface.mainWindow(),
+            add_to_toolbar=False)
+
+        self.add_action(
+            ':/Kauko/icons/mActionSharingImport.svg',
+            text='Tuo kaava',
+            callback=self.import_plan,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False)
 
@@ -446,6 +454,20 @@ class Kauko:
                                             level=Qgis.Warning, duration=5)
         if dlg.exec_():
             bar_msg = dlg.export_plan(db, self.schema)
+            self.iface.messageBar().pushMessage(
+                bar_msg["details"],
+                level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
+                duration=bar_msg["duration"])
+
+    def import_plan(self):
+        self._start(True)
+        dlg = ImportPlanDialog(self.iface)
+        if not self.database_initializer.initialize_database(self.connection):
+            return
+        db = self.database_initializer.database
+
+        if dlg.exec_():
+            bar_msg = dlg.import_plan(db, self.schema)
             self.iface.messageBar().pushMessage(
                 bar_msg["details"],
                 level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
