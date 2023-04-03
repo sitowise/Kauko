@@ -5,7 +5,6 @@ ALTER TABLE SCHEMANAME.planner
     ADD COLUMN reference_id VARCHAR,
     ADD COLUMN latest_change TIMESTAMP DEFAULT now() NOT NULL,
     ADD COLUMN storage_time TIMESTAMP DEFAULT now() NOT NULL;
-;
 
 CREATE TRIGGER planner_modified_trigger
   BEFORE INSERT OR UPDATE ON SCHEMANAME.planner
