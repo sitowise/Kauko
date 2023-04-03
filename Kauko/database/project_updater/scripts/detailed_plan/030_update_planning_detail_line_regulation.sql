@@ -230,6 +230,14 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
+DELETE FROM SCHEMANAME.planning_detail_line pdl
+    WHERE "type" IN (6, 7)
+    AND NOT EXISTS (
+        SELECT 1
+        FROM SCHEMANAME.planning_detail_line_plan_regulation pdlpr
+        WHERE pdlpr.planning_detail_line_local_id = pdl.local_id
+    );
+
 ALTER TABLE SCHEMANAME.planning_detail_line
     DROP COLUMN "type",
     DROP COLUMN "type_description";
