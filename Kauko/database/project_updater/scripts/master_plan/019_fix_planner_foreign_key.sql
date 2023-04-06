@@ -8,7 +8,8 @@ UPDATE SCHEMANAME.planner
     WHERE sp.producer_specific_id = planner.fk_spatial_plan;
 
 ALTER TABLE SCHEMANAME.planner
-    DROP COLUMN fk_spatial_plan,
+    DROP COLUMN fk_spatial_plan;
+ALTER TABLE SCHEMANAME.planner
     RENAME COLUMN temp_fk_spatial_plan TO fk_spatial_plan;
 
 ALTER TABLE SCHEMANAME.planner
