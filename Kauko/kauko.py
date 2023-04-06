@@ -58,16 +58,6 @@ from .ui.update_project_dialog import InitiateUpdateProjectDialog
 
 setup_logger("kauko")
 
-
-def is_admin():
-    s = QSettings()
-    s.beginGroup("variables")
-    admin = s.value("kauko_admin")
-    s.endGroup()
-    return False if admin is None else admin.lower() == "true"
-
-
-
 class Kauko:
     """QGIS Plugin Implementation."""
 
@@ -95,7 +85,7 @@ class Kauko:
             actions = self.iface.mainWindow().menuBar().actions()
             last_action = actions[-1]
             self.iface.mainWindow().menuBar().insertMenu(last_action, self.menu)
-            if is_admin():
+            if Kauko.is_admin():
                 self.admin_menu = self.menu.addMenu("&Admin")
 
 
@@ -108,6 +98,14 @@ class Kauko:
         self.database_initializer = None
         self.connection = None
         self.schema = None
+    
+    @staticmethod
+    def is_admin():
+        s = QSettings()
+        s.beginGroup("variables")
+        admin = s.value("kauko_admin")
+        s.endGroup()
+        return False if admin is None else admin.lower() == "true"
 
     def add_action(
             self,
@@ -179,7 +177,7 @@ class Kauko:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = None
-        if is_admin():
+        if Kauko.is_admin():
             self.add_action(
                 icon_path,
                 text="Luo uusi työtila",
@@ -272,6 +270,7 @@ class Kauko:
             self.iface.removeToolBarIcon(action) """
         self.menu.clear()
         self.iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
+        self.menu.deleteLater()
 
     def _start(self, require_db: bool=False):
         """
