@@ -16,6 +16,50 @@ DROP INDEX IF EXISTS SCHEMANAME.planning_detail_line_identity_id_key;
 DROP INDEX IF EXISTS SCHEMANAME.spatial_plan_commentary_identity_id_key;
 DROP INDEX IF EXISTS SCHEMANAME.zoning_element_identity_id_key;
 
+--EXAMPLE:
+CREATE OR REPLACE FUNCTION SCHEMANAME.create_new_spatial_plan_version(p_spatial_plan_local_id varchar)
+RETURNS VOID AS $$
+DECLARE
+    new_spatial_plan_local_id varchar;
+    new_elements RECORD;
+BEGIN
+    -- 1. Create a new spatial_plan version with same plan_id
+    INSERT INTO SCHEMANAME.spatial_plan (geom, plan_id)
+    SELECT geom, plan_id
+    FROM SCHEMANAME.spatial_plan
+    WHERE local_id = p_spatial_plan_local_id
+    RETURNING local_id INTO new_spatial_plan_local_id;
+        -- 2. Clone zoning_element, planned_space and their relations
+    FOR new_elements IN
+        SELECT old_zoning.local_id AS old_zoning_element_local_id,
+            new_zoning.local_id AS new_zoning_element_local_id,
+            old_space.local_id AS old_planned_space_local_id,
+            new_space.local_id AS new_planned_space_local_id
+        FROM SCHEMANAME.zoning_element AS old_zoning
+        JOIN LATERAL (
+            INSERT INTO SCHEMANAME.zoning_element (geom, spatial_plan)
+            VALUES (old_zoning.geom, new_spatial_plan_local_id)
+            RETURNING local_id
+        ) AS new_zoning ON TRUE
+        JOIN SCHEMANAME.zoning_element_planned_space AS zeps
+        ON zeps.zoning_element_local_id = old_zoning.local_id
+        JOIN SCHEMANAME.planned_space AS old_space
+        ON old_space.local_id = zeps.planned_space_local_id
+        JOIN LATERAL (
+            INSERT INTO SCHEMANAME.planned_space (uuid, spatial_plan)
+            VALUES (old_space.uuid, new_spatial_plan_local_id)
+            RETURNING local_id
+        ) AS new_space ON TRUE
+        WHERE old_zoning.spatial_plan = p_spatial_plan_local_id
+    LOOP
+        INSERT INTO SCHEMANAME.zoning_element_planned_space (zoning_element_local_id, planned_space_local_id)
+        VALUES (new_elements.new_zoning_element_local_id, new_elements.new_planned_space_local_id);
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
 
 ALTER TABLE SCHEMANAME.spatial_plan
     ADD COLMUN is_active BOOLEAN DEFAULT FALSE,
@@ -96,12 +140,10 @@ BEGIN
         RAISE EXCEPTION 'Version % doesn''t exists for spatial_plan', p_from_version;
     END IF;
 
-    v_from_spatial_plan := (
-        SELECT *
-        FROM SCHEMANAME.spatial_plan
-        WHERE local_id = p_from_version
-        LIMIT 1
-    );
+    SELECT *
+    FROM SCHEMANAME.spatial_plan
+    WHERE local_id = p_from_version
+    LIMIT 1 INTO v_from_spatial_plan;
 
     INSERT INTO SCHEMANAME.spatial_plan (
         identity_id,
@@ -151,6 +193,44 @@ BEGIN
     FROM SCHEMANAME.spatial_plan sp
     WHERE sp.local_id = v_from_spatial_plan.local_id
     RETURNING * INTO v_new_spatial_plan;
+
+    INSERT INTO SCHEMANAME.zoning_element (
+        identity_id,
+        geom,
+        localized_name,
+        "name",
+        "type",
+        up_to_dateness,
+        valid_from,
+        valid_to,
+        block_number,
+        parcel_number,
+        bindingness_of_location,
+        ground_relative_position,
+        land_use_kind,
+        spatial_plan,
+        validity_time,
+        lifecycle_status)
+    SELECT
+        identity_id,
+        geom,
+        localized_name,
+        "name",
+        "type",
+        up_to_dateness,
+        valid_from,
+        valid_to,
+        block_number,
+        parcel_number,
+        bindingness_of_location,
+        ground_relative_position,
+        land_use_kind,
+        v_new_spatial_plan.local_id,
+        validity_time,
+        lifecycle_status
+    FROM SCHEMANAME.zoning_element ze
+    WHERE ze.local_id = v_old_zoning_element_id;
+
 
     FOR v_old_zoning_element_id IN (
         SELECT local_id
