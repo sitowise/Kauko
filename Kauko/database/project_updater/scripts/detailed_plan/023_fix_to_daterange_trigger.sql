@@ -9,7 +9,17 @@ DECLARE
     ];
     table_name text;
 BEGIN
-    SET session_replication_role = replica;
+    ALTER TABLE SCHEMANAME.spatial_plan
+      DISABLE TRIGGER spatial_plan_validity_time;
+    ALTER TABLE SCHEMANAME.zoning_element
+      DISABLE TRIGGER zoning_element_validity_time;
+    ALTER TABLE SCHEMANAME.planned_space
+      DISABLE TRIGGER planned_space_validity_time;
+    ALTER TABLE SCHEMANAME.plan_regulation
+      DISABLE TRIGGER plan_regulation_validity_time;
+    ALTER TABLE SCHEMANAME.plan_guidance
+      DISABLE TRIGGER plan_guidance_validity_time;
+
     FOREACH table_name IN ARRAY _table_name
     LOOP
         EXECUTE format('UPDATE SCHEMANAME.%I
@@ -17,7 +27,17 @@ BEGIN
                           WHERE validity_time IS NOT NULL',
                       quote_ident(table_name));
     END LOOP;
-    SET session_replication_role = DEFAULT;
+
+    ALTER TABLE SCHEMANAME.spatial_plan
+      ENABLE TRIGGER spatial_plan_validity_time;
+    ALTER TABLE SCHEMANAME.zoning_element
+      ENABLE TRIGGER zoning_element_validity_time;
+    ALTER TABLE SCHEMANAME.planned_space
+      ENABLE TRIGGER planned_space_validity_time;
+    ALTER TABLE SCHEMANAME.plan_regulation
+      ENABLE TRIGGER plan_regulation_validity_time;
+    ALTER TABLE SCHEMANAME.plan_guidance
+      ENABLE TRIGGER plan_guidance_validity_time;
 END $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.validity_to_daterange()
