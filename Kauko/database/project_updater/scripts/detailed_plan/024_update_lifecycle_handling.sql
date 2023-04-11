@@ -18,10 +18,9 @@ BEGIN
       FROM pg_trigger
       JOIN pg_class ON tgrelid = pg_class.oid
       WHERE tgfoid in (
-        'update_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'upsert_creator_and_modifier_trigger()'::regprocedure
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure,
+        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
       )
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
@@ -60,10 +59,9 @@ BEGIN
       FROM pg_trigger
       JOIN pg_class ON tgrelid = pg_class.oid
       WHERE tgfoid in (
-        'update_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'upsert_creator_and_modifier_trigger()'::regprocedure
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure,
+        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
       )
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I

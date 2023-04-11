@@ -18,10 +18,9 @@ BEGIN
       FROM pg_trigger
       JOIN pg_class ON tgrelid = pg_class.oid
       WHERE tgfoid in (
-        'update_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'upsert_creator_and_modifier_trigger()'::regprocedure
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure,
+        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
       )
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
@@ -60,17 +59,16 @@ BEGIN
       FROM pg_trigger
       JOIN pg_class ON tgrelid = pg_class.oid
       WHERE tgfoid in (
-        'update_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'inherit_validity()'::regprocedure,
-        'upsert_creator_and_modifier_trigger()'::regprocedure
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure,
+        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
       )
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
                           DISABLE TRIGGER %I;',
                       quote_ident(_triggers_to_disable.relname),
                       quote_ident(_triggers_to_disable.tgname));
-    END LOOP
+    END LOOP;
 END $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_spatial_plan_area(spatial_local_id VARCHAR)
