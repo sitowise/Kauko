@@ -11,12 +11,27 @@ DECLARE
         'describing_text'
     ];
     table_name text;
+    _triggers_to_disable RECORD;
 BEGIN
-    FOREACH table_name IN ARRAY _table_names
+    FOR _triggers_to_disable IN
+    SELECT tgname, relname
+      FROM pg_trigger
+      JOIN pg_class ON tgrelid = pg_class.oid
+      WHERE tgfoid in (
+        'update_validity()'::regprocedure,
+        'inherit_validity()'::regprocedure,
+        'inherit_validity()'::regprocedure,
+        'upsert_creator_and_modifier_trigger()'::regprocedure
+      )
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          DISABLE TRIGGER ALL;',
-                      quote_ident(table_name));
+                          DISABLE TRIGGER %I;',
+                      quote_ident(_triggers_to_disable.relname),
+                      quote_ident(_triggers_to_disable.tgname));
+    END LOOP;
+
+    FOREACH table_name IN ARRAY _table_names
+    LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
                           ADD COLUMN lifecycle_status VARCHAR(3);',
                       quote_ident(table_name));
@@ -38,10 +53,24 @@ BEGIN
                           DROP COLUMN validity,
                           ALTER COLUMN lifecycle_status SET NOT NULL;',
                       quote_ident(table_name));
-        EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          ENABLE TRIGGER ALL;',
-                      quote_ident(table_name));
     END LOOP;
+
+    FOR _triggers_to_disable IN
+    SELECT tgname, relname
+      FROM pg_trigger
+      JOIN pg_class ON tgrelid = pg_class.oid
+      WHERE tgfoid in (
+        'update_validity()'::regprocedure,
+        'inherit_validity()'::regprocedure,
+        'inherit_validity()'::regprocedure,
+        'upsert_creator_and_modifier_trigger()'::regprocedure
+      )
+    LOOP
+        EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                          DISABLE TRIGGER %I;',
+                      quote_ident(_triggers_to_disable.relname),
+                      quote_ident(_triggers_to_disable.tgname));
+    END LOOP
 END $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_spatial_plan_area(spatial_local_id VARCHAR)
