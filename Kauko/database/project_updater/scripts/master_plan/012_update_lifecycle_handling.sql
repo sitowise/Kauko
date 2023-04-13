@@ -65,7 +65,7 @@ BEGIN
       )
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          DISABLE TRIGGER %I;',
+                          ENABLE TRIGGER %I;',
                       quote_ident(_triggers_to_disable.relname),
                       quote_ident(_triggers_to_disable.tgname));
     END LOOP;
