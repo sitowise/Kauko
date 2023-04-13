@@ -39,26 +39,26 @@ BEGIN
             );
 
             INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-                VALUES ('0508', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+                VALUES ('0508', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
                 RETURNING * INTO v_new_regulation;
-            
+
             INSERT INTO SCHEMANAME.geometry_line_value ("value", obligatory)
-                VALUES (v_planning_detail_line.geom, v_planning_detail_line.obligatory)
+                VALUES (v_planning_detail_line.geom, CASE WHEN v_planning_detail_line.bindingness_of_location = '01' THEN TRUE ELSE FALSE END)
                 RETURNING * INTO v_new_value;
-            
+
             INSERT INTO SCHEMANAME.plan_regulation_geometry_line_value (fk_plan_regulation, fk_geometry_line_value)
                 VALUES (v_new_regulation.local_id, v_new_value.geometry_line_value_uuid);
-            
+
             INSERT INTO SCHEMANAME.plan_regulation_planned_space (fk_plan_regulation, fk_planned_space)
                 VALUES (v_new_regulation.local_id, v_planned_space.local_id);
-            
+
             DELETE FROM SCHEMANAME.planning_detail_line
             WHERE local_id = v_planning_detail_line.local_id;
         ELSE
             INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-                VALUES ('1302', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+                VALUES ('1302', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
                 RETURNING * INTO v_new_regulation;
-            
+
             INSERT INTO SCHEMANAME.planning_detail_line_plan_regulation (planning_detail_line_local_id, plan_regulation_local_id)
                 VALUES (v_planning_detail_line.local_id, v_new_regulation.local_id);
         END IF;
@@ -90,16 +90,16 @@ BEGIN
         WHERE zepdl.planning_detail_line_local_id = v_planning_detail_line.local_id;
 
         INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-            VALUES ('0802', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+            VALUES ('0802', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
             RETURNING * INTO v_new_regulation;
-        
+
         INSERT INTO SCHEMANAME.geometry_line_value ("value", obligatory)
-            VALUES (v_planning_detail_line.geom, v_planning_detail_line.obligatory)
+            VALUES (v_planning_detail_line.geom, CASE WHEN v_planning_detail_line.bindingness_of_location = '01' THEN TRUE ELSE FALSE END)
             RETURNING * INTO v_new_value;
-        
+
         INSERT INTO SCHEMANAME.plan_regulation_geometry_line_value (fk_plan_regulation, fk_geometry_line_value)
             VALUES (v_new_regulation.local_id, v_new_value.geometry_line_value_uuid);
-        
+
         FOR v_zoning_element_local_id IN
             SELECT zoning_element_local_id
             FROM SCHEMANAME.zoning_element_plan_detail_line
@@ -137,9 +137,9 @@ BEGIN
         WHERE zepdl.planning_detail_line_local_id = v_planning_detail_line.local_id;
 
         INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-            VALUES ('0805', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+            VALUES ('0805', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
             RETURNING * INTO v_new_regulation;
-        
+
         INSERT INTO SCHEMANAME.numeric_double_value ("value", unit_of_measure, obligatory)
             VALUES (
                 round(
@@ -149,12 +149,12 @@ BEGIN
                             ST_EndPoint(ST_GeometryN(v_planning_detail_line.geom, 1))
                         )
                     )
-                ), "deg", v_planning_detail_line.obligatory)
+                ), 'deg', CASE WHEN v_planning_detail_line.bindingness_of_location = '01' THEN TRUE ELSE FALSE END)
             RETURNING * INTO v_new_value;
-        
+
         INSERT INTO SCHEMANAME.plan_regulation_numeric_double_value (fk_plan_regulation, fk_numeric_double_value)
             VALUES (v_new_regulation.local_id, v_new_value.numeric_double_value_uuid);
-        
+
         FOR v_planned_space_local_id IN
             SELECT planned_space_local_id
             FROM SCHEMANAME.planned_space_plan_detail_line
@@ -191,9 +191,9 @@ BEGIN
         WHERE zepdl.planning_detail_line_local_id = v_planning_detail_line.local_id;
 
         INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-            VALUES ('020313', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+            VALUES ('020313', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
             RETURNING * INTO v_new_regulation;
-        
+
         INSERT INTO SCHEMANAME.planning_detail_line_plan_regulation (planning_detail_line_local_id, plan_regulation_local_id)
             VALUES (v_planning_detail_line.local_id, v_new_regulation.local_id);
     END LOOP;
@@ -221,9 +221,9 @@ BEGIN
         WHERE zepdl.planning_detail_line_local_id = v_planning_detail_line.local_id;
 
         INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-            VALUES ('020204', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+            VALUES ('020204', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
             RETURNING * INTO v_new_regulation;
-        
+
         INSERT INTO SCHEMANAME.planning_detail_line_plan_regulation (planning_detail_line_local_id, plan_regulation_local_id)
             VALUES (v_planning_detail_line.local_id, v_new_regulation.local_id);
     END LOOP;

@@ -98,7 +98,7 @@ class Kauko:
         self.database_initializer = None
         self.connection = None
         self.schema = None
-    
+
     @staticmethod
     def is_admin():
         s = QSettings()
@@ -309,7 +309,7 @@ class Kauko:
         result = dlg.exec_()
         # See if OK was pressed
         if result:
-            connection_name, db_name = dlg.get_connection_and_db() 
+            connection_name, db_name = dlg.get_connection_and_db()
             if self.database_initializer.initialize_database(connection_name):
                 database = self.database_initializer.database
                 dlg.create_schema(database)
@@ -399,8 +399,18 @@ class Kauko:
             DatabaseInitializer(self.iface, QgsApplication.instance())
 
         dlg = InitiateUpdateProjectDialog(self.iface)
-        self._initialize_database(dlg)
-        dlg.db_changed.connect(lambda: self._initialize_database(dlg))
+        def initialize_database():
+            connection_name, db_name = dlg.get_connection_and_db()
+            self.database_initializer.initialize_database(connection_name)
+            db = self.database_initializer.database
+            try:
+                dlg.add_projects(get_projects(db))
+            except psycopg2.OperationalError:
+                dlg.add_projects(["Ei yhteyttä!"])
+
+        initialize_database()
+
+        dlg.db_changed.connect(initialize_database)
 
         dlg.show()
         # Run the dialog event loop
