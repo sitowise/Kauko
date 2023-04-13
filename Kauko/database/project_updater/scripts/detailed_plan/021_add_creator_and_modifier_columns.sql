@@ -8,182 +8,108 @@ BEGIN
   ELSIF TG_OP = 'UPDATE' THEN
     NEW.created = OLD.created;
     NEW.created_by = OLD.created_by;
+  END IF;
   NEW.modified_by = current_user;
   NEW.modified_at = now();
-  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-ALTER TABLE SCHEMANAME.spatial_plan
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
+DO $$
+DECLARE
+  _table_names text[] := ARRAY[
+        'zoning_element',
+        'planned_space',
+        'planning_detail_line',
+        'document',
+        'plan_regulation',
+        'plan_guidance'
+    ];
+    table_name text;
+    _triggers_to_disable RECORD;
+BEGIN
+  FOR _triggers_to_disable IN
+    SELECT tgname, relname
+      FROM pg_trigger
+      JOIN pg_class ON tgrelid = pg_class.oid
+      WHERE tgfoid in (
+        'public.versioned_object_modified_trigger()'::regprocedure,
+        'SCHEMANAME.validity_to_daterange()'::regprocedure,
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure
+      )
+      AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'SCHEMANAME')
+      AND relname IN (SELECT unnest(_table_names))
+    LOOP
+        EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                          DISABLE TRIGGER %I;',
+                      quote_ident(_triggers_to_disable.relname),
+                      quote_ident(_triggers_to_disable.tgname));
+    END LOOP;
 
-UPDATE SCHEMANAME.spatial_plan
-  SET created = storage_time;
+  FOREACH table_name IN ARRAY _table_names
+  LOOP
+    EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                      ADD COLUMN created timestamp,
+                      ADD COLUMN created_by text,
+                      ADD COLUMN modified_by text,
+                      ADD COLUMN modified_at timestamp;',
+                  quote_ident(table_name));
 
-ALTER TABLE SCHEMANAME.spatial_plan
-  ALTER COLUMN storage_time DROP NOT NULL,
-  ALTER COLUMN storage_time DROP DEFAULT;
+    EXECUTE format('UPDATE SCHEMANAME.%I
+                      SET
+                        created = CASE
+                                    WHEN storage_time IS NOT NULL THEN storage_time
+                                    ELSE now()
+                                  END,
+                        created_by = ''system'',
+                        modified_by = ''system'',
+                        modified_at = now();',
+                  quote_ident(table_name));
 
-UPDATE SCHEMANAME.spatial_plan
-  SET storage_time = NULL;
-
-ALTER TABLE SCHEMANAME.spatial_plan
-  ALTER COLUMN created SET NOT NULL,
-  ALTER COLUMN created SET DEFAULT now(),
-  ALTER COLUMN created_by SET NOT NULL,
-  ALTER COLUMN modified_by SET NOT NULL,
-  ALTER COLUMN modified_at SET NOT NULL;
+    EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                      ALTER COLUMN storage_time DROP NOT NULL,
+                      ALTER COLUMN storage_time DROP DEFAULT;',
+                  quote_ident(table_name));
 
 
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME.spatial_plan
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
+    EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                      ALTER COLUMN created SET NOT NULL,
+                      ALTER COLUMN created SET DEFAULT now(),
+                      ALTER COLUMN created_by SET NOT NULL,
+                      ALTER COLUMN modified_by SET NOT NULL,
+                      ALTER COLUMN modified_at SET NOT NULL;',
+                  quote_ident(table_name));
 
-ALTER TABLE SCHEMANAME.zoning_element
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
+    EXECUTE format('CREATE TRIGGER upsert_creator_and_modifier_trigger
+                      BEFORE INSERT OR UPDATE ON SCHEMANAME.%I
+                      FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();',
+                  quote_ident(table_name));
+  END LOOP;
 
-UPDATE SCHEMANAME.zoning_element
-  SET created = storage_time;
+  FOR _triggers_to_disable IN
+    SELECT tgname, relname
+      FROM pg_trigger
+      JOIN pg_class ON tgrelid = pg_class.oid
+      WHERE tgfoid in (
+        'public.versioned_object_modified_trigger()'::regprocedure,
+        'SCHEMANAME.validity_to_daterange()'::regprocedure,
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure
+      )
+      AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'SCHEMANAME')
+      AND relname IN (SELECT unnest(_table_names))
+    LOOP
+        EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                          ENABLE TRIGGER %I;',
+                      quote_ident(_triggers_to_disable.relname),
+                      quote_ident(_triggers_to_disable.tgname));
+    END LOOP;
 
-ALTER TABLE SCHEMANAME.zoning_element
-  ALTER COLUMN storage_time DROP NOT NULL,
-  ALTER COLUMN storage_time DROP DEFAULT;
-
-UPDATE SCHEMANAME.zoning_element
-  SET storage_time = NULL;
-
-ALTER TABLE SCHEMANAME.zoning_element
-  ALTER COLUMN created SET NOT NULL,
-  ALTER COLUMN created SET DEFAULT now(),
-  ALTER COLUMN created_by SET NOT NULL,
-  ALTER COLUMN modified_by SET NOT NULL,
-  ALTER COLUMN modified_at SET NOT NULL;
-
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME.zoning_element
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
-
-ALTER TABLE SCHEMANAME.planned_space
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
-
-UPDATE SCHEMANAME.planned_space
-  SET created = storage_time;
-
-ALTER TABLE SCHEMANAME.planned_space
-  ALTER COLUMN storage_time DROP NOT NULL,
-  ALTER COLUMN storage_time DROP DEFAULT;
-
-UPDATE SCHEMANAME.planned_space
-  SET storage_time = NULL;
-
-ALTER TABLE SCHEMANAME.planned_space
-  ALTER COLUMN created SET NOT NULL,
-  ALTER COLUMN created SET DEFAULT now(),
-  ALTER COLUMN created_by SET NOT NULL,
-  ALTER COLUMN modified_by SET NOT NULL,
-  ALTER COLUMN modified_at SET NOT NULL;
-
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME.planned_space
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
-
-ALTER TABLE SCHEMANAME.planning_detail_line
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
-
-UPDATE SCHEMANAME.planning_detail_line
-  SET created = storage_time;
-
-ALTER TABLE SCHEMANAME.planning_detail_line
-  ALTER COLUMN storage_time DROP NOT NULL,
-  ALTER COLUMN storage_time DROP DEFAULT;
-
-UPDATE SCHEMANAME.planning_detail_line
-  SET storage_time = NULL;
-
-ALTER TABLE SCHEMANAME.planning_detail_line
-  ALTER COLUMN created SET NOT NULL,
-  ALTER COLUMN created SET DEFAULT now(),
-  ALTER COLUMN created_by SET NOT NULL,
-  ALTER COLUMN modified_by SET NOT NULL,
-  ALTER COLUMN modified_at SET NOT NULL;
-
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME.planning_detail_line
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
-
-ALTER TABLE SCHEMANAME."document"
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
-
-UPDATE SCHEMANAME."document"
-  SET created = storage_time;
-
-ALTER TABLE SCHEMANAME."document"
-  ALTER COLUMN storage_time DROP NOT NULL,
-  ALTER COLUMN storage_time DROP DEFAULT;
-
-UPDATE SCHEMANAME."document"
-  SET storage_time = NULL;
-
-ALTER TABLE SCHEMANAME."document"
-  ALTER COLUMN created SET NOT NULL,
-  ALTER COLUMN created SET DEFAULT now(),
-  ALTER COLUMN created_by SET NOT NULL,
-  ALTER COLUMN modified_by SET NOT NULL,
-  ALTER COLUMN modified_at SET NOT NULL;
-
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME."document"
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
-
-ALTER TABLE SCHEMANAME.plan_regulation
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
-
-UPDATE SCHEMANAME.plan_regulation
-  SET created = storage_time;
-
-ALTER TABLE SCHEMANAME.plan_regulation
-  ALTER COLUMN storage_time DROP NOT NULL,
-  ALTER COLUMN storage_time DROP DEFAULT;
-
-UPDATE SCHEMANAME.plan_regulation
-  SET storage_time = NULL;
-
-ALTER TABLE SCHEMANAME.plan_regulation
-  ALTER COLUMN created SET NOT NULL,
-  ALTER COLUMN created SET DEFAULT now(),
-  ALTER COLUMN created_by SET NOT NULL,
-  ALTER COLUMN modified_by SET NOT NULL,
-  ALTER COLUMN modified_at SET NOT NULL;
-
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME.plan_regulation
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
-
-ALTER TABLE SCHEMANAME.plan_guidance
-  ADD COLUMN created timestamp,
-  ADD COLUMN created_by text,
-  ADD COLUMN modified_by text,
-  ADD COLUMN modified_at timestamp;
-
-CREATE TRIGGER upsert_creator_and_modifier_trigger
-  BEFORE INSERT OR UPDATE ON SCHEMANAME.plan_guidance
-  FOR EACH ROW EXECUTE PROCEDURE SCHEMANAME.upsert_creator_and_modifier_trigger();
+  FOREACH table_name IN ARRAY _table_names
+  LOOP
+    EXECUTE format('UPDATE SCHEMANAME.%I
+                      SET storage_time = NULL;',
+                  quote_ident(table_name));
+  END LOOP;
+END $$ LANGUAGE plpgsql;

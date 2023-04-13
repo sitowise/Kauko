@@ -19,7 +19,7 @@ BEGIN
                 pr."type" = '0403'
         ) THEN
             INSERT INTO SCHEMANAME.plan_regulation("type", "life_cycle_status", "valid_from", "valid_to")
-            VALUES ('0403', v_planned_space."life_cycle_status", v_planned_space."valid_from", v_planned_space."valid_to")
+            VALUES ('0403', v_planned_space."lifecycle_status", v_planned_space."valid_from", v_planned_space."valid_to")
             RETURNING local_id INTO v_new_regulation_local_id;
 
             INSERT INTO SCHEMANAME.planned_space_plan_regulation(planned_space_local_id, plan_regulation_local_id)

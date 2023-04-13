@@ -22,9 +22,9 @@ BEGIN
         WHERE zepdl.planning_detail_line_local_id = v_planning_detail_line.local_id;
 
         INSERT INTO SCHEMANAME.plan_regulation ("type", life_cycle_status, valid_from, valid_to)
-            VALUES ('0324', v_planning_detail_line.life_cycle_status, v_valid_from, v_valid_to)
+            VALUES ('0324', v_planning_detail_line.lifecycle_status, v_valid_from, v_valid_to)
             RETURNING * INTO v_new_regulation;
-        
+
         INSERT INTO SCHEMANAME.planning_detail_line_plan_regulation (planning_detail_line_local_id, plan_regulation_local_id)
             VALUES (v_planning_detail_line.local_id, v_new_regulation.local_id);
     END LOOP;
