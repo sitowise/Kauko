@@ -10,6 +10,6 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(
 class NewVersionDialog(QtWidgets.QDialog, FROM_CLASS):
 
     def __init__(self, iface: QgisInterface, parent=None):
-        super(NewVersionDialog, self).__init__(parent)
+        super(NewVersionDialog, self).__init__(iface, parent)
         self.setupUi(self)
         self.iface = iface

@@ -22,38 +22,36 @@
  ***************************************************************************/
 """
 import os.path
-from typing import Callable, Tuple
+from typing import Callable
 
 import psycopg2
-from qgis.core import (Qgis, QgsApplication, QgsCoordinateReferenceSystem,
-                       QgsProject)
+from qgis.core import (Qgis, QgsApplication, QgsProject)
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QWidget
+from qgis.PyQt.QtWidgets import QAction, QMenu, QWidget
+
 
 from .ui.project_dialog import ProjectDialog
 
-from .constants import NUMBER_OF_GEOM_CHECKS_SQL, PG_CONNECTIONS, KAATIO_API_URL
-from .database.database_handler import (add_geom_checks, drop_geom_checks,
-                                        get_projects, get_spatial_plan_ids_and_names)
+from .constants import KAATIO_API_URL
+from .database.database_handler import (get_projects)
 from .database.db_initializer import DatabaseInitializer
-from .database.db_tools import get_active_connection_and_schema, get_database_connections
+from .database.db_tools import get_active_connection_and_schema
 from .database.project_updater.project_template_writer import write_template
 from .database.query_builder import get_query
 from .filter_layer import clear_layer_filters
-from .project_handler import open_project
 from .qgis_plugin_tools.tools.custom_logging import setup_logger
 from .resources import *
 from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
 from .ui.export_plan_dialog import ExportPlanDialog
 from .ui.get_regulations_dialog import InitiateRegulationsDialog
-from .ui.move_plan_dialog import MovePlanDialog
 from .ui.open_project_dialog import InitiateOpenProjectDialog
 from .ui.schema_creator_dialog import InitiateSchemaDialog
 from .ui.select_plan_name_dialog import InitiateSelectPlanNameDialog
 from .ui.update_project_dialog import InitiateUpdateProjectDialog
+from .ui.version_control_dialog import VersionControlDialog
 
 
 setup_logger("kauko")
@@ -230,6 +228,14 @@ class Kauko:
             callback=self.export_plan,
             parent=self.iface.mainWindow(),
             add_to_toolbar=False)
+
+        self.add_action(
+            ':/Kauko/icons/mActionDuplicateLayer.svg',
+            text="Kaavan versionhallinta",
+            callback=self.version_control,
+            parent=self.iface.mainWindow(),
+            add_to_toolbar=False
+        )
 
         """ self.add_action(
             icon_path,
@@ -450,3 +456,44 @@ class Kauko:
                 bar_msg["details"],
                 level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
                 duration=bar_msg["duration"])
+
+    def version_control(self):
+        self._start(True)
+        dlg = VersionControlDialog(self.iface)
+        if not self.database_initializer.initialize_database(self.connection):
+            return
+        db = self.database_initializer.database
+
+        plans = db.select(
+            f'''with version_names_agg as (
+                select
+                    sp.plan_id,
+                    array_agg(sp.version_name) as version_names
+                from {self.schema}.spatial_plan sp
+                group by
+                    sp.plan_id
+            ),
+            active_plan as (
+                select
+                    sp.plan_id,
+                    sp.version_name as active_version,
+                    spls.preflabel_fi as active_lifecycle_status
+                from {self.schema}.spatial_plan sp
+                join code_lists.spatial_plan_lifecycle_status spls
+                    on spls.codevalue = sp.lifecycle_status
+                where sp.is_active
+            )
+            select
+                spm."name",
+                vna.version_names,
+                ap.active_version,
+                ap.active_lifecycle_status
+            from {self.schema}.spatial_plan_metadata spm
+            join version_names_agg vna on spm.plan_id = vna.plan_id
+            join active_plan ap on spm.plan_id = ap.plan_id;
+            ''')
+        dlg.add_versions(plans)
+
+        dlg.show()
+        if dlg.exec_():
+            pass
