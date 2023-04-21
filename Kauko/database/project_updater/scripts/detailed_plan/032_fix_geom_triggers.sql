@@ -1,180 +1,137 @@
-ALTER TABLE SCHEMANAME.spatial_plan
-  DROP COLUMN validity;
-
-DO $$
-DECLARE
-    _table_names text[] := ARRAY[
-        'zoning_element',
-        'planned_space',
-        'planning_detail_line',
-        'describing_line',
-        'describing_text'
-    ];
-    table_name text;
-    _triggers_to_disable RECORD;
-BEGIN
-    FOR _triggers_to_disable IN
-    SELECT tgname, relname
-      FROM pg_trigger
-      JOIN pg_class ON tgrelid = pg_class.oid
-      WHERE tgfoid in (
-        'SCHEMANAME.update_validity()'::regprocedure,
-        'SCHEMANAME.inherit_validity()'::regprocedure,
-        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
-      )
-    LOOP
-        EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          DISABLE TRIGGER %I;',
-                      quote_ident(_triggers_to_disable.relname),
-                      quote_ident(_triggers_to_disable.tgname));
-    END LOOP;
-
-    FOREACH table_name IN ARRAY _table_names
-    LOOP
-        EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          ADD COLUMN lifecycle_status VARCHAR(3);',
-                      quote_ident(table_name));
-        EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          ADD CONSTRAINT %1$I_lifecycle_status_fkey
-                          FOREIGN KEY (lifecycle_status)
-                          REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue);',
-                      quote_ident(table_name));
-        EXECUTE format('UPDATE SCHEMANAME.%I
-                          SET lifecycle_status =
-                            CASE
-                              WHEN validity = 1 THEN ''11''
-                              WHEN validity = 2 THEN ''10''
-                              WHEN validity = 3 THEN ''12''
-                              WHEN validity = 4 THEN ''01''
-                            END;',
-                      quote_ident(table_name));
-        EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          DROP COLUMN validity,
-                          ALTER COLUMN lifecycle_status SET NOT NULL;',
-                      quote_ident(table_name));
-    END LOOP;
-
-    FOR _triggers_to_disable IN
-    SELECT tgname, relname
-      FROM pg_trigger
-      JOIN pg_class ON tgrelid = pg_class.oid
-      WHERE tgfoid in (
-        'SCHEMANAME.update_validity()'::regprocedure,
-        'SCHEMANAME.inherit_validity()'::regprocedure,
-        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
-      )
-    LOOP
-        EXECUTE format('ALTER TABLE SCHEMANAME.%I
-                          ENABLE TRIGGER %I;',
-                      quote_ident(_triggers_to_disable.relname),
-                      quote_ident(_triggers_to_disable.tgname));
-    END LOOP;
-END $$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_spatial_plan_area(spatial_local_id VARCHAR)
-RETURNS geometry
-LANGUAGE plpgsql
-STRICT
+CREATE OR REPLACE FUNCTION SCHEMANAME.upsert_creator_and_modifier_trigger()
+RETURNS trigger
 AS $$
-DECLARE
-  spatial_plan_geometry geometry;
-  _spatial_plan RECORD;
-  _zoning_element_geoms geometry[];
 BEGIN
-  _spatial_plan := (
-    SELECT local_id, geom, validity_time, lifecycle_status
-    FROM SCHEMANAME.spatial_plan
-    WHERE local_id = spatial_local_id
-    LIMIT 1
-  );
-  IF _spatial_plan IS NULL THEN
-    RAISE EXCEPTION 'Spatial plan with local_id % does not exist', spatial_local_id;
+  IF TG_OP = 'INSERT' THEN
+    NEW.created = now();
+    NEW.created_by = current_user;
+  ELSIF TG_OP = 'UPDATE' THEN
+    NEW.created = OLD.created;
+    NEW.created_by = OLD.created_by;
   END IF;
-  IF _spatial_plan.lifecycle_status NOT IN ('8', '10', '11') THEN
-    RAISE EXCEPTION 'Spatial plan with local_id % is not valid', spatial_local_id;
+  NEW.modified_by = current_user;
+  NEW.modified_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.geom_relations()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+  table_name TEXT;
+BEGIN
+  table_name := TG_TABLE_NAME;
+  IF table_name IN ('spatial_plan', 'zoning_element') THEN
+    UPDATE SCHEMANAME.zoning_element ze
+    SET spatial_plan = sp.local_id
+    FROM SCHEMANAME.spatial_plan sp
+    WHERE st_contains(st_buffer(sp.geom, 1), ze.geom)
+      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05')
+      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05')
+      AND ze.spatial_plan IS NULL;
   END IF;
-  IF _spatial_plan.lifecycle_status = '11' THEN
-    RETURN _spatial_plan.geom;
-  END IF;
-  IF _spatial_plan.lifecycle_status = '8' THEN
-    IF NOT EXISTS (
+
+  IF TG_TABLE_NAME IN ('zoning_element', 'planned_space') THEN
+    INSERT INTO SCHEMANAME.zoning_element_planned_space (zoning_element_local_id, planned_space_local_id)
+    SELECT DISTINCT ze.local_id, ps.local_id
+    FROM SCHEMANAME.zoning_element ze
+      INNER JOIN SCHEMANAME.planned_space ps ON
+        st_overlaps(
+          st_buffer(ze.geom, 0.1::DOUBLE PRECISION), ps.geom
+        )
+        OR
+        st_contains(st_buffer(ze.geom, 0.1::DOUBLE PRECISION), ps.geom)
+    WHERE ze.lifecycle_status IN ('01', '02', '03', '04', '05')
+      AND ps.lifecycle_status IN ('01', '02', '03', '04', '05')
+    AND NOT EXISTS (
       SELECT 1
-      FROM SCHEMANAME.zoning_element
-      WHERE spatial_plan = spatial_local_id
-        AND lifecycle_status IN ('10', '11')
-    ) THEN
-      RETURN NULL;
+      FROM SCHEMANAME.zoning_element_planned_space zeps
+      WHERE zeps.planned_space_local_id = ps.local_id AND
+            zeps.zoning_element_local_id = ze.local_id
+    );
+  END IF;
+
+  IF (tg_table_name IN ('zoning_element', 'planning_detail_line')) THEN
+    INSERT INTO SCHEMANAME.zoning_element_plan_detail_line (zoning_element_local_id, planning_detail_line_local_id)
+    SELECT DISTINCT
+      ze.local_id,
+      pdl.local_id
+    FROM SCHEMANAME.zoning_element ze
+      INNER JOIN SCHEMANAME.planning_detail_line pdl
+        ON st_intersects(ze.geom, pdl.geom)
+    WHERE ze.lifecycle_status IN ('01', '02', '03', '04', '05')
+      AND pdl.lifecycle_status IN ('01', '02', '03', '04', '05')
+      AND NOT EXISTS (
+        SELECT 1
+        FROM SCHEMANAME.zoning_element_plan_detail_line zepdl
+        WHERE zepdl.planning_detail_line_local_id = pdl.local_id AND
+              zepdl.zoning_element_local_id = ze.local_id
+      );
     END IF;
-  END IF;
 
-  -- get zoning element geometries
-  SELECT
-    SCHEMANAME.get_valid_zoning_element_area(ze.local_id)
-  INTO
-    _zoning_element_geoms
-  FROM
-    SCHEMANAME.zoning_element ze
-  WHERE
-    ze.spatial_plan = spatial_local_id
-    AND ze.lifecycle_status IN ('10', '11')
-    AND ze.validity_time @> CURRENT_DATE;
+    IF (tg_table_name IN ('zoning_element', 'describing_line')) THEN
+      INSERT INTO SCHEMANAME.zoning_element_describing_line (zoning_element_local_id, describing_line_id)
+      SELECT DISTINCT
+        ze.local_id,
+        dl.identifier
+      FROM SCHEMANAME.zoning_element ze
+        INNER JOIN SCHEMANAME.describing_line dl
+          ON st_intersects(ze.geom, dl.geom)
+      WHERE ze.lifecycle_status IN ('01', '02', '03', '04', '05')
+        AND dl.lifecycle_status IN ('01', '02', '03', '04', '05')
+        AND NOT EXISTS (
+          SELECT 1
+          FROM SCHEMANAME.zoning_element_describing_line zedl
+          WHERE zedl.describing_line_id = dl.identifier AND
+                zedl.zoning_element_local_id = ze.local_id
+        );
+    END IF;
 
-  -- compute the union of all zoning element geometries
-  RETURN ST_Union(_zoning_element_geoms);
+      IF (tg_table_name IN ('zoning_element', 'describing_text')) THEN
+        INSERT INTO SCHEMANAME.zoning_element_describing_text (zoning_element_local_id, describing_text_id)
+        SELECT DISTINCT
+          ze.local_id,
+          dt.identifier
+        FROM SCHEMANAME.zoning_element ze
+          INNER JOIN SCHEMANAME.describing_text dt
+            ON st_intersects(ze.geom, dt.geom)
+        WHERE ze.lifecycle_status IN ('01', '02', '03', '04', '05')
+          AND dt.lifecycle_status IN ('01', '02', '03', '04', '05')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM SCHEMANAME.zoning_element_describing_text zedt
+            WHERE zedt.describing_text_id = dt.identifier AND
+                  zedt.zoning_element_local_id = ze.local_id
+          );
+      END IF;
+
+      IF (tg_table_name IN ('planned_space', 'planning_detail_line')) THEN
+        INSERT INTO SCHEMANAME.planned_space_plan_detail_line (planned_space_local_id, planning_detail_line_local_id)
+        SELECT DISTINCT
+          ps.local_id,
+          pdl.local_id
+        FROM SCHEMANAME.planned_space ps
+          INNER JOIN SCHEMANAME.planning_detail_line pdl
+            ON st_intersects(ps.geom, pdl.geom)
+        WHERE ps.lifecycle_status IN ('01', '02', '03', '04', '05')
+          AND pdl.lifecycle_status IN ('01', '02', '03', '04', '05')
+          AND NOT EXISTS (
+            SELECT 1
+            FROM SCHEMANAME.planned_space_plan_detail_line ps_pdl
+            WHERE ps_pdl.planning_detail_line_local_id = pdl.local_id AND
+                  ps_pdl.planned_space_local_id = ps.local_id
+          );
+      END IF;
+    RETURN NULL;
 END;
-$$;
-
-
-CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_zoning_element_area(zoning_local_id VARCHAR)
-  RETURNS geometry
-  LANGUAGE plpgsql STRICT
-AS $$
-DECLARE
-  _local_id varchar;
-  _geom geometry;
-  _validity_time daterange;
-  _lifecycle_status varchar;
-  _spatial_plan varchar;
-  zoning_element_geometry geometry;
-BEGIN
-  SELECT local_id, geom, validity_time, lifecycle_status, spatial_plan
-  INTO _local_id, _geom, _validity_time, _lifecycle_status, _spatial_plan
-  FROM SCHEMANAME.zoning_element
-  WHERE local_id = zoning_local_id
-  LIMIT 1;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Zoning element with local_id % does not exist', zoning_local_id;
-  END IF;
-
-  IF _lifecycle_status NOT IN ('10', '11') THEN
-    RAISE EXCEPTION 'Zoning element with local_id % is not valid', zoning_local_id;
-  END IF;
-
-  IF _lifecycle_status = '11' THEN
-    RETURN _geom;
-  END IF;
-
-  WITH valid_zoning_elements AS (
-    SELECT geom
-    FROM SCHEMANAME.zoning_element
-    WHERE spatial_plan <> _spatial_plan
-      AND lifecycle_status IN ('10', '11')
-      AND validity_time &> _validity_time
-      AND ST_Intersects(geom, _geom)
-  )
-  SELECT ST_Difference(_geom, ST_Union(valid_zoning_elements.geom))
-  INTO zoning_element_geometry
-  FROM valid_zoning_elements;
-
-  RETURN zoning_element_geometry;
-END;
-$$;
+$function$;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.update_validity()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $$
+AS $function$
 BEGIN
   PERFORM SCHEMANAME.refresh_validity();
 
@@ -183,7 +140,7 @@ BEGIN
       SELECT
         local_id,
         SCHEMANAME.get_valid_spatial_plan_area(local_id) AS geom
-      FROM SCHEMANAME.spatial_plan
+      FROM SCHEMANAME.spatial_plan sp
       WHERE sp.lifecycle_status IN ('8', '10', '11')
         AND sp.validity_time @> CURRENT_DATE
     )
@@ -262,6 +219,8 @@ BEGIN
     SELECT
       ze.local_id AS local_id,
       vze.geom AS geom,
+      ze.valid_from,
+      ze.valid_to,
       ze.validity_time AS validity_time,
       ze.lifecycle_status AS lifecycle_status,
       ze.spatial_plan AS spatial_plan
@@ -464,7 +423,7 @@ BEGIN
 
 
     UPDATE SCHEMANAME.describing_text dt
-    SET validity = '12'
+    SET lifecycle_status = '12'
     WHERE ST_Within(
       dt.geom,
       ST_Buffer(
@@ -489,12 +448,12 @@ BEGIN
     PERFORM SCHEMANAME.refresh_validity();
     RETURN NULL;
 END;
-$$;
+$function$;
 
-CREATE OR REPLACE FUNCTION "SCHEMANAME".refresh_validity()
-    RETURNS void
-    LANGUAGE plpgsql
-AS $$
+CREATE OR REPLACE FUNCTION SCHEMANAME.refresh_validity()
+ RETURNS void
+ LANGUAGE plpgsql
+AS $function$
 BEGIN
   UPDATE SCHEMANAME.spatial_plan sp
   SET lifecycle_status = '06'
@@ -622,7 +581,7 @@ BEGIN
     ON ze_ps.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '12'
   WHERE ps.local_id = ze_ps.planned_space_local_id
-    AND ps.validity IN ('10', '11');
+    AND ps.lifecycle_status IN ('10', '11');
 
   UPDATE SCHEMANAME.planning_detail_line pdl
   SET lifecycle_status = '13'
@@ -783,13 +742,18 @@ BEGIN
   WHERE local_id IN (
     SELECT sp.local_id
     FROM SCHEMANAME.spatial_plan sp
-    WHERE NOT EXISTS (
+    WHERE
+    EXISTS (
+        SELECT 1
+        FROM SCHEMANAME.zoning_element ze
+        WHERE ze.spatial_plan = sp.local_id
+    )
+    AND NOT EXISTS (
       SELECT 1
       FROM SCHEMANAME.zoning_element ze
       WHERE ze.spatial_plan = sp.local_id
       AND ze.lifecycle_status != '11'
-    )
-  );
+    ));
 
   UPDATE SCHEMANAME.spatial_plan
   SET lifecycle_status = '10'
@@ -797,7 +761,7 @@ BEGIN
     SELECT DISTINCT sp.local_id
     FROM SCHEMANAME.spatial_plan sp
     JOIN SCHEMANAME.zoning_element ze ON ze.spatial_plan = sp.local_id
-    WHERE zoning_element.lifecycle_status = '11'
+    WHERE ze.lifecycle_status = '11'
     AND EXISTS (
       SELECT 1
       FROM SCHEMANAME.zoning_element ze2
@@ -807,4 +771,28 @@ BEGIN
   );
 
 END;
-$$;
+$function$;
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.validate_geometry()
+    RETURNS trigger
+    LANGUAGE plpgsql
+AS $function$
+DECLARE
+    valid_reason text;
+BEGIN
+    IF TG_TABLE_NAME IN ('geometry_area_value', 'geometry_line_value', 'geometry_point_value') THEN
+        IF NOT ST_IsValid(NEW."value") THEN
+            valid_reason := ST_IsValidReason(NEW."value");
+            NEW."value" = ST_MakeValid(NEW."value", 'method=structure');
+            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
+        END IF;
+    ELSE
+        IF NOT ST_IsValid(NEW.geom) THEN
+            valid_reason := ST_IsValidReason(NEW.geom);
+            NEW.geom = ST_MakeValid(NEW.geom, 'method=structure');
+            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
+        END IF;
+    END IF;
+  RETURN NEW;
+END;
+$function$;

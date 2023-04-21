@@ -1,17 +1,26 @@
-CREATE FUNCTION SCHEMANAME.validate_geometry()
-RETURNS TRIGGER
-AS $$
+CREATE OR REPLACE FUNCTION SCHEMANAME.validate_geometry()
+    RETURNS trigger
+    LANGUAGE plpgsql
+AS $function$
 DECLARE
-  valid_reason text;
+    valid_reason text;
 BEGIN
-  IF NOT ST_IsValid(NEW.geom) THEN
-    valid_reason := ST_IsValidReason(NEW.geom);
-    NEW.geom = ST_MakeValid(NEW.geom, 'method=structure');
-    RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
-  END IF;
+    IF TG_TABLE_NAME IN ('geometry_area_value', 'geometry_line_value', 'geometry_point_value') THEN
+        IF NOT ST_IsValid(NEW."value") THEN
+            valid_reason := ST_IsValidReason(NEW."value");
+            NEW."value" = ST_MakeValid(NEW."value", 'method=structure');
+            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
+        END IF;
+    ELSE
+        IF NOT ST_IsValid(NEW.geom) THEN
+            valid_reason := ST_IsValidReason(NEW.geom);
+            NEW.geom = ST_MakeValid(NEW.geom, 'method=structure');
+            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
+        END IF;
+    END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$function$;
 
 CREATE TRIGGER validate_spatial_plan_geom
   BEFORE INSERT OR UPDATE OF geom

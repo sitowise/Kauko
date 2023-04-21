@@ -11,8 +11,24 @@ DECLARE
         'describing_text'
     ];
     table_name text;
+    _triggers_to_disable RECORD;
 BEGIN
-    SET session_replication_role = replica;
+    FOR _triggers_to_disable IN
+    SELECT tgname, relname
+      FROM pg_trigger
+      JOIN pg_class ON tgrelid = pg_class.oid
+      WHERE tgfoid in (
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure,
+        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
+      )
+    LOOP
+        EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                          DISABLE TRIGGER %I;',
+                      quote_ident(_triggers_to_disable.relname),
+                      quote_ident(_triggers_to_disable.tgname));
+    END LOOP;
+
     FOREACH table_name IN ARRAY _table_names
     LOOP
         EXECUTE format('ALTER TABLE SCHEMANAME.%I
@@ -37,7 +53,22 @@ BEGIN
                           ALTER COLUMN lifecycle_status SET NOT NULL;',
                       quote_ident(table_name));
     END LOOP;
-    SET session_replication_role = DEFAULT;
+
+    FOR _triggers_to_disable IN
+    SELECT tgname, relname
+      FROM pg_trigger
+      JOIN pg_class ON tgrelid = pg_class.oid
+      WHERE tgfoid in (
+        'SCHEMANAME.update_validity()'::regprocedure,
+        'SCHEMANAME.inherit_validity()'::regprocedure,
+        'SCHEMANAME.upsert_creator_and_modifier_trigger()'::regprocedure
+      )
+    LOOP
+        EXECUTE format('ALTER TABLE SCHEMANAME.%I
+                          ENABLE TRIGGER %I;',
+                      quote_ident(_triggers_to_disable.relname),
+                      quote_ident(_triggers_to_disable.tgname));
+    END LOOP;
 END $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.get_valid_spatial_plan_area(spatial_local_id VARCHAR)
@@ -75,7 +106,7 @@ BEGIN
       RETURN NULL;
     END IF;
   END IF;
-  
+
   -- get zoning element geometries
   SELECT
     SCHEMANAME.get_valid_zoning_element_area(ze.local_id)
@@ -87,7 +118,7 @@ BEGIN
     ze.spatial_plan = spatial_local_id
     AND ze.lifecycle_status IN ('10', '11')
     AND ze.validity_time @> CURRENT_DATE;
-  
+
   -- compute the union of all zoning element geometries
   RETURN ST_Union(_zoning_element_geoms);
 END;
@@ -106,10 +137,10 @@ DECLARE
   _spatial_plan varchar;
   zoning_element_geometry geometry;
 BEGIN
-  SELECT local_id, geom, validity_time, lifecycle_status, spatial_plan 
+  SELECT local_id, geom, validity_time, lifecycle_status, spatial_plan
   INTO _local_id, _geom, _validity_time, _lifecycle_status, _spatial_plan
-  FROM SCHEMANAME.zoning_element 
-  WHERE local_id = zoning_local_id 
+  FROM SCHEMANAME.zoning_element
+  WHERE local_id = zoning_local_id
   LIMIT 1;
 
   IF NOT FOUND THEN
@@ -126,7 +157,7 @@ BEGIN
 
   WITH valid_zoning_elements AS (
     SELECT geom
-    FROM SCHEMANAME.zoning_element 
+    FROM SCHEMANAME.zoning_element
     WHERE spatial_plan <> _spatial_plan
       AND lifecycle_status IN ('10', '11')
       AND validity_time &> _validity_time
@@ -138,7 +169,7 @@ BEGIN
 
   RETURN zoning_element_geometry;
 END;
-$$;  
+$$;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.update_validity()
  RETURNS trigger
@@ -209,7 +240,7 @@ BEGIN
       ST_Buffer(
         (SELECT ST_Union(tsp.geom)
         FROM temp_spatial_plan tsp
-        WHERE 
+        WHERE
           tsp.local_id <> sp.local_id
           AND tsp.validity_time &> sp.validity_time
           AND tsp.lifecycle_status IN ('10', '11')),
@@ -565,7 +596,7 @@ BEGIN
     AND ze.lifecycle_status = '15'
   WHERE ps.local_id = ze_ps.planned_space_local_id
     AND ps.lifecycle_status = '01';
-  
+
   UPDATE SCHEMANAME.planned_space ps
   SET
     lifecycle_status = '11',
@@ -747,30 +778,30 @@ BEGIN
   FROM valid_spatial_plans vsp
   WHERE sp.local_id = vsp.local_id;
 
-  UPDATE SCHEMANAME.spatial_plan 
-  SET lifecycle_status = '11' 
+  UPDATE SCHEMANAME.spatial_plan
+  SET lifecycle_status = '11'
   WHERE local_id IN (
-    SELECT sp.local_id 
+    SELECT sp.local_id
     FROM SCHEMANAME.spatial_plan sp
     WHERE NOT EXISTS (
-      SELECT 1 
-      FROM SCHEMANAME.zoning_element ze 
-      WHERE ze.spatial_plan = sp.local_id 
+      SELECT 1
+      FROM SCHEMANAME.zoning_element ze
+      WHERE ze.spatial_plan = sp.local_id
       AND ze.lifecycle_status != '11'
     )
   );
 
-  UPDATE SCHEMANAME.spatial_plan 
-  SET lifecycle_status = '10' 
+  UPDATE SCHEMANAME.spatial_plan
+  SET lifecycle_status = '10'
   WHERE local_id IN (
-    SELECT DISTINCT sp.local_id 
+    SELECT DISTINCT sp.local_id
     FROM SCHEMANAME.spatial_plan sp
-    JOIN SCHEMANAME.zoning_element ze ON ze.spatial_plan = sp.local_id 
+    JOIN SCHEMANAME.zoning_element ze ON ze.spatial_plan = sp.local_id
     WHERE zoning_element.lifecycle_status = '11'
     AND EXISTS (
-      SELECT 1 
-      FROM SCHEMANAME.zoning_element ze2 
-      WHERE ze2.spatial_plan = sp.local_id 
+      SELECT 1
+      FROM SCHEMANAME.zoning_element ze2
+      WHERE ze2.spatial_plan = sp.local_id
       AND ze2.lifecycle_status != '11'
     )
   );
