@@ -44,6 +44,15 @@ class Database:
         except psycopg2.OperationalError:
             return []
 
+    def insert_with_preserving_old_ids(self, query: str) -> Dict[str, psycopg2.extras.DictRow]:
+        try:
+            with psycopg2.connect(**self.params) as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                    cur.execute(query)
+                    return cur.fetchall()
+        except psycopg2.OperationalError:
+            return {}
+
     def update(self, query: str) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to update

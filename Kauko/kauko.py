@@ -23,7 +23,6 @@
 """
 import os.path
 from typing import Callable
-import ast
 
 import psycopg2
 from psycopg2 import sql
@@ -32,6 +31,9 @@ from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QWidget
+from .database.database import Database
+
+from .plan_version_control.version_control import VersionControl
 
 
 
@@ -482,6 +484,7 @@ class Kauko:
             select
                 sp.plan_id,
                 sp.version_name as active_version,
+                sp.local_id as active_local_id,
                 spls.preflabel_fi as active_lifecycle_status
             from {schema}.spatial_plan sp
             join code_lists.spatial_plan_lifecycle_status spls
@@ -492,7 +495,8 @@ class Kauko:
             spm."name",
             vna.version_names,
             ap.active_version,
-            ap.active_lifecycle_status
+            ap.active_lifecycle_status,
+            ap.active_local_id
         from {schema}.spatial_plan_metadata spm
         join version_names_agg vna on spm.plan_id = vna.plan_id
         join active_plan ap on spm.plan_id = ap.plan_id;
@@ -505,12 +509,33 @@ class Kauko:
 
         dlg.show()
         if dlg.exec_():
-            pass
+            old_local_id, new_local_id = dlg.get_old_and_new_version()
+            self._change_active(db, old_local_id, new_local_id)
 
-    def create_new_version(self, version_name):
+    def create_new_version(self, version_name, local_id):
         self._start(True)
-        dlg = NewVersionDialog(self.iface, version_name)
+        dlg = NewVersionDialog(self.iface, local_id, version_name)
+        if not self.database_initializer.initialize_database(self.connection):
+            return
+        db = self.database_initializer.database
         dlg.show()
 
         if dlg.exec_():
-            pass
+            version_control = VersionControl(db, self.schema)
+            version_name = dlg.get_version_name()
+            old_local_id = dlg.get_plan_local_id()
+            new_local_id = version_control.create_new_version(old_local_id, version_name)
+            self._change_active(db, old_local_id, new_local_id)
+            self.iface.messageBar().pushMessage(
+            "Uusi versio luotu.",
+            level=Qgis.Success, duration=5)
+
+    def _change_active(self, db: Database, old_local_id: str, new_local_id: str) -> None:
+        update_query = sql.SQL('SELECT {schema}.update_active_plan({old_plan}, {new_plan})').format(
+            schema=sql.Identifier(self.schema),
+            old_plan=sql.Literal(old_local_id),
+            new_plan=sql.Literal(new_local_id)
+            )
+        db.select(update_query)
+        self.iface.mapCanvas().refreshAllLayers()
+

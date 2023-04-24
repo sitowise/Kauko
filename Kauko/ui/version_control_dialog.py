@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Tuple
 
 from qgis.PyQt import uic, QtWidgets
 from qgis.PyQt.QtCore import pyqtSignal
@@ -12,12 +12,13 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'version_control_dialog.ui'))
 
 class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
-    new_version_clicked = pyqtSignal(str)
+    new_version_clicked = pyqtSignal(str, str)
 
     def __init__(self, iface: QgisInterface, parent=None):
         super(VersionControlDialog, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface
+        self.active_local_id: str = None
         self.versions: List[DictRow] = []
         self.spatialPlanNameComboBox.currentTextChanged.connect(self.plan_changed)
         self.versionComboBox.currentTextChanged.connect(self.version_changed)
@@ -25,7 +26,7 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
 
 
     def create_new_version(self):
-        self.new_version_clicked.emit(self.get_current_plan())
+        self.new_version_clicked.emit(self.get_current_plan(), self.get_current_version_local_id())
 
     def add_versions(self, versions: List[DictRow]):
         self.versions = versions
@@ -41,6 +42,7 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
             self.currentVersionLineEdit.setText('')
             self.currentLifecycleLineEdit.setText('')
             return
+        self.active_local_id = current_version['active_local_id']
         self.currentVersionLineEdit.setText(current_version['active_version'])
         self.currentLifecycleLineEdit.setText(current_version['active_lifecycle_status'])
         for version in current_version['version_names']:
@@ -52,11 +54,17 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
     def get_current_version(self) -> str:
         return self.versionComboBox.currentText()
 
+    def get_current_version_local_id(self) -> str:
+        return self.versionComboBox.currentData()
+
     def find_version_by_name(self, name: str) -> DictRow:
         for version in self.versions:
             if version['name'] == name:
                 return version
         return None
+
+    def get_old_and_new_version(self) -> Tuple[str, str]:
+        return self.active_local_id, self.get_current_version_local_id()
 
     def version_changed(self):
         current_version = self.get_current_version()

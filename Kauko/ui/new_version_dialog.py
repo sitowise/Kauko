@@ -11,7 +11,7 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class NewVersionDialog(QtWidgets.QDialog, FROM_CLASS):
 
-    def __init__(self, iface: QgisInterface, plan_name: str = None, parent=None):
+    def __init__(self, iface: QgisInterface, plan_local_id: str, plan_name: str = None, parent=None):
         super(NewVersionDialog, self).__init__(parent)
         self.setupUi(self)
         self.iface = iface
@@ -19,6 +19,7 @@ class NewVersionDialog(QtWidgets.QDialog, FROM_CLASS):
         validator = QRegExpValidator(regexp)
         self.versionNameLineEdit.setValidator(validator)
         self.versionNameLineEdit.textChanged.connect(self.version_name_changed)
+        self.plan_local_id = plan_local_id
         self.planNameLineEdit.setText(plan_name)
 
     def get_version_name(self) -> str:
@@ -29,3 +30,6 @@ class NewVersionDialog(QtWidgets.QDialog, FROM_CLASS):
             self.acceptPushButton.setEnabled(False)
         else:
             self.acceptPushButton.setEnabled(True)
+
+    def get_plan_local_id(self) -> str:
+        return self.plan_local_id
