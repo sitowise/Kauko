@@ -23,13 +23,16 @@
 """
 import os.path
 from typing import Callable
+import ast
 
 import psycopg2
+from psycopg2 import sql
 from qgis.core import (Qgis, QgsApplication, QgsProject)
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QWidget
+
 
 
 from .ui.project_dialog import ProjectDialog
@@ -52,6 +55,7 @@ from .ui.schema_creator_dialog import InitiateSchemaDialog
 from .ui.select_plan_name_dialog import InitiateSelectPlanNameDialog
 from .ui.update_project_dialog import InitiateUpdateProjectDialog
 from .ui.version_control_dialog import VersionControlDialog
+from .ui.new_version_dialog import NewVersionDialog
 
 
 setup_logger("kauko")
@@ -460,40 +464,53 @@ class Kauko:
     def version_control(self):
         self._start(True)
         dlg = VersionControlDialog(self.iface)
+        dlg.new_version_clicked.connect(self.create_new_version)
         if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
-        plans = db.select(
-            f'''with version_names_agg as (
-                select
-                    sp.plan_id,
-                    array_agg(sp.version_name) as version_names
-                from {self.schema}.spatial_plan sp
-                group by
-                    sp.plan_id
-            ),
-            active_plan as (
-                select
-                    sp.plan_id,
-                    sp.version_name as active_version,
-                    spls.preflabel_fi as active_lifecycle_status
-                from {self.schema}.spatial_plan sp
-                join code_lists.spatial_plan_lifecycle_status spls
-                    on spls.codevalue = sp.lifecycle_status
-                where sp.is_active
-            )
+        plansQuery = sql.SQL(
+            '''with version_names_agg as (
             select
-                spm."name",
-                vna.version_names,
-                ap.active_version,
-                ap.active_lifecycle_status
-            from {self.schema}.spatial_plan_metadata spm
-            join version_names_agg vna on spm.plan_id = vna.plan_id
-            join active_plan ap on spm.plan_id = ap.plan_id;
-            ''')
+                sp.plan_id,
+                array_agg(ARRAY[sp.local_id, sp.version_name]) as version_names
+            from {schema}.spatial_plan sp
+            group by
+                sp.plan_id
+        ),
+        active_plan as (
+            select
+                sp.plan_id,
+                sp.version_name as active_version,
+                spls.preflabel_fi as active_lifecycle_status
+            from {schema}.spatial_plan sp
+            join code_lists.spatial_plan_lifecycle_status spls
+                on spls.codevalue = sp.lifecycle_status
+            where sp.is_active
+        )
+        select
+            spm."name",
+            vna.version_names,
+            ap.active_version,
+            ap.active_lifecycle_status
+        from {schema}.spatial_plan_metadata spm
+        join version_names_agg vna on spm.plan_id = vna.plan_id
+        join active_plan ap on spm.plan_id = ap.plan_id;
+        ''').format(
+                schema=sql.Identifier(self.schema)
+                )
+
+        plans = db.select(plansQuery)
         dlg.add_versions(plans)
 
         dlg.show()
+        if dlg.exec_():
+            pass
+
+    def create_new_version(self, version_name):
+        self._start(True)
+        dlg = NewVersionDialog(self.iface, version_name)
+        dlg.show()
+
         if dlg.exec_():
             pass

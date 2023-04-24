@@ -2,6 +2,7 @@ import os
 from typing import List
 
 from qgis.PyQt import uic, QtWidgets
+from qgis.PyQt.QtCore import pyqtSignal
 from qgis.gui import QgisInterface
 
 from psycopg2.extras import DictRow
@@ -11,6 +12,7 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'version_control_dialog.ui'))
 
 class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
+    new_version_clicked = pyqtSignal(str)
 
     def __init__(self, iface: QgisInterface, parent=None):
         super(VersionControlDialog, self).__init__(parent)
@@ -18,6 +20,12 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
         self.iface = iface
         self.versions: List[DictRow] = []
         self.spatialPlanNameComboBox.currentTextChanged.connect(self.plan_changed)
+        self.versionComboBox.currentTextChanged.connect(self.version_changed)
+        self.createNewPushButton.clicked.connect(self.create_new_version)
+
+
+    def create_new_version(self):
+        self.new_version_clicked.emit(self.get_current_plan())
 
     def add_versions(self, versions: List[DictRow]):
         self.versions = versions
@@ -35,14 +43,30 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
             return
         self.currentVersionLineEdit.setText(current_version['active_version'])
         self.currentLifecycleLineEdit.setText(current_version['active_lifecycle_status'])
-        self.versionComboBox.addItems(current_version['version_names'])
+        for version in current_version['version_names']:
+            self.versionComboBox.addItem(version[1], version[0])
 
     def get_current_plan(self) -> str:
         return self.spatialPlanNameComboBox.currentText()
+
+    def get_current_version(self) -> str:
+        return self.versionComboBox.currentText()
 
     def find_version_by_name(self, name: str) -> DictRow:
         for version in self.versions:
             if version['name'] == name:
                 return version
         return None
+
+    def version_changed(self):
+        current_version = self.get_current_version()
+
+        if current_version is not None:
+            self.createNewPushButton.setEnabled(True)
+        else:
+            self.createNewPushButton.setEnabled(False)
+
+        is_current_version = current_version == self.currentVersionLineEdit.text()
+        self.acceptPushButton.setEnabled(not is_current_version)
+
 

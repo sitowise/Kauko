@@ -58,7 +58,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Aktiivinen versio</string>
+         <string>Nykyinen versio</string>
         </property>
        </widget>
       </item>
@@ -82,7 +82,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Aktiivisen version elinkaaren vaihe</string>
+         <string>Nykyisen version elinkaaren vaihe</string>
         </property>
        </widget>
       </item>
@@ -209,6 +209,22 @@
     <hint type="destinationlabel">
      <x>225</x>
      <y>102</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>createNewPushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>62</x>
+     <y>165</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>225</x>
+     <y>96</y>
     </hint>
    </hints>
   </connection>
