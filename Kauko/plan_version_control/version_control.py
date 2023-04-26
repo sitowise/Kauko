@@ -73,6 +73,10 @@ class VersionControl:
 
         new_planning_detail_lines = self.create_planning_detail_lines(new_zoning_elements, new_planned_spaces)
 
+        new_describing_lines = self.create_describing_lines(new_zoning_elements)
+
+        new_describing_texts = self.create_describing_texts(new_zoning_elements)
+
         return splan["local_id"]
 
     def create_zoning_elements(self, old_splan_local_id, new_splan_local_id) -> Dict[str, DictRow]:
@@ -234,7 +238,7 @@ class VersionControl:
             WHERE zeps.zoning_element_local_id IN ({zoning_element_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements),
+                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
             )
         )
 
@@ -337,20 +341,174 @@ class VersionControl:
 
         return new_planning_detail_lines
 
+    def create_describing_lines(self, zoning_elements: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        old_zoning_elements = list(zoning_elements.keys())
+        old_describing_lines = self.db.select(sql.SQL(
+            '''
+            SELECT DISTINCT describing_line_id
+            FROM {schema}.zoning_element_describing_line zedl
+            WHERE zedl.zoning_element_local_id IN ({zoning_element_local_ids})
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
+            ))
+
+        old_describing_lines = [item["describing_line_id"] for item in old_describing_lines]
+
+        new_describing_lines: Dict[str, DictRow] = {}
+
+        for describing_line in old_describing_lines:
+            new_describing_line = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.describing_line (
+                    geom,
+                    type,
+                    lifecycle_status,
+                    is_active
+                )
+                SELECT
+                    geom,
+                    type,
+                    lifecycle_status,
+                    false
+                FROM {schema}.describing_line
+                WHERE identifier = {describing_line_identifier}
+                RETURNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    describing_line_identifier=sql.Literal(describing_line)
+                )
+            )
+            new_describing_lines[describing_line] = new_describing_line[0]
+
+        zoning_element_describing_lines = self.db.select(sql.SQL(
+            '''
+            SELECT
+            zoning_element_local_id,
+            describing_line_id
+            FROM {schema}.zoning_element_describing_line
+            WHERE describing_line_id IN ({describing_line_ids})
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                describing_line_ids=sql.SQL(', ').join(sql.Literal(describing_line_id) for describing_line_id in old_describing_lines)
+            )
+        )
+
+        zoning_element_describing_lines = [[d["zoning_element_local_id"], d["describing_line_id"]] for d in zoning_element_describing_lines]
+        new_zoning_elements_local_ids = self.convert_to_key_dict(zoning_elements)
+        describing_line_ids = self.convert_to_key_dict(new_describing_lines)
+
+        zoning_element_describing_lines = self.convert_keys_to_new(zoning_element_describing_lines, new_zoning_elements_local_ids, describing_line_ids)
+
+        self.db.insert(sql.SQL(
+            '''
+            INSERT INTO {schema}.zoning_element_describing_line (
+                zoning_element_local_id,
+                describing_line_id)
+            Values {values}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in zoning_element_describing_lines)
+            )
+        )
+
+        return new_describing_lines
+
+    def create_describing_texts(self, zoning_elements: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        old_zoning_elements = list(zoning_elements.keys())
+        old_describing_texts = self.db.select(sql.SQL(
+            '''
+            SELECT DISTINCT describing_text_id
+            FROM {schema}.zoning_element_describing_text zedt
+            WHERE zedt.zoning_element_local_id IN ({zoning_element_local_ids})
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
+            ))
+
+        old_describing_texts = [item["describing_text_id"] for item in old_describing_texts]
+
+        new_describing_texts: Dict[str, DictRow] = {}
+
+        for describing_text in old_describing_texts:
+            new_describing_line = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.describing_text (
+                    geom,
+                    text,
+                    label_x,
+                    label_y,
+                    label_rotation,
+                    callouts,
+                    big_letters,
+                    lifecycle_status,
+                    is_active
+                )
+                SELECT
+                    geom,
+                    text,
+                    label_x,
+                    label_y,
+                    label_rotation,
+                    callouts,
+                    big_letters,
+                    lifecycle_status,
+                    false
+                FROM {schema}.describing_text
+                WHERE identifier = {describing_text_identifier}
+                RETURNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    describing_text_identifier=sql.Literal(describing_text)
+                )
+            )
+            new_describing_texts[describing_text] = new_describing_line[0]
+
+        zoning_element_describing_texts = self.db.select(sql.SQL(
+            '''
+            SELECT
+            zoning_element_local_id,
+            describing_text_id
+            FROM {schema}.zoning_element_describing_text
+            WHERE describing_text_id IN ({describing_text_ids})
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                describing_text_ids=sql.SQL(', ').join(sql.Literal(describing_text_id) for describing_text_id in old_describing_texts)
+            )
+        )
+
+        zoning_element_describing_texts = [[d["zoning_element_local_id"], d["describing_text_id"]] for d in zoning_element_describing_texts]
+        new_zoning_elements_local_ids = self.convert_to_key_dict(zoning_elements)
+        describing_text_ids = self.convert_to_key_dict(new_describing_texts)
+
+        zoning_element_describing_texts = self.convert_keys_to_new(zoning_element_describing_texts, new_zoning_elements_local_ids, describing_text_ids)
+
+        self.db.insert(sql.SQL(
+            '''
+            INSERT INTO {schema}.zoning_element_describing_text (
+                zoning_element_local_id,
+                describing_text_id)
+            Values {values}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in zoning_element_describing_texts)
+            )
+        )
+
+        return new_describing_texts
+
     def convert_keys_to_new(self, data: List[List[str]], table_a_keys: List[Dict[str, str]], table_b_keys: List[Dict[str, str]]) -> List[List[str]]:
         table_a_key_map = {key["old_key"]: key["new_key"] for key in table_a_keys}
         table_b_key_map = {key["old_key"]: key["new_key"] for key in table_b_keys}
-        merged_key_map = table_a_key_map.copy()
-        merged_key_map.update(table_b_key_map)
-
-        updated_data = []
-        for item in data:
-            updated_data.append([merged_key_map[item[0]], merged_key_map[item[1]]])
-
-        return updated_data
+        merged_key_map = table_a_key_map | table_b_key_map
+        return [[merged_key_map[item[0]], merged_key_map[item[1]]] for item in data]
 
     def convert_to_key_dict(self, keys: Dict[str, DictRow]) -> List[Dict[str, str]]:
-        return [{"old_key": k, "new_key": v["local_id"]} for k, v in keys.items()]
+        result = []
+        for k, v in keys.items():
+            new_key = v["local_id"] if v.get("local_id") is not None else v["identifier"]
+            result.append({"old_key": k, "new_key": new_key})
+        return result
 
 
 

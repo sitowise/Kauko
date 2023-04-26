@@ -58,7 +58,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Nykyinen versio</string>
+         <string>Aktiivinen versio</string>
         </property>
        </widget>
       </item>
@@ -82,7 +82,7 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Nykyisen version elinkaaren vaihe</string>
+         <string>Aktiivisen version elinkaaren vaihe</string>
         </property>
        </widget>
       </item>

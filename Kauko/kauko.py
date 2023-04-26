@@ -527,14 +527,17 @@ class Kauko:
         dlg.show()
 
         if dlg.exec_():
-            version_control = VersionControl(db, self.schema)
-            version_name = dlg.get_version_name()
-            old_local_id = dlg.get_plan_local_id()
-            new_local_id = version_control.create_new_version(old_local_id, version_name)
-            self.change_active_plan(db, old_local_id, new_local_id)
-            self.iface.messageBar().pushMessage(
-            "Uusi versio luotu.",
-            level=Qgis.Success, duration=5)
+            self._create_version(db, dlg)
+
+    def _create_version(self, db, dlg):
+        version_control = VersionControl(db, self.schema)
+        version_name = dlg.get_version_name()
+        old_local_id = dlg.get_plan_local_id()
+        new_local_id = version_control.create_new_version(old_local_id, version_name)
+        self.change_active_plan(db, old_local_id, new_local_id)
+        self.iface.messageBar().pushMessage(
+        "Uusi versio luotu.",
+        level=Qgis.Success, duration=5)
 
 
 
@@ -569,7 +572,9 @@ class Kauko:
             where sp.is_active
         )
         select
-            spm."name",
+            spm.name,
+            spm."name" ->> 'fin' as name_fi,
+            spm."name" ->> 'swe' as name_sv,
             vna.version_names,
             ap.active_version,
             ap.active_lifecycle_status,

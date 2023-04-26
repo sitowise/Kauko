@@ -37,7 +37,20 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
         self.versions = versions
         self.spatialPlanNameComboBox.clear()
         for version in self.versions:
-            self.spatialPlanNameComboBox.addItem(version['name'])
+            version_name = self.get_version_name(version)
+            self.spatialPlanNameComboBox.addItem(version_name)
+
+    def get_version_name(self, version: DictRow) -> str:
+        name_fi = version.get("name_fi")
+        name_sv = version.get("name_sv")
+        if name_fi is None and name_sv is None:
+            raise ValueError("No name found for version")
+        elif name_fi is not None and name_sv is not None:
+            return f"{name_fi}, {name_sv}"
+        elif name_fi is not None:
+            return name_fi
+        else:
+            return name_sv
 
     def plan_changed(self):
         current_plan = self.get_current_plan()
@@ -63,10 +76,14 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
         return self.versionComboBox.currentData()
 
     def find_version_by_name(self, name: str) -> DictRow:
-        for version in self.versions:
-            if version['name'] == name:
-                return version
-        return None
+        return next(
+            (
+                version
+                for version in self.versions
+                if self.get_version_name(version) == name
+            ),
+            None,
+        )
 
     def get_old_and_new_version(self) -> Tuple[str, str]:
         return self.active_local_id, self.get_current_version_local_id()
