@@ -13,6 +13,7 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
     new_version_clicked = pyqtSignal(str, str)
+    delete_version_clicked = pyqtSignal(str, str, str)
 
     def __init__(self, iface: QgisInterface, parent=None):
         super(VersionControlDialog, self).__init__(parent)
@@ -23,10 +24,14 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
         self.spatialPlanNameComboBox.currentTextChanged.connect(self.plan_changed)
         self.versionComboBox.currentTextChanged.connect(self.version_changed)
         self.createNewPushButton.clicked.connect(self.create_new_version)
+        self.deleteVersionPushButton.clicked.connect(self.delete_version)
 
 
     def create_new_version(self):
         self.new_version_clicked.emit(self.get_current_plan(), self.get_current_version_local_id())
+
+    def delete_version(self):
+        self.delete_version_clicked.emit(self.get_current_plan(), self.get_current_version(), self.get_current_version_local_id())
 
     def add_versions(self, versions: List[DictRow]):
         self.versions = versions
@@ -69,12 +74,13 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
     def version_changed(self):
         current_version = self.get_current_version()
 
-        if current_version is not None:
-            self.createNewPushButton.setEnabled(True)
-        else:
-            self.createNewPushButton.setEnabled(False)
+        enable_delete = current_version is not None and self.get_current_version_local_id() != self.active_local_id
+        self.deleteVersionPushButton.setEnabled(enable_delete)
 
-        is_current_version = current_version == self.currentVersionLineEdit.text()
-        self.acceptPushButton.setEnabled(not is_current_version)
+        enable_create = current_version is not None
+        self.createNewPushButton.setEnabled(enable_create)
+
+        enable_accept = current_version != self.currentVersionLineEdit.text()
+        self.acceptPushButton.setEnabled(enable_accept)
 
 

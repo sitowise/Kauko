@@ -22,15 +22,16 @@
  ***************************************************************************/
 """
 import os.path
-from typing import Callable
+from typing import Callable, List
 
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extras import DictRow
 from qgis.core import (Qgis, QgsApplication, QgsProject)
 from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMenu, QWidget
+from qgis.PyQt.QtWidgets import QAction, QMenu, QWidget, QMessageBox
 from .database.database import Database
 
 from .plan_version_control.version_control import VersionControl
@@ -467,10 +468,86 @@ class Kauko:
         self._start(True)
         dlg = VersionControlDialog(self.iface)
         dlg.new_version_clicked.connect(self.create_new_version)
+        def delete_version(plan_name:str, version_name:str,  version_local_id: str) -> None:
+            msg = QMessageBox()
+            msg.setWindowTitle("Poista versio")
+            msg.setText(f"Haluatko varmasti poistaa version '{version_name}' kaavasta {plan_name}? Tätä toimintoa ei voida peruuttaa.")
+            msg.setIcon(QMessageBox.Warning)
+            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            confirm_delete = msg.exec_()
+
+            if confirm_delete != QMessageBox.Yes:
+                return
+
+            db = self.database_initializer.database
+
+            delete_query = sql.SQL(
+                '''
+                DELETE FROM {schema}.spatial_plan
+                WHERE local_id = {local_id}
+                AND is_active = FALSE
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    local_id=sql.Literal(version_local_id)
+                )
+
+            if(db.update(delete_query)):
+                self.iface.messageBar().pushMessage(
+                    "Versio poistettu.",
+                    level=Qgis.Success, duration=5)
+            else:
+                self.iface.messageBar().pushMessage(
+                    "Version poisto epäonnistui.",
+                    level=Qgis.Critical, duration=5)
+
+            plans = self._get_plans(db)
+            dlg.add_versions(plans)
+        dlg.delete_version_clicked.connect(delete_version)
         if not self.database_initializer.initialize_database(self.connection):
             return
         db = self.database_initializer.database
 
+        plans = self._get_plans(db)
+        dlg.add_versions(plans)
+
+
+
+        dlg.show()
+        if dlg.exec_():
+            old_local_id, new_local_id = dlg.get_old_and_new_version()
+            self.change_active_plan(db, old_local_id, new_local_id)
+
+
+    def create_new_version(self, version_name, local_id):
+        self._start(True)
+        dlg = NewVersionDialog(self.iface, local_id, version_name)
+        if not self.database_initializer.initialize_database(self.connection):
+            return
+        db = self.database_initializer.database
+        dlg.show()
+
+        if dlg.exec_():
+            version_control = VersionControl(db, self.schema)
+            version_name = dlg.get_version_name()
+            old_local_id = dlg.get_plan_local_id()
+            new_local_id = version_control.create_new_version(old_local_id, version_name)
+            self.change_active_plan(db, old_local_id, new_local_id)
+            self.iface.messageBar().pushMessage(
+            "Uusi versio luotu.",
+            level=Qgis.Success, duration=5)
+
+
+
+    def change_active_plan(self, db: Database, old_local_id: str, new_local_id: str) -> None:
+        update_query = sql.SQL('SELECT {schema}.update_active_plan({old_plan}, {new_plan})').format(
+            schema=sql.Identifier(self.schema),
+            old_plan=sql.Literal(old_local_id),
+            new_plan=sql.Literal(new_local_id)
+            )
+        db.select(update_query)
+        self.iface.mapCanvas().refreshAllLayers()
+
+    def _get_plans(self, db: Database) -> List[DictRow]:
         plansQuery = sql.SQL(
             '''with version_names_agg as (
             select
@@ -504,38 +581,5 @@ class Kauko:
                 schema=sql.Identifier(self.schema)
                 )
 
-        plans = db.select(plansQuery)
-        dlg.add_versions(plans)
-
-        dlg.show()
-        if dlg.exec_():
-            old_local_id, new_local_id = dlg.get_old_and_new_version()
-            self._change_active(db, old_local_id, new_local_id)
-
-    def create_new_version(self, version_name, local_id):
-        self._start(True)
-        dlg = NewVersionDialog(self.iface, local_id, version_name)
-        if not self.database_initializer.initialize_database(self.connection):
-            return
-        db = self.database_initializer.database
-        dlg.show()
-
-        if dlg.exec_():
-            version_control = VersionControl(db, self.schema)
-            version_name = dlg.get_version_name()
-            old_local_id = dlg.get_plan_local_id()
-            new_local_id = version_control.create_new_version(old_local_id, version_name)
-            self._change_active(db, old_local_id, new_local_id)
-            self.iface.messageBar().pushMessage(
-            "Uusi versio luotu.",
-            level=Qgis.Success, duration=5)
-
-    def _change_active(self, db: Database, old_local_id: str, new_local_id: str) -> None:
-        update_query = sql.SQL('SELECT {schema}.update_active_plan({old_plan}, {new_plan})').format(
-            schema=sql.Identifier(self.schema),
-            old_plan=sql.Literal(old_local_id),
-            new_plan=sql.Literal(new_local_id)
-            )
-        db.select(update_query)
-        self.iface.mapCanvas().refreshAllLayers()
+        return db.select(plansQuery)
 
