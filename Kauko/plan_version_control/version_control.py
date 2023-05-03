@@ -10,7 +10,18 @@ class VersionControl:
         self.schema = schema
 
     def create_new_version(self, splan_local_id: str, version_name: str) -> str:
-        splan = self.db.insert_with_return(sql.SQL('''
+        new_spatial_plan = self.create_new_spatial_plan(splan_local_id, version_name)
+        new_planners = self.create_planners(splan_local_id, new_spatial_plan["local_id"])
+        new_zoning_elements = self.create_zoning_elements(splan_local_id, new_spatial_plan["local_id"])
+        new_planned_spaces = self.create_planned_spaces(new_zoning_elements)
+        new_planning_detail_lines = self.create_planning_detail_lines(new_zoning_elements, new_planned_spaces)
+        new_describing_lines = self.create_describing_lines(new_zoning_elements)
+        new_describing_texts = self.create_describing_texts(new_zoning_elements)
+
+        return new_spatial_plan["local_id"]
+
+    def create_new_spatial_plan(self, old_splan_local_id: str, new_version_name) -> DictRow:
+        return self.db.insert_with_return(sql.SQL('''
             INSERT INTO {schema}.spatial_plan (
                 identity_id,
                 geom,
@@ -63,21 +74,286 @@ class VersionControl:
             RETURNING *;
             ''').format(
                 schema=sql.Identifier(self.schema),
-                old_local_id=sql.Literal(splan_local_id),
-                new_version_name=sql.Literal(version_name)
+                old_local_id=sql.Literal(old_splan_local_id),
+                new_version_name=sql.Literal(new_version_name)
                 ))[0]
 
-        new_zoning_elements = self.create_zoning_elements(splan_local_id, splan["local_id"])
+    def create_planners(self, old_splan_local_id:str, new_splan_local_id: str) -> List[DictRow]:
+        return self.db.insert_with_return(sql.SQL(
+            '''
+            INSERT INTO {schema}.planner (
+                name,
+                professional_title,
+                role,
+                identity_id,
+                namespace,
+                fk_spatial_plan
+            )
+            SELECT
+                name,
+                professional_title,
+                role,
+                identity_id,
+                namespace,
+                {new_fk_spatial_plan}
+            FROM {schema}.planner
+            WHERE fk_spatial_plan = {old_fk_spatial_plan}
+            RETURNING *;
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_fk_spatial_plan=sql.Literal(old_splan_local_id),
+                new_fk_spatial_plan=sql.Literal(new_splan_local_id)
+            ))
 
-        new_planned_spaces = self.create_planned_spaces(new_zoning_elements)
+    def create_participation_and_evalution_plan(self, old_splan_local_id: str, new_splan_local_id: str) -> DictRow:
+        old_participation_and_evalution_plans = self.db.select(sql.SQL(
+            '''
+            SELECT local_id
+            FROM {schema}.participation_and_evalution_plan
+            WHERE spatial_plan = {old_spatial_plan_local_id}
+            RETURNING *;
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
+            )
+        )
 
-        new_planning_detail_lines = self.create_planning_detail_lines(new_zoning_elements, new_planned_spaces)
+        new_participation_and_evalution_plans = {}
+        for participation_and_evalution_plan in old_participation_and_evalution_plans:
+            new_participation_and_evalution_plan = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.participation_and_evalution_plan (
+                    local_id,
+                    identity_id,
+                    namespace,
+                    spatial_plan
+                )
+                SELECT
+                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
+                    identity_id,
+                    namespace,
+                    {new_spatial_plan_local_id}
+                FROM {schema}.participation_and_evalution_plan
+                WHERE local_id = {old_participation_and_evalution_plan_local_id}
+                RETRUNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    new_spatial_plan_local_id=sql.Literal(new_splan_local_id),
+                    old_participation_and_evalution_plan_local_id=sql.Literal(participation_and_evalution_plan["local_id"])
+                ))
+            new_participation_and_evalution_plans[participation_and_evalution_plan["local_id"]] = new_participation_and_evalution_plan[0]
 
-        new_describing_lines = self.create_describing_lines(new_zoning_elements)
+    def create_regulations(self, old_splan_local_id, new_splan_local_id) -> Dict[str, DictRow]:
+        old_regulations = self.db.select(sql.SQL(
+            '''
+            SELECT DISTINCT zer.plan_regulation_local_id AS local_id
+            FROM {schema}.zoning_element_plan_regulation AS zer
+            JOIN {schema}.zoning_element AS ze ON ze.local_id = zer.zoning_element_local_id
+            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
 
-        new_describing_texts = self.create_describing_texts(new_zoning_elements)
+            UNION
 
-        return splan["local_id"]
+            SELECT DISTINCT psr.plan_regulation_group_local_id AS local_id
+            FROM {schema}.zoning_element_planned_space AS zeps
+            JOIN {schema}.planned_space_plan_regulation_group AS psr ON psr.planned_space_local_id = zeps.planned_space_local_id
+            JOIN {schema}.zoning_element AS ze ON ze.local_id = zeps.zoning_element_local_id
+            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
+
+            UNION
+
+            SELECT DISTINCT pdlr.plan_regulation_local_id AS local_id
+            FROM {schema}.zoning_element_plan_detail_line AS zedl
+            JOIN {schema}.planning_detail_line_plan_regulation AS pdlr ON pdlr.planning_detail_line_local_id = zedl.planning_detail_line_local_id
+            JOIN {schema}.zoning_element AS ze ON ze.local_id = zedl.zoning_element_local_id
+            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
+
+            UNION
+
+            SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
+            FROM {schema}.zoning_element ze
+            JOIN {schema}.zoning_element_plan_regulation_group zeprg ON zeprg.zoning_element_local_id = ze.local_id
+            JOIN {schema}.plan_regulation_group_regulation prgr ON prgr.plan_regulation_group_local_id = zeprg.plan_regulation_group_local_id
+            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
+
+            UNION
+
+            SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
+            FROM {schema}.zoning_element ze
+            JOIN {schema}.zoning_element_planned_space zeps ON zeps.zoning_element_local_id = ze.local_id
+            JOIN {schema}.planned_space_plan_regulation_group psprg ON zeps.planned_space_local_id = psprg.planned_space_local_id
+            JOIN {schema}.plan_regulation_group_regulation prgr ON prgr.plan_regulation_group_local_id = psprg.plan_regulation_group_local_id
+            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
+
+            UNION
+
+            SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
+            FROM {schema}.zoning_element ze
+            JOIN {schema}.zoning_element_plan_detail_line zepdl ON zepdl.zoning_element_local_id = ze.local_id
+            JOIN {schema}.planning_detail_line_plan_regulation_group pdlprg ON zepdl.planning_detail_line_local_id = pdlprg.planning_detail_line_local_id
+            JOIN {schema}.plan_regulation_group_regulation prgr ON pdlprg.plan_regulation_group_local_id = prgr.plan_regulation_group_local_id
+            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
+            RETURNING *;
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
+            )
+        )
+
+        new_regulations: Dict[str, DictRow] = {}
+        for regulation in old_regulations:
+            new_regulation = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.plan_regulation (
+                    local_id,
+                    identity_id,
+                    namespace,
+                    name,
+                    type,
+                    life_cycle_status,
+                    valid_from,
+                    valid_to
+                )
+                SELECT
+                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
+                    identity_id,
+                    namespace,
+                    name,
+                    type,
+                    life_cycle_status,
+                    valid_from,
+                    valid_to
+                FROM {schema}.plan_regulation
+                WHERE local_id = {old_regulation_local_id}
+                RETURNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_regulation_local_id=sql.Literal(regulation["local_id"])
+                )
+            )
+            new_regulations[regulation["local_id"]] = new_regulation[0]
+
+        self.create_plan_regulation_text_values(new_regulations)
+        self.create_plan_regulation_code_values(new_regulations)
+        self.create_plan_regulation_geometry_area_values(new_regulations)
+        self.create_plan_regulation_geometry_line_values(new_regulations)
+        self.create_plan_regulation_geometry_point_values(new_regulations)
+        self.create_plan_regulation_identifier_values(new_regulations)
+        self.create_plan_regulation_double_values(new_regulations)
+        self.create_plan_regulation_numeric_range_values(new_regulations)
+        self.create_plan_regulation_time_instant_values(new_regulations)
+        self.create_plan_regulation_time_period_values(new_regulations)
+
+        return new_regulations
+
+    def create_plan_regulation_values(self, plan_regulations: Dict[str, DictRow], value_type: str, columns: List[str]) -> Dict[str, DictRow]:
+        new_values: Dict[str, DictRow] = {}
+        old_values = self.db.select(
+            sql.SQL(
+                f'''
+                SELECT DISTINCT fk_{value_type}_value
+                FROM {{schema}}.plan_regulation_{value_type}_value
+                WHERE fk_plan_regulation IN ({{old_regulation_local_ids}})
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_regulation_local_ids=sql.SQL(', ').join(sql.Literal(regulation_local_id) for regulation_local_id in plan_regulations)
+            )
+        )
+
+        old_values = [item[f"fk_{value_type}_value"] for item in old_values]
+
+        for value in old_values:
+            new_value = self.db.insert_with_return(sql.SQL(
+                f'''
+                INSERT INTO {{schema}}.{value_type}_value (
+                    {{columns}}
+                )
+                SELECT
+                    {{columns}}
+                FROM {{schema}}.{value_type}_value
+                WHERE {value_type}_value_uuid = {{old_{value_type}_value_uuid}}
+                RETURNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_value_uuid=sql.Literal(value),
+                    columns=sql.SQL(', ').join(sql.Identifier(column) for column in columns)
+                )
+            )
+            new_values[value] = new_value[0]
+
+        plan_regulation_values = self.db.select(sql.SQL(
+            f'''
+            SELECT
+                fk_plan_regulation,
+                fk_{value_type}_value
+            FROM {{schema}}.plan_regulation_{value_type}_value
+            WHERE fk_{value_type}_value IN ({{value_uuids}})
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                value_uuids=sql.SQL(', ').join(sql.Literal(value_uuid) for value_uuid in old_values)
+            )
+        )
+
+        plan_regulation_values = [[d["fk_plan_regulation"], d[f"fk_{value_type}_value"]] for d in plan_regulation_values]
+        new_regulation_local_ids = self.convert_to_key_dict(plan_regulations)
+        value_uuids = self.convert_to_key_dict(new_values, f"{value_type}_value_uuid")
+
+        plan_regulation_values = self.convert_keys_to_new(plan_regulation_values, new_regulation_local_ids, value_uuids)
+
+        self.db.insert(sql.SQL(
+            f'''
+            INSERT INTO {{schema}}.plan_regulation_{value_type}_value (
+                fk_plan_regulation,
+                fk_{value_type}_value
+            )
+            VALUES {{values}}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values=sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in plan_regulation_values)
+            )
+        )
+
+        return new_values
+
+
+    def create_plan_regulation_text_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "syntax"]
+        return self.create_plan_regulation_values(plan_regulations, "text", columns)
+
+    def create_plan_regulation_code_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "code_list", "title"]
+        return self.create_plan_regulation_values(plan_regulations, "code", columns)
+
+    def create_plan_regulation_geometry_area_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "obligatory"]
+        return self.create_plan_regulation_values(plan_regulations, "geometry_area", columns)
+
+    def create_plan_regulation_geometry_line_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "obligatory"]
+        return self.create_plan_regulation_values(plan_regulations, "geometry_line", columns)
+
+    def create_plan_regulation_geometry_point_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "obligatory"]
+        return self.create_plan_regulation_values(plan_regulations, "geometry_point", columns)
+
+    def create_plan_regulation_identifier_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "register_id", "register_name"]
+        return self.create_plan_regulation_values(plan_regulations, "identifier", columns)
+
+    def create_plan_regulation_double_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value", "unit_of_measure", "obligatory"]
+        return self.create_plan_regulation_values(plan_regulations, "numeric_double", columns)
+
+    def create_plan_regulation_numeric_range_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["minimum_value", "maximum_value", "unit_of_measure"]
+        return self.create_plan_regulation_values(plan_regulations, "numeric_range", columns)
+
+    def create_plan_regulation_time_instant_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["value"]
+        return self.create_plan_regulation_values(plan_regulations, "time_instant", columns)
+
+    def create_plan_regulation_time_period_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
+        columns = ["time_period_from", "time_period_to"]
+        return self.create_plan_regulation_values(plan_regulations, "time_period", columns)
 
     def create_zoning_elements(self, old_splan_local_id, new_splan_local_id) -> Dict[str, DictRow]:
         old_zoning_elements = self.db.select(sql.SQL(
@@ -497,20 +773,17 @@ class VersionControl:
 
         return new_describing_texts
 
-    def convert_keys_to_new(self, data: List[List[str]], table_a_keys: List[Dict[str, str]], table_b_keys: List[Dict[str, str]]) -> List[List[str]]:
+    @staticmethod
+    def convert_keys_to_new(data: List[List[str]], table_a_keys: List[Dict[str, str]], table_b_keys: List[Dict[str, str]]) -> List[List[str]]:
         table_a_key_map = {key["old_key"]: key["new_key"] for key in table_a_keys}
         table_b_key_map = {key["old_key"]: key["new_key"] for key in table_b_keys}
         merged_key_map = table_a_key_map | table_b_key_map
         return [[merged_key_map[item[0]], merged_key_map[item[1]]] for item in data]
 
-    def convert_to_key_dict(self, keys: Dict[str, DictRow]) -> List[Dict[str, str]]:
+    @staticmethod
+    def convert_to_key_dict(keys: Dict[str, DictRow], key_name: str = None) -> List[Dict[str, str]]:
         result = []
-        for k, v in keys.items():
-            new_key = v["local_id"] if v.get("local_id") is not None else v["identifier"]
-            result.append({"old_key": k, "new_key": new_key})
+        for old_key, value in keys.items():
+            new_key = value.get(key_name) or value["local_id"] if value.get("local_id") else value["identifier"]
+            result.append({"old_key": old_key, "new_key": new_key})
         return result
-
-
-
-
-
