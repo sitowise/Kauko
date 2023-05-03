@@ -422,3 +422,116 @@ BEFORE UPDATE ON SCHEMANAME.spatial_plan_metadata
 FOR EACH ROW
 WHEN (pg_trigger_depth() < 1)
 EXECUTE PROCEDURE create_or_update_spatial_plan();
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.get_plan_regulation_local_ids(p_spatial_plan_local_id TEXT)
+RETURNS TABLE(local_id VARCHAR) AS $$
+BEGIN
+  RETURN QUERY (
+    SELECT DISTINCT zer.plan_regulation_local_id AS local_id
+    FROM SCHEMANAME.zoning_element_plan_regulation AS zer
+    JOIN SCHEMANAME.zoning_element AS ze ON ze.local_id = zer.zoning_element_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT psr.plan_regulation_group_local_id AS local_id
+    FROM SCHEMANAME.zoning_element_planned_space AS zeps
+    JOIN SCHEMANAME.planned_space_plan_regulation_group AS psr ON psr.planned_space_local_id = zeps.planned_space_local_id
+    JOIN SCHEMANAME.zoning_element AS ze ON ze.local_id = zeps.zoning_element_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT pdlr.plan_regulation_local_id AS local_id
+    FROM SCHEMANAME.zoning_element_plan_detail_line AS zedl
+    JOIN SCHEMANAME.planning_detail_line_plan_regulation AS pdlr ON pdlr.planning_detail_line_local_id = zedl.planning_detail_line_local_id
+    JOIN SCHEMANAME.zoning_element AS ze ON ze.local_id = zedl.zoning_element_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
+    FROM SCHEMANAME.zoning_element ze
+    JOIN SCHEMANAME.zoning_element_plan_regulation_group zeprg ON zeprg.zoning_element_local_id = ze.local_id
+    JOIN SCHEMANAME.plan_regulation_group_regulation prgr ON prgr.plan_regulation_group_local_id = zeprg.plan_regulation_group_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
+    FROM SCHEMANAME.zoning_element ze
+    JOIN SCHEMANAME.zoning_element_planned_space zeps ON zeps.zoning_element_local_id = ze.local_id
+    JOIN SCHEMANAME.planned_space_plan_regulation_group psprg ON zeps.planned_space_local_id = psprg.planned_space_local_id
+    JOIN SCHEMANAME.plan_regulation_group_regulation prgr ON prgr.plan_regulation_group_local_id = psprg.plan_regulation_group_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
+    FROM SCHEMANAME.zoning_element ze
+    JOIN SCHEMANAME.zoning_element_plan_detail_line zepdl ON zepdl.zoning_element_local_id = ze.local_id
+    JOIN SCHEMANAME.planning_detail_line_plan_regulation_group pdlprg ON zepdl.planning_detail_line_local_id = pdlprg.planning_detail_line_local_id
+    JOIN SCHEMANAME.plan_regulation_group_regulation prgr ON pdlprg.plan_regulation_group_local_id = prgr.plan_regulation_group_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.get_plan_guidance_local_ids(p_spatial_plan_local_id TEXT)
+RETURNS TABLE(local_id VARCHAR) AS $$
+BEGIN
+  RETURN QUERY (
+    SELECT DISTINCT sppg.plan_guidance_local_id AS local_id
+    FROM SCHEMANAME.spatial_plan_plan_guidance sppg
+    WHERE sppg.spatial_plan_local_id = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT zepg.plan_guidance_local_id
+    FROM SCHEMANAME.zoning_element ze
+    JOIN SCHEMANAME.zoning_element_plan_guidance zepg ON zepg.zoning_element_local_id = ze.local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT pspg.plan_guidance_local_id AS local_id
+    FROM SCHEMANAME.zoning_element ze
+    JOIN SCHEMANAME.zoning_element_planned_space zeps ON zeps.zoning_element_local_id = ze.local_id
+    JOIN SCHEMANAME.planned_space ps ON zeps.planned_space_local_id = ps.local_id
+    JOIN SCHEMANAME.planned_space_plan_guidance pspg ON pspg.planned_space_local_id = ps.local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+
+    UNION
+
+    SELECT DISTINCT pdlpg.plan_guidance_local_id AS local_id
+    FROM SCHEMANAME.zoning_element ze
+    JOIN SCHEMANAME.zoning_element_plan_detail_line zepdl ON zepdl.zoning_element_local_id = ze.local_id
+    JOIN SCHEMANAME.planning_detail_line pdl ON zepdl.planning_detail_line_local_id = pdl.local_id
+    JOIN SCHEMANAME.planning_detail_line_plan_guidance pdlpg ON pdlpg.planning_detail_line_local_id = pdl.local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.get_document_local_ids(p_spatial_plan_local_id TEXT)
+RETURNS TABLE(local_id VARCHAR) AS $$
+BEGIN
+  RETURN QUERY (
+    SELECT DISTINCT d.local_id AS local_id
+    FROM SCHEMANAME.document d
+    JOIN SCHEMANAME.patricipation_evalution_plan_document pepd ON pepd.document_local_id = d.local_id
+    JOIN SCHEMANAME.plan_guidance_document pgd ON pgd.document_local_id = d.local_id
+    JOIN SCHEMANAME.plan_regulation_document prd ON prd.document_local_id = d.local_id
+    JOIN SCHEMANAME.spatial_plan_commentary_document spcd ON spcd.document_local_id = d.local_id
+    JOIN SCHEMANAME.spatial_plan_document spd ON spd.document_local_id = d.local_id
+    JOIN SCHEMANAME.participation_and_evalution_plan pep ON pepd.participation_and_evalution_plan_local_id = pep.local_id
+    JOIN SCHEMANAME.spatial_plan_commentary spc ON spcd.spatial_plan_commentary_local_id = spc.local_id
+    WHERE
+      (spd.spatial_plan_local_id = p_spatial_plan_local_id) OR
+      (spc.spatial_plan = p_spatial_plan_local_id) OR
+      (pep.spatial_plan = p_spatial_plan_local_id) OR
+      (prd.document_local_id IN (SELECT SCHEMANAME.get_plan_regulation_local_ids(p_spatial_plan_local_id))) OR
+      (pgd.document_local_id IN (SELECT SCHEMANAME.get_plan_guidance_local_ids(p_spatial_plan_local_id)))
+  );
+END;
+$$ LANGUAGE plpgsql;
