@@ -3,6 +3,18 @@ from ..database.database import Database
 from psycopg2 import sql
 from psycopg2.extras import DictRow
 
+VALUE_TYPE_COLUMNS = {
+    "text": ["value", "syntax"],
+    "code": ["value", "code_list", "title"],
+    "geometry_area": ["value", "obligatory"],
+    "geometry_line": ["value", "obligatory"],
+    "geometry_point": ["value", "obligatory"],
+    "identifier": ["value", "register_id", "register_name"],
+    "numeric_double": ["value", "unit_of_measure", "obligatory"],
+    "numeric_range": ["minimum_value", "maximum_value", "unit_of_measure"],
+    "time_instant": ["value"],
+    "time_period": ["time_period_from", "time_period_to"],
+}
 
 class VersionControl:
     def __init__(self, db: Database, schema: str) -> None:
@@ -105,6 +117,85 @@ class VersionControl:
                 new_fk_spatial_plan=sql.Literal(new_splan_local_id)
             ))
 
+    def create_documents(self, old_splan_local_id: str) -> List[str, DictRow]:
+        old_docs = self.db.select(sql.SQL(
+            '''
+                SELECT {schema}.get_document_local_ids({splan_local_id}) AS local_id
+                RETRUNING *;
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                splan_local_id=sql.Literal(old_splan_local_id)
+            )
+        )
+
+        old_docs = [doc["local_id"] for doc in old_docs]
+
+        new_docs: Dict[str, DictRow] = {}
+
+        for doc in old_docs:
+            new_doc = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.document (
+                    identity_id,
+                    local_id,
+                    namespace,
+                    document_identifier,
+                    name,
+                    additional_information_link,
+                    metadata,
+                    type
+                )
+                SELECT
+                    identity_id,
+                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
+                    namespace,
+                    document_identifier,
+                    name,
+                    additional_information_link,
+                    metadata,
+                    type
+                FROM {schema}.document
+                WHERE local_id = {old_local_id}
+                RETURNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_local_id=sql.Literal(doc["local_ids"])
+                )
+            )
+            new_docs[doc["local_id"]] = new_doc[0]
+
+        doc_docs = self.db.select(sql.SQL(
+            '''
+            SELECT
+                referencing_document_local_id,
+                referenced_document_local_id
+            FROM {schema}.document_document
+            WHERE referencing_document_local_id IN ({old_local_ids})
+                OR referenced_document_local_id IN ({old_local_ids});
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_local_ids=sql.SQL(', ').join(sql.Literal(local_id) for local_id in old_docs)
+            )
+        )
+
+        doc_docs = [[d["referencing_document_local_id"], d["referenced_document_local_id"]] for d in doc_docs]
+        new_doc_local_ids = self.convert_to_key_dict(new_docs)
+
+        doc_docs = self.convert_keys_to_new(doc_docs, new_doc_local_ids, new_doc_local_ids)
+
+        self.db.insert(sql.SQL(
+            '''
+            INSERT INTO {schema}.document_document (
+                referencing_document_local_id,
+                referenced_document_local_id
+            VALUES {values}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values=sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in doc_docs)
+        ))
+
+        return new_docs
+
     def create_participation_and_evalution_plan(self, old_splan_local_id: str, new_splan_local_id: str) -> DictRow:
         old_participation_and_evalution_plans = self.db.select(sql.SQL(
             '''
@@ -146,52 +237,7 @@ class VersionControl:
     def create_regulations(self, old_splan_local_id, new_splan_local_id) -> Dict[str, DictRow]:
         old_regulations = self.db.select(sql.SQL(
             '''
-            SELECT DISTINCT zer.plan_regulation_local_id AS local_id
-            FROM {schema}.zoning_element_plan_regulation AS zer
-            JOIN {schema}.zoning_element AS ze ON ze.local_id = zer.zoning_element_local_id
-            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
-
-            UNION
-
-            SELECT DISTINCT psr.plan_regulation_group_local_id AS local_id
-            FROM {schema}.zoning_element_planned_space AS zeps
-            JOIN {schema}.planned_space_plan_regulation_group AS psr ON psr.planned_space_local_id = zeps.planned_space_local_id
-            JOIN {schema}.zoning_element AS ze ON ze.local_id = zeps.zoning_element_local_id
-            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
-
-            UNION
-
-            SELECT DISTINCT pdlr.plan_regulation_local_id AS local_id
-            FROM {schema}.zoning_element_plan_detail_line AS zedl
-            JOIN {schema}.planning_detail_line_plan_regulation AS pdlr ON pdlr.planning_detail_line_local_id = zedl.planning_detail_line_local_id
-            JOIN {schema}.zoning_element AS ze ON ze.local_id = zedl.zoning_element_local_id
-            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
-
-            UNION
-
-            SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
-            FROM {schema}.zoning_element ze
-            JOIN {schema}.zoning_element_plan_regulation_group zeprg ON zeprg.zoning_element_local_id = ze.local_id
-            JOIN {schema}.plan_regulation_group_regulation prgr ON prgr.plan_regulation_group_local_id = zeprg.plan_regulation_group_local_id
-            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
-
-            UNION
-
-            SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
-            FROM {schema}.zoning_element ze
-            JOIN {schema}.zoning_element_planned_space zeps ON zeps.zoning_element_local_id = ze.local_id
-            JOIN {schema}.planned_space_plan_regulation_group psprg ON zeps.planned_space_local_id = psprg.planned_space_local_id
-            JOIN {schema}.plan_regulation_group_regulation prgr ON prgr.plan_regulation_group_local_id = psprg.plan_regulation_group_local_id
-            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
-
-            UNION
-
-            SELECT DISTINCT prgr.plan_regulation_local_id AS local_id
-            FROM {schema}.zoning_element ze
-            JOIN {schema}.zoning_element_plan_detail_line zepdl ON zepdl.zoning_element_local_id = ze.local_id
-            JOIN {schema}.planning_detail_line_plan_regulation_group pdlprg ON zepdl.planning_detail_line_local_id = pdlprg.planning_detail_line_local_id
-            JOIN {schema}.plan_regulation_group_regulation prgr ON pdlprg.plan_regulation_group_local_id = prgr.plan_regulation_group_local_id
-            WHERE ze.spatial_plan = {old_spatial_plan_local_id}
+            SELECT {SCHEMA}.get_plan_regulation_local_ids({old_spatial_plan_local_id}) AS local_id;
             RETURNING *;
             ''').format(
                 schema=sql.Identifier(self.schema),
@@ -232,16 +278,9 @@ class VersionControl:
             )
             new_regulations[regulation["local_id"]] = new_regulation[0]
 
-        self.create_plan_regulation_text_values(new_regulations)
-        self.create_plan_regulation_code_values(new_regulations)
-        self.create_plan_regulation_geometry_area_values(new_regulations)
-        self.create_plan_regulation_geometry_line_values(new_regulations)
-        self.create_plan_regulation_geometry_point_values(new_regulations)
-        self.create_plan_regulation_identifier_values(new_regulations)
-        self.create_plan_regulation_double_values(new_regulations)
-        self.create_plan_regulation_numeric_range_values(new_regulations)
-        self.create_plan_regulation_time_instant_values(new_regulations)
-        self.create_plan_regulation_time_period_values(new_regulations)
+
+        for type in VALUE_TYPE_COLUMNS:
+            self.create_plan_regulation_values_by_type(new_regulation, type)
 
         return new_regulations
 
@@ -315,45 +354,9 @@ class VersionControl:
         return new_values
 
 
-    def create_plan_regulation_text_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "syntax"]
-        return self.create_plan_regulation_values(plan_regulations, "text", columns)
-
-    def create_plan_regulation_code_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "code_list", "title"]
-        return self.create_plan_regulation_values(plan_regulations, "code", columns)
-
-    def create_plan_regulation_geometry_area_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "obligatory"]
-        return self.create_plan_regulation_values(plan_regulations, "geometry_area", columns)
-
-    def create_plan_regulation_geometry_line_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "obligatory"]
-        return self.create_plan_regulation_values(plan_regulations, "geometry_line", columns)
-
-    def create_plan_regulation_geometry_point_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "obligatory"]
-        return self.create_plan_regulation_values(plan_regulations, "geometry_point", columns)
-
-    def create_plan_regulation_identifier_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "register_id", "register_name"]
-        return self.create_plan_regulation_values(plan_regulations, "identifier", columns)
-
-    def create_plan_regulation_double_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value", "unit_of_measure", "obligatory"]
-        return self.create_plan_regulation_values(plan_regulations, "numeric_double", columns)
-
-    def create_plan_regulation_numeric_range_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["minimum_value", "maximum_value", "unit_of_measure"]
-        return self.create_plan_regulation_values(plan_regulations, "numeric_range", columns)
-
-    def create_plan_regulation_time_instant_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["value"]
-        return self.create_plan_regulation_values(plan_regulations, "time_instant", columns)
-
-    def create_plan_regulation_time_period_values(self, plan_regulations: Dict[str, DictRow]) -> Dict[str, DictRow]:
-        columns = ["time_period_from", "time_period_to"]
-        return self.create_plan_regulation_values(plan_regulations, "time_period", columns)
+    def create_plan_regulation_values_by_type(self, plan_regulations: Dict[str, DictRow], value_type: str) -> Dict[str, DictRow]:
+        columns = VALUE_TYPE_COLUMNS[value_type]
+        return self.create_plan_regulation_values(plan_regulations, value_type, columns)
 
     def create_zoning_elements(self, old_splan_local_id, new_splan_local_id) -> Dict[str, DictRow]:
         old_zoning_elements = self.db.select(sql.SQL(
