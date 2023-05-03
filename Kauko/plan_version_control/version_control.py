@@ -31,7 +31,10 @@ class VersionControl:
         new_describing_texts = self.create_describing_texts(new_zoning_elements)
         new_documents = self.create_documents(splan_local_id)
         new_regulations = self.create_regulations(splan_local_id)
-        new_guidances = self.create_guidances(splan_local_id)
+        new_regulation_groups = self.create_regulation_groups(splan_local_id)
+        new_guidances = self.create_plan_guidances(splan_local_id)
+        new_participation_and_evaluation = self.create_participation_and_evalution_plan(splan_local_id, new_spatial_plan["local_id"]),
+        new_spatial_plan_commentaries = self.create_spatial_plan_commentaries(splan_local_id, new_spatial_plan["local_id"])
 
         return new_spatial_plan["local_id"]
 
@@ -200,7 +203,7 @@ class VersionControl:
         return new_docs
 
 
-    def create_participation_and_evalution_plan(self, old_splan_local_id: str, new_splan_local_id: str) -> DictRow:
+    def create_participation_and_evalution_plan(self, old_splan_local_id: str, new_splan_local_id: str) -> Dict[str, DictRow]:
         old_participation_and_evalution_plans = self.db.select(sql.SQL(
             '''
             SELECT local_id
@@ -213,7 +216,9 @@ class VersionControl:
             )
         )
 
-        new_participation_and_evalution_plans = {}
+        old_participation_and_evalution_plans = [plan["local_id"] for plan in old_participation_and_evalution_plans]
+
+        new_participation_and_evalution_plans: Dict[str, DictRow] = {}
         for participation_and_evalution_plan in old_participation_and_evalution_plans:
             new_participation_and_evalution_plan = self.db.insert_with_return(sql.SQL(
                 '''
@@ -234,9 +239,94 @@ class VersionControl:
                 ''').format(
                     schema=sql.Identifier(self.schema),
                     new_spatial_plan_local_id=sql.Literal(new_splan_local_id),
-                    old_participation_and_evalution_plan_local_id=sql.Literal(participation_and_evalution_plan["local_id"])
+                    old_participation_and_evalution_plan_local_id=sql.Literal(participation_and_evalution_plan)
                 ))
-            new_participation_and_evalution_plans[participation_and_evalution_plan["local_id"]] = new_participation_and_evalution_plan[0]
+            new_participation_and_evalution_plans[participation_and_evalution_plan] = new_participation_and_evalution_plan[0]
+
+        return new_participation_and_evalution_plans
+
+    def create_spatial_plan_commentaries(self, old_splan_local_id: str, new_splan_local_id: str) -> Dict[str, DictRow]:
+        old_commentaries = self.db.select(sql.SQL(
+            '''
+            SELECT local_id
+            FROM {schema}.spatial_plan_commentary
+            WHERE spatial_plan = {old_spatial_plan_local_id}
+            RETURNING *;
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_splan_local_id=sql.Literal(old_splan_local_id)
+            )
+        )
+
+        old_commentaries = [commentary["local_id"] for commentary in old_commentaries]
+
+        new_commentaries: Dict[str, DictRow] = {}
+
+        for commentary in old_commentaries:
+            new_commentary = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.spatial_plan_commentary (
+                    local_id,
+                    identity_id,
+                    namespace,
+                    spatial_plan
+                )
+                SELECT
+                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
+                    identity_id,
+                    namespace,
+                    {new_spatial_plan_local_id}
+                FROM {schema}.spatial_plan_commentary
+                WHERE local_id = {old_commentary_local_id}
+                RETRUNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    new_spatial_plan_local_id=sql.Literal(new_splan_local_id),
+                    old_commentary_local_id=sql.Literal(commentary)
+                ))
+            new_commentaries[commentary] = new_commentary[0]
+
+        return new_commentaries
+
+    def create_regulation_groups(self, old_splan_local_id: str):
+        old_regulation_groups = self.db.select(sql.SQL(
+            '''
+            SELECT {schema}.get_regulation_group_local_ids({old_spatial_plan_local_id}) AS local_id
+            RETURNING *;
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
+            )
+        )
+
+        old_regulation_groups = [group["local_id"] for group in old_regulation_groups]
+
+        new_regulation_groups: Dict[str, DictRow] = {}
+
+        for group in old_regulation_groups:
+            new_regulation_group = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.plan_regulation_group (
+                    local_id,
+                    identity_id,
+                    namespace,
+                    name
+                )
+                SELECT
+                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
+                    identity_id,
+                    namespace,
+                    name
+                FROM {schema}.plan_regulation_group
+                WHERE local_id = {old_regulation_group_local_id}
+                RETRUNING *;
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_regulation_group_local_id=sql.Literal(group)
+                ))
+            new_regulation_groups[group] = new_regulation_group[0]
+
+        return new_regulation_groups
 
     def create_regulations(self, old_splan_local_id) -> Dict[str, DictRow]:
         old_regulations = self.db.select(sql.SQL(

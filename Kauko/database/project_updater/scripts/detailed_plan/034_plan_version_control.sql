@@ -535,3 +535,29 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION SCHEMANAME.get_regulation_group_local_ids(p_spatial_plan_local_id TEXT)
+RETURNS TABLE(local_id VARCHAR) AS $$
+BEGIN
+  RETURN QUERY (
+    SELECT DISTINCT zeprg.plan_regulation_group_local_id AS local_id
+    FROM SCHEMANAME.zoning_element_plan_regulation_group zeprg
+        INNER JOIN SCHEMANAME.zoning_element ze ON ze.local_id = zeprg.zoning_element_local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+    UNION
+    SELECT DISTINCT psprg.plan_regulation_group_local_id AS local_id
+    FROM SCHEMANAME.planned_space_plan_regulation_group psprg
+        INNER JOIN SCHEMANAME.planned_space ps ON psprg.planned_space_local_id = ps.local_id
+        INNER JOIN SCHEMANAME.zoning_element_planned_space zeps ON zeps.planned_space_local_id = ps.local_id
+        INNER JOIN SCHEMANAME.zoning_element ze ON zeps.zoning_element_local_id = ze.local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
+    UNION
+    SELECT DISTINCT pdlprg.planning_detail_line_local_id AS local_id
+    FROM SCHEMANAME.planning_detail_line_plan_regulation_group pdlprg
+        INNER JOIN SCHEMANAME.planning_detail_line pdl ON pdlprg.planning_detail_line_local_id = pdl.local_id
+        INNER JOIN SCHEMANAME.zoning_element_plan_detail_line zepdl ON zepdl.planning_detail_line_local_id = pdl.local_id
+        INNER JOIN SCHEMANAME.zoning_element ze ON zepdl.zoning_element_local_id = ze.local_id
+    WHERE ze.spatial_plan = p_spatial_plan_local_id;
+  );
+END;
+$$ LANGUAGE plpgsql;
