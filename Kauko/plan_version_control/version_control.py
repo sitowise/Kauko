@@ -379,6 +379,25 @@ class VersionControl:
         for type in VALUE_TYPE_COLUMNS:
             self.create_plan_regulation_values_by_type(new_regulations, type)
 
+        # Duplicate plan_regulation_themes
+        for old_regulation_local_id in new_regulations:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.plan_regulation_theme (
+                    plan_regulation_local_id,
+                    theme_code
+                )
+                SELECT
+                    {new_regulation_local_id},
+                    theme_code
+                FROM {schema}.plan_regulation_theme
+                WHERE plan_regulation_local_id = {old_regulation_local_id};
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_regulation_local_id=sql.Literal(old_regulation_local_id),
+                    new_regulation_local_id=sql.Literal(new_regulations[old_regulation_local_id]["local_id"])
+            ))
+
         return new_regulations
 
 
@@ -511,6 +530,25 @@ class VersionControl:
 
         for type in VALUE_TYPE_COLUMNS:
             self.create_plan_guidance_values_by_type(new_plan_guidances, type)
+
+        # Duplicate plan_guidance_themes
+        for old_guidance_local_id in new_plan_guidances:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.plan_guidance_theme (
+                    plan_guidance_local_id,
+                    theme_code
+                )
+                SELECT
+                    {new_guidance_local_id},
+                    theme_code
+                FROM {schema}.plan_regulation_theme
+                WHERE plan_regulation_local_id = {old_guidance_local_id};
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    old_guidance_local_id=sql.Literal(old_guidance_local_id),
+                    new_guidance_local_id=sql.Literal(new_plan_guidances[old_guidance_local_id]["local_id"])
+            ))
 
         return new_plan_guidances
 
