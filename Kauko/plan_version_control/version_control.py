@@ -505,6 +505,100 @@ class VersionControl:
         for table_name, element_key, new_elements in relations_data:
             self.insert_guidance_relations(table_name, element_key, new_elements, old_guidance_local_ids, guidance_local_ids)
 
+    def insert_document_relations(self, table_name: str, element_key: str, new_elements: Dict[str, DictRow], old_document_local_ids: List[str], document_local_ids: List[Dict[str,str]]) -> None:
+
+        def fetch_relations(table_name: str, element_key: str, old_element_local_ids: str, old_document_local_ids: str):
+            return self.db.select(sql.SQL(
+                f'''
+                SELECT
+                    {element_key},
+                    document_local_id
+                FROM {{schema}}.{table_name}
+                WHERE {element_key} IN ({{old_element_local_ids}})
+                    AND document_local_id IN ({{old_document_local_ids}});
+                '''
+            ).format(
+                schema=sql.Identifier(self.schema),
+                old_element_local_ids=old_element_local_ids,
+                old_document_local_ids=old_document_local_ids
+            ))
+
+        old_element_local_ids = self.format_ids_for_query(new_elements)
+        relations = fetch_relations(table_name, element_key, old_element_local_ids, old_document_local_ids)
+        relations = [[relation[element_key], relation["document_local_id"]] for relation in relations]
+
+        element_local_ids = self.convert_to_key_dict(new_elements)
+        relations = self.convert_keys_to_new(relations, element_local_ids, document_local_ids)
+
+        self.db.insert(sql.SQL(
+            f'''
+            INSERT INTO {{schema}}.{table_name} (
+                {element_key},
+                document_local_id
+            )
+            VALUES {{values}}
+            '''
+        ).format(
+            schema=sql.Identifier(self.schema),
+            values=self.format_values_for_insert(relations)
+        ))
+
+    def create_document_relations(
+        self,
+        new_documents: Dict[str, DictRow],
+        old_spatial_plan_local_id: str,
+        new_spatial_plan_local_id: str,
+        new_part_eval_plans: Dict[str, DictRow],
+        new_splan_commentaries: Dict[str, DictRow],
+        new_regulations: Dict[str, DictRow],
+        new_guidances: Dict[str, DictRow]
+    ) -> None:
+        old_document_local_ids = sql.SQL(', ').join(sql.Literal(document_local_id) for document_local_id in new_documents)
+        document_local_ids = self.convert_to_key_dict(new_documents)
+
+        spatial_plan_relations = self.db.select(sql.SQL(
+            '''
+            SELECT
+                spatial_plan_local_id
+                document_local_id
+            FROM {schema}.spatial_plan_document
+            WHERE spatial_plan_local_id = {old_spatial_plan_local_id}
+                AND document_local_id IN ({old_document_local_ids});
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_spatial_plan_local_id=sql.Literal(old_spatial_plan_local_id),
+                old_document_local_ids=old_document_local_ids
+            )
+        )
+
+        spatial_plan_relations = [[relation["spatial_plan_local_id"], relation["document_local_id"]] for relation in spatial_plan_relations]
+        spatial_plan_local_ids = [{"old_key": old_spatial_plan_local_id, "new_key": new_spatial_plan_local_id}]
+
+        spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, document_local_ids)
+
+        self.db.insert(sql.SQL(
+            '''
+            INSERT INTO {schema}.spatial_plan_document (
+                spatial_plan_local_id,
+                document_local_id
+            )
+            VALUES {values}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values=self.format_values_for_insert(spatial_plan_relations)
+            )
+        )
+
+        relations_data = [
+            ('patricipation_evalution_plan_document', 'participation_and_evalution_plan_local_id', new_part_eval_plans),
+            ('spatial_plan_commentary_document', 'spatial_plan_commentary_local_id', new_splan_commentaries),
+            ('plan_regulation_document', 'plan_regulation_local_id', new_regulations),
+            ('plan_guidance_document', 'plan_guidance_local_id', new_guidances)
+        ]
+
+        for table_name, element_key, new_elements in relations_data:
+            self.insert_document_relations(table_name, element_key, new_elements, old_document_local_ids, document_local_ids)
+
     def insert_regulation_relations(self, table_name: str, element_key: str, new_elements: Dict[str, DictRow], old_regulation_local_ids: List[str], regulation_local_ids: List[Dict[str, str]]) -> None:
 
         def fetch_relations(table_name: str, element_key: str, old_element_local_ids: str, old_regulation_local_ids: str):
