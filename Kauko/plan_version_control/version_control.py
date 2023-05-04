@@ -29,7 +29,7 @@ class VersionControl:
 
     def create_new_version(self, splan_local_id: str, version_name: str) -> str:
         new_spatial_plan = self.create_new_spatial_plan(splan_local_id, version_name)
-        new_planners = self.create_planners(splan_local_id, new_spatial_plan["local_id"])
+        self.create_planners(splan_local_id, new_spatial_plan["local_id"])
         new_zoning_elements = self.create_zoning_elements(splan_local_id, new_spatial_plan["local_id"])
         new_planned_spaces = self.create_planned_spaces(new_zoning_elements)
         new_planning_detail_lines = self.create_planning_detail_lines(new_zoning_elements, new_planned_spaces)
@@ -41,6 +41,12 @@ class VersionControl:
         new_guidances = self.create_plan_guidances(splan_local_id)
         new_participation_and_evaluation = self.create_participation_and_evalution_plan(splan_local_id, new_spatial_plan["local_id"]),
         new_spatial_plan_commentaries = self.create_spatial_plan_commentaries(splan_local_id, new_spatial_plan["local_id"])
+
+        # Create plan regulation relations
+        self.create_regulation_relations(new_regulations, splan_local_id, new_spatial_plan["local_id"], new_zoning_elements, new_planned_spaces, new_planning_detail_lines, new_regulation_groups)
+
+        # Create plan guidance relations
+        self.create_guidance_relations(new_guidances, splan_local_id, new_spatial_plan["local_id"], new_zoning_elements, new_planned_spaces, new_planning_detail_lines)
 
         return new_spatial_plan["local_id"]
 
@@ -407,8 +413,99 @@ class VersionControl:
 
         return new_regulations
 
-    def insert_regulation_relations(self, table_name: str, element_key: str, new_elements: Dict[str, DictRow], old_regulation_local_ids: List[str]) -> None:
+    def insert_guidance_relations(self, table_name: str, element_key: str, new_elements: Dict[str, DictRow], old_guidance_local_ids: List[str], guidance_local_ids: List[Dict[str,str]]) -> None:
 
+        def fetch_relations(table_name: str, element_key: str, old_element_local_ids: str, old_guidance_local_ids: str):
+            return self.db.select(sql.SQL(
+                f'''
+                SELECT
+                    {element_key},
+                    plan_guidance_local_id
+                FROM {{schema}}.{table_name}
+                WHERE {element_key} IN ({{old_element_local_ids}})
+                    AND plan_guidance_local_id IN ({{old_guidance_local_ids}});
+                '''
+            ).format(
+                schema=sql.Identifier(self.schema),
+                old_element_local_ids=old_element_local_ids,
+                old_guidance_local_ids=old_guidance_local_ids
+            ))
+
+        old_element_local_ids = self.format_ids_for_query(new_elements)
+        relations = fetch_relations(table_name, element_key, old_element_local_ids, old_guidance_local_ids)
+        relations = [[relation[element_key], relation["plan_guidance_local_id"]] for relation in relations]
+
+        element_local_ids = self.convert_to_key_dict(new_elements)
+        relations = self.convert_keys_to_new(relations, element_local_ids, guidance_local_ids)
+
+        self.db.insert(sql.SQL(
+            f'''
+            INSERT INTO {{schema}}.{table_name} (
+                {element_key},
+                plan_guidance_local_id
+            )
+            VALUES {{values}}
+            '''
+        ).format(
+            schema=sql.Identifier(self.schema),
+            values=self.format_values_for_insert(relations)
+        ))
+
+    def create_guidance_relations(
+        self,
+        new_guidances: Dict[str, DictRow],
+        old_spatial_plan_local_id: str,
+        new_spatial_plan_local_id: str,
+        new_zoning_elements: Dict[str, DictRow],
+        new_planned_spaces: Dict[str, DictRow],
+        new_planning_detail_lines: Dict[str, DictRow],
+    ) -> None:
+        old_guidance_local_ids = sql.SQL(', ').join(sql.Literal(guidance_local_id) for guidance_local_id in new_guidances)
+        guidance_local_ids = self.convert_to_key_dict(new_guidances)
+
+        spatial_plan_relations = self.db.select(sql.SQL(
+            '''
+            SELECT
+                spatial_plan_local_id
+                plan_guidance_local_id
+            FROM {schema}.spatial_plan_plan_guidance
+            WHERE spatial_plan_local_id = {old_spatial_plan_local_id}
+                AND plan_guidance_local_id IN ({old_guidance_local_ids});
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_spatial_plan_local_id=sql.Literal(old_spatial_plan_local_id),
+                old_guidance_local_ids=old_guidance_local_ids
+            )
+        )
+
+        spatial_plan_relations = [[relation["spatial_plan_local_id"], relation["plan_guidance_local_id"]] for relation in spatial_plan_relations]
+        spatial_plan_local_ids = [{"old_key": old_spatial_plan_local_id, "new_key": new_spatial_plan_local_id}]
+
+        spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, guidance_local_ids)
+
+        self.db.insert(sql.SQL(
+            '''
+            INSERT INTO {schema}.spatial_plan_plan_guidance (
+                spatial_plan_local_id,
+                plan_guidance_local_id
+            )
+            VALUES {values}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values=self.format_values_for_insert(spatial_plan_relations)
+            )
+        )
+
+        relations_data = [
+            ('zoning_element_plan_guidance', 'zoning_element_local_id', new_zoning_elements),
+            ('planned_space_plan_guidance', 'planned_space_local_id', new_planned_spaces),
+            ('planning_detail_line_plan_guidance', 'planning_detail_line_local_id', new_planning_detail_lines),
+        ]
+
+        for table_name, element_key, new_elements in relations_data:
+            self.insert_guidance_relations(table_name, element_key, new_elements, old_guidance_local_ids, guidance_local_ids)
+
+    def insert_regulation_relations(self, table_name: str, element_key: str, new_elements: Dict[str, DictRow], old_regulation_local_ids: List[str], regulation_local_ids: List[Dict[str, str]]) -> None:
 
         def fetch_relations(table_name: str, element_key: str, old_element_local_ids: str, old_regulation_local_ids: str):
             return self.db.select(sql.SQL(
@@ -431,7 +528,7 @@ class VersionControl:
         relations = [[relation[element_key], relation["plan_regulation_local_id"]] for relation in relations]
 
         element_local_ids = self.convert_to_key_dict(new_elements)
-        relations = self.convert_keys_to_new(relations, element_local_ids, old_regulation_local_ids)
+        relations = self.convert_keys_to_new(relations, element_local_ids, regulation_local_ids)
 
         self.db.insert(sql.SQL(
             f'''
@@ -457,6 +554,7 @@ class VersionControl:
         new_regulation_groups: Dict[str, DictRow]
     ) -> None:
         old_regulation_local_ids = sql.SQL(', ').join(sql.Literal(regulation_local_id) for regulation_local_id in new_regulations)
+        regulation_local_ids = self.convert_to_key_dict(new_regulations)
 
         spatial_plan_relations = self.db.select(sql.SQL(
             '''
@@ -476,7 +574,7 @@ class VersionControl:
         spatial_plan_relations = [[relation["spatial_plan_local_id"], relation["plan_regulation_local_id"]] for relation in spatial_plan_relations]
         spatial_plan_local_ids = [{"old_key": old_spatial_plan_local_id, "new_key": new_spatial_plan_local_id}]
 
-        spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, old_regulation_local_ids)
+        spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, regulation_local_ids)
 
         self.db.insert(sql.SQL(
             '''
@@ -499,7 +597,7 @@ class VersionControl:
         ]
 
         for table_name, element_key, new_elements in relations_data:
-            self.insert_regulation_relations(table_name, element_key, new_elements, old_regulation_local_ids)
+            self.insert_regulation_relations(table_name, element_key, new_elements, old_regulation_local_ids, regulation_local_ids)
 
     def create_plan_values(self, plan_items: Dict[str, DictRow], value_type: str, columns: List[str], table_type: ValueTableType) -> Dict[str, DictRow]:
         if table_type not in ValueTableType.__members__:
