@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, List
 from ..database.database import Database
 from psycopg2 import sql
@@ -15,6 +16,11 @@ VALUE_TYPE_COLUMNS = {
     "time_instant": ["value"],
     "time_period": ["time_period_from", "time_period_to"],
 }
+
+class ValueTableType(Enum):
+    PLAN_REGULATION = 'plan_regulation'
+    PLAN_GUIDANCE = 'plan_guidance'
+    SUPPLEMENTARY_INFORMATION = 'supplementary_information'
 
 class VersionControl:
     def __init__(self, db: Database, schema: str) -> None:
@@ -123,7 +129,7 @@ class VersionControl:
                 new_fk_spatial_plan=sql.Literal(new_splan_local_id)
             ))
 
-    def create_documents(self, old_splan_local_id: str) -> List[str, DictRow]:
+    def create_documents(self, old_splan_local_id: str) -> Dict[str, DictRow]:
         old_docs = self.db.select(sql.SQL(
             '''
                 SELECT {schema}.get_document_local_ids({splan_local_id}) AS local_id
@@ -376,8 +382,7 @@ class VersionControl:
             new_regulations[regulation] = new_regulation[0]
 
 
-        for type in VALUE_TYPE_COLUMNS:
-            self.create_plan_regulation_values_by_type(new_regulations, type)
+        self.create_values(new_regulations, ValueTableType.PLAN_REGULATION)
 
         # Duplicate plan_regulation_themes
         for old_regulation_local_id in new_regulations:
@@ -398,20 +403,22 @@ class VersionControl:
                     new_regulation_local_id=sql.Literal(new_regulations[old_regulation_local_id]["local_id"])
             ))
 
+        self.create_supplementary_information(new_regulations)
+
         return new_regulations
 
 
-    def create_plan_values(self, plan_items: Dict[str, DictRow], value_type: str, columns: List[str], table_type: str) -> Dict[str, DictRow]:
-        if table_type not in ('regulation', 'guidance'):
-            raise ValueError("table_type must be either 'regulation' or 'guidance'")
+    def create_plan_values(self, plan_items: Dict[str, DictRow], value_type: str, columns: List[str], table_type: ValueTableType) -> Dict[str, DictRow]:
+        if table_type not in ValueTableType.__members__:
+            raise ValueError("table_type must be one of " + ', '.join([e.name for e in ValueTableType]))
 
         new_values: Dict[str, DictRow] = {}
         old_values = self.db.select(
             sql.SQL(
                 f'''
                 SELECT DISTINCT fk_{value_type}_value
-                FROM {{schema}}.plan_{table_type}_{value_type}_value
-                WHERE fk_plan_{table_type} IN ({{old_item_local_ids}})
+                FROM {{schema}}.{table_type}_{value_type}_value
+                WHERE fk_{table_type} IN ({{old_item_local_ids}})
                 ''').format(
                     schema=sql.Identifier(self.schema),
                     old_item_local_ids=sql.SQL(', ').join(sql.Literal(item_local_id) for item_local_id in plan_items)
@@ -442,9 +449,9 @@ class VersionControl:
         plan_values = self.db.select(sql.SQL(
             f'''
             SELECT
-                fk_plan_{table_type},
+                fk_{table_type},
                 fk_{value_type}_value
-            FROM {{schema}}.plan_{table_type}_{value_type}_value
+            FROM {{schema}}.{table_type}_{value_type}_value
             WHERE fk_{value_type}_value IN ({{value_uuids}})
             ''').format(
                 schema=sql.Identifier(self.schema),
@@ -452,16 +459,19 @@ class VersionControl:
             )
         )
 
-        plan_values = [[d[f"fk_plan_{table_type}"], d[f"fk_{value_type}_value"]] for d in plan_values]
-        new_item_local_ids = self.convert_to_key_dict(plan_items)
+        plan_values = [[d[f"fk_{table_type}"], d[f"fk_{value_type}_value"]] for d in plan_values]
+        if (table_type == 'supplementary_information'):
+            new_item_local_ids = self.convert_to_key_dict(plan_items, 'producer_specific_id')
+        else:
+            new_item_local_ids = self.convert_to_key_dict(plan_items)
         value_uuids = self.convert_to_key_dict(new_values, f"{value_type}_value_uuid")
 
         plan_values = self.convert_keys_to_new(plan_values, new_item_local_ids, value_uuids)
 
         self.db.insert(sql.SQL(
             f'''
-            INSERT INTO {{schema}}.plan_{table_type}_{value_type}_value (
-                fk_plan_{table_type},
+            INSERT INTO {{schema}}.{table_type}_{value_type}_value (
+                fk_{table_type},
                 fk_{value_type}_value
             )
             VALUES {{values}}
@@ -474,14 +484,54 @@ class VersionControl:
         return new_values
 
 
+    def create_values(self, new_items: Dict[str, DictRow], table_type: ValueTableType) -> None:
+        for value_type in VALUE_TYPE_COLUMNS:
+            columns = VALUE_TYPE_COLUMNS[value_type]
+            self.create_plan_values(new_items, value_type, columns, table_type)
 
-    def create_plan_regulation_values_by_type(self, plan_regulations: Dict[str, DictRow], value_type: str) -> Dict[str, DictRow]:
-        columns = VALUE_TYPE_COLUMNS[value_type]
-        return self.create_plan_values(plan_regulations, value_type, columns, 'regulation')
+    def create_supplementary_information(self, regulations: Dict[str, DictRow]):
+        old_supplementary_informations = self.db.select(sql.SQL(
+            '''
+                SELECT
+                    producer_specific_id,
+                    fk_plan_regulation
+                FROM {schema}.supplementary_information
+                WHERE fk_plan_regulation IN ({regulation_local_ids})
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                regulation_local_ids=sql.SQL(', ').join(sql.Literal(regulation_local_id) for regulation_local_id in regulations)
+            ))
 
-    def create_plan_guidance_values_by_type(self, plan_regulations: Dict[str, DictRow], value_type: str) -> Dict[str, DictRow]:
-        columns = VALUE_TYPE_COLUMNS[value_type]
-        return self.create_plan_values(plan_regulations, value_type, columns, 'guidance')
+        new_supplementary_informations: Dict[str, DictRow] = {}
+
+        for supplementary_information in old_supplementary_informations:
+            new_supplementary_information = self.db.insert_with_return(sql.SQL(
+                '''
+                INSERT INTO {schema}.supplementary_information (
+                    type,
+                    name,
+                    fk_plan_regulation
+                )
+                SELECT
+                    type,
+                    name,
+                    {regulation_local_id}
+                FROM {schema}.supplementary_information
+                WHERE producer_specific_id = {producer_specific_id}
+                RETURNING *
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    regulation_local_id=sql.Literal(regulations[supplementary_information["fk_plan_regulation"]]["local_id"]),
+                    producer_specific_id=sql.Literal(supplementary_information["producer_specific_id"])
+                )
+            )
+            new_supplementary_informations[supplementary_information["producer_specific_id"]] = new_supplementary_information[0]
+
+        self.create_values(new_supplementary_informations, ValueTableType.SUPPLEMENTARY_INFORMATION)
+
+        return new_supplementary_informations
+
+
 
     def create_plan_guidances(self, old_splan_local_id: str):
         old_plan_guidances = self.db.select(sql.SQL(
@@ -528,8 +578,7 @@ class VersionControl:
             )
             new_plan_guidances[plan_guidance] = new_plan_guidance[0]
 
-        for type in VALUE_TYPE_COLUMNS:
-            self.create_plan_guidance_values_by_type(new_plan_guidances, type)
+        self.create_values(new_plan_guidances, ValueTableType.PLAN_GUIDANCE)
 
         # Duplicate plan_guidance_themes
         for old_guidance_local_id in new_plan_guidances:
