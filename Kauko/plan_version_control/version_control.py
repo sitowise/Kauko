@@ -407,6 +407,99 @@ class VersionControl:
 
         return new_regulations
 
+    def insert_regulation_relations(self, table_name: str, element_key: str, new_elements: Dict[str, DictRow], old_regulation_local_ids: List[str]) -> None:
+
+
+        def fetch_relations(table_name: str, element_key: str, old_element_local_ids: str, old_regulation_local_ids: str):
+            return self.db.select(sql.SQL(
+                f'''
+                SELECT
+                    {element_key},
+                    plan_regulation_local_id
+                FROM {{schema}}.{table_name}
+                WHERE {element_key} IN ({{old_element_local_ids}})
+                    AND plan_regulation_local_id IN ({{old_regulation_local_ids}});
+                '''
+            ).format(
+                schema=sql.Identifier(self.schema),
+                old_element_local_ids=old_element_local_ids,
+                old_regulation_local_ids=old_regulation_local_ids
+            ))
+
+        old_element_local_ids = self.format_ids_for_query(new_elements)
+        relations = fetch_relations(table_name, element_key, old_element_local_ids, old_regulation_local_ids)
+        relations = [[relation[element_key], relation["plan_regulation_local_id"]] for relation in relations]
+
+        element_local_ids = self.convert_to_key_dict(new_elements)
+        relations = self.convert_keys_to_new(relations, element_local_ids, old_regulation_local_ids)
+
+        self.db.insert(sql.SQL(
+            f'''
+            INSERT INTO {{schema}}.{table_name} (
+                {element_key},
+                plan_regulation_local_id
+            )
+            VALUES {{values}}
+            '''
+        ).format(
+            schema=sql.Identifier(self.schema),
+            values=self.format_values_for_insert(relations)
+        ))
+
+    def create_regulation_relations(
+        self,
+        new_regulations: Dict[str, DictRow],
+        old_spatial_plan_local_id: str,
+        new_spatial_plan_local_id: str,
+        new_zoning_elements: Dict[str, DictRow],
+        new_planned_spaces: Dict[str, DictRow],
+        new_planning_detail_lines: Dict[str, DictRow],
+        new_regulation_groups: Dict[str, DictRow]
+    ) -> None:
+        old_regulation_local_ids = sql.SQL(', ').join(sql.Literal(regulation_local_id) for regulation_local_id in new_regulations)
+
+        spatial_plan_relations = self.db.select(sql.SQL(
+            '''
+            SELECT
+                spatial_plan_local_id
+                plan_regulation_local_id
+            FROM {schema}.spatial_plan_plan_regulation
+            WHERE spatial_plan_local_id = {old_spatial_plan_local_id}
+                AND plan_regulation_local_id IN ({old_regulation_local_ids});
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                old_spatial_plan_local_id=sql.Literal(old_spatial_plan_local_id),
+                old_regulation_local_ids=old_regulation_local_ids
+            )
+        )
+
+        spatial_plan_relations = [[relation["spatial_plan_local_id"], relation["plan_regulation_local_id"]] for relation in spatial_plan_relations]
+        spatial_plan_local_ids = [{"old_key": old_spatial_plan_local_id, "new_key": new_spatial_plan_local_id}]
+
+        spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, old_regulation_local_ids)
+
+        self.db.insert(sql.SQL(
+            '''
+            INSERT INTO {schema}.spatial_plan_plan_regulation (
+                spatial_plan_local_id,
+                plan_regulation_local_id
+            )
+            VALUES {values}
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                values=self.format_values_for_insert(spatial_plan_relations)
+            )
+        )
+
+        relations_data = [
+            ('zoning_element_plan_regulation', 'zoning_element_local_id', new_zoning_elements),
+            ('planned_space_plan_regulation', 'planned_space_local_id', new_planned_spaces),
+            ('planning_detail_line_plan_regulation', 'planning_detail_line_local_id', new_planning_detail_lines),
+            ('plan_regulation_group_regulation', 'plan_regulation_group_local_id', new_regulation_groups),
+        ]
+
+        for table_name, element_key, new_elements in relations_data:
+            self.insert_regulation_relations(table_name, element_key, new_elements, old_regulation_local_ids)
 
     def create_plan_values(self, plan_items: Dict[str, DictRow], value_type: str, columns: List[str], table_type: ValueTableType) -> Dict[str, DictRow]:
         if table_type not in ValueTableType.__members__:
@@ -421,7 +514,7 @@ class VersionControl:
                 WHERE fk_{table_type} IN ({{old_item_local_ids}})
                 ''').format(
                     schema=sql.Identifier(self.schema),
-                    old_item_local_ids=sql.SQL(', ').join(sql.Literal(item_local_id) for item_local_id in plan_items)
+                    old_item_local_ids=self.format_ids_for_query(plan_items)
             )
         )
 
@@ -455,7 +548,7 @@ class VersionControl:
             WHERE fk_{value_type}_value IN ({{value_uuids}})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                value_uuids=sql.SQL(', ').join(sql.Literal(value_uuid) for value_uuid in old_values)
+                value_uuids=self.format_ids_for_query(old_values)
             )
         )
 
@@ -477,7 +570,7 @@ class VersionControl:
             VALUES {{values}}
             ''').format(
                 schema=sql.Identifier(self.schema),
-                values=sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in plan_values)
+                values=self.format_values_for_insert(plan_values)
             )
         )
 
@@ -499,7 +592,7 @@ class VersionControl:
                 WHERE fk_plan_regulation IN ({regulation_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                regulation_local_ids=sql.SQL(', ').join(sql.Literal(regulation_local_id) for regulation_local_id in regulations)
+                regulation_local_ids=self.format_ids_for_query(regulations)
             ))
 
         new_supplementary_informations: Dict[str, DictRow] = {}
@@ -678,7 +771,7 @@ class VersionControl:
             WHERE zeps.zoning_element_local_id IN ({zoning_element_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
+                zoning_element_local_ids=self.format_ids_for_query(old_zoning_elements)
             )
         )
 
@@ -729,7 +822,7 @@ class VersionControl:
             WHERE planned_space_local_id IN ({planned_space_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                planned_space_local_ids=sql.SQL(', ').join(sql.Literal(planned_space_local_id) for planned_space_local_id in old_planned_spaces),
+                planned_space_local_ids=self.format_ids_for_query(old_planned_spaces),
             )
         )
 
@@ -747,7 +840,7 @@ class VersionControl:
             VALUES {values}
             ''').format(
                 schema=sql.Identifier(self.schema),
-                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in zoning_element_planned_spaces)
+                values = self.format_values_for_insert(zoning_element_planned_spaces)
             )
         )
 
@@ -762,7 +855,7 @@ class VersionControl:
             WHERE zeps.zoning_element_local_id IN ({zoning_element_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
+                zoning_element_local_ids=self.format_ids_for_query(old_zoning_elements)
             )
         )
 
@@ -811,7 +904,7 @@ class VersionControl:
             WHERE planning_detail_line_local_id IN ({planning_detail_line_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                planning_detail_line_local_ids=sql.SQL(', ').join(sql.Literal(planned_space_local_id) for planned_space_local_id in old_planning_detail_lines),
+                planning_detail_line_local_ids=self.format_ids_for_query(old_planning_detail_lines),
             )
         )
 
@@ -829,7 +922,7 @@ class VersionControl:
             VALUES {values}
             ''').format(
                 schema=sql.Identifier(self.schema),
-                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in zoning_element_planning_detail_lines)
+                values = self.format_values_for_insert(zoning_element_planning_detail_lines)
             )
         )
 
@@ -842,7 +935,7 @@ class VersionControl:
             WHERE planning_detail_line_local_id IN ({planning_detail_line_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                planning_detail_line_local_ids=sql.SQL(', ').join(sql.Literal(planned_space_local_id) for planned_space_local_id in old_planning_detail_lines),
+                planning_detail_line_local_ids=self.format_ids_for_query(old_planning_detail_lines),
             )
         )
 
@@ -859,7 +952,7 @@ class VersionControl:
             VALUES {values}
             ''').format(
                 schema=sql.Identifier(self.schema),
-                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in planned_space_planning_detail_lines)
+                values = self.format_values_for_insert(planned_space_planning_detail_lines)
             )
         )
 
@@ -874,7 +967,7 @@ class VersionControl:
             WHERE zedl.zoning_element_local_id IN ({zoning_element_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
+                zoning_element_local_ids=self.format_ids_for_query(old_zoning_elements)
             ))
 
         old_describing_lines = [item["describing_line_id"] for item in old_describing_lines]
@@ -914,7 +1007,7 @@ class VersionControl:
             WHERE describing_line_id IN ({describing_line_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                describing_line_ids=sql.SQL(', ').join(sql.Literal(describing_line_id) for describing_line_id in old_describing_lines)
+                describing_line_ids=self.format_ids_for_query(old_describing_lines)
             )
         )
 
@@ -932,7 +1025,7 @@ class VersionControl:
             Values {values}
             ''').format(
                 schema=sql.Identifier(self.schema),
-                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in zoning_element_describing_lines)
+                values = self.format_values_for_insert(zoning_element_describing_lines)
             )
         )
 
@@ -947,7 +1040,7 @@ class VersionControl:
             WHERE zedt.zoning_element_local_id IN ({zoning_element_local_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                zoning_element_local_ids=sql.SQL(', ').join(sql.Literal(zoning_element_local_id) for zoning_element_local_id in old_zoning_elements)
+                zoning_element_local_ids=self.format_ids_for_query(old_zoning_elements)
             ))
 
         old_describing_texts = [item["describing_text_id"] for item in old_describing_texts]
@@ -997,7 +1090,7 @@ class VersionControl:
             WHERE describing_text_id IN ({describing_text_ids})
             ''').format(
                 schema=sql.Identifier(self.schema),
-                describing_text_ids=sql.SQL(', ').join(sql.Literal(describing_text_id) for describing_text_id in old_describing_texts)
+                describing_text_ids=self.format_ids_for_query(old_describing_texts)
             )
         )
 
@@ -1015,7 +1108,7 @@ class VersionControl:
             Values {values}
             ''').format(
                 schema=sql.Identifier(self.schema),
-                values = sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in zoning_element_describing_texts)
+                values = self.format_values_for_insert(zoning_element_describing_texts)
             )
         )
 
@@ -1035,3 +1128,14 @@ class VersionControl:
             new_key = value.get(key_name) or value["local_id"] if value.get("local_id") else value["identifier"]
             result.append({"old_key": old_key, "new_key": new_key})
         return result
+
+    @staticmethod
+    def format_ids_for_query(elements: Dict[str, DictRow]):
+        return sql.SQL(', ').join(sql.Literal(element) for element in elements)
+
+    @staticmethod
+    def format_values_for_insert(value_list_list: List[List[str]]):
+        return sql.SQL(', ').join(
+        sql.SQL('({})').format(sql.SQL(', ').join(sql.Literal(value) for value in value_list))
+        for value_list in value_list_list
+    )
