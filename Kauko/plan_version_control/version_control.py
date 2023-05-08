@@ -5,16 +5,16 @@ from psycopg2 import sql
 from psycopg2.extras import DictRow
 
 VALUE_TYPE_COLUMNS = {
-    "text": ["value", "syntax"],
-    "code": ["value", "code_list", "title"],
-    "geometry_area": ["value", "obligatory"],
-    "geometry_line": ["value", "obligatory"],
-    "geometry_point": ["value", "obligatory"],
-    "identifier": ["value", "register_id", "register_name"],
-    "numeric_double": ["value", "unit_of_measure", "obligatory"],
+    "text_value": ["value", "syntax"],
+    "code_value": ["value", "code_list", "title"],
+    "geometry_area_value": ["value", "obligatory"],
+    "geometry_line_value": ["value", "obligatory"],
+    "geometry_point_value": ["value", "obligatory"],
+    "identifier_value": ["value", "register_id", "register_name"],
+    "numeric_double_value": ["value", "unit_of_measure", "obligatory"],
     "numeric_range": ["minimum_value", "maximum_value", "unit_of_measure"],
-    "time_instant": ["value"],
-    "time_period": ["time_period_from", "time_period_to"],
+    "time_instant_value": ["value"],
+    "time_period_value": ["time_period_from", "time_period_to"],
 }
 
 class ValueTableType(Enum):
@@ -33,13 +33,13 @@ class VersionControl:
         new_zoning_elements = self.create_zoning_elements(splan_local_id, new_spatial_plan["local_id"])
         new_planned_spaces = self.create_planned_spaces(new_zoning_elements)
         new_planning_detail_lines = self.create_planning_detail_lines(new_zoning_elements, new_planned_spaces)
-        new_describing_lines = self.create_describing_lines(new_zoning_elements)
-        new_describing_texts = self.create_describing_texts(new_zoning_elements)
+        self.create_describing_lines(new_zoning_elements)
+        self.create_describing_texts(new_zoning_elements)
         new_documents = self.create_documents(splan_local_id)
         new_regulations = self.create_regulations(splan_local_id)
         new_regulation_groups = self.create_regulation_groups(splan_local_id)
         new_guidances = self.create_plan_guidances(splan_local_id)
-        new_participation_and_evaluation = self.create_participation_and_evalution_plan(splan_local_id, new_spatial_plan["local_id"]),
+        new_participation_and_evaluation = self.create_participation_and_evalution_plan(splan_local_id, new_spatial_plan["local_id"])
         new_spatial_plan_commentaries = self.create_spatial_plan_commentaries(splan_local_id, new_spatial_plan["local_id"])
 
         # Create plan regulation relations
@@ -47,6 +47,8 @@ class VersionControl:
 
         # Create plan guidance relations
         self.create_guidance_relations(new_guidances, splan_local_id, new_spatial_plan["local_id"], new_zoning_elements, new_planned_spaces, new_planning_detail_lines)
+
+        self.create_document_relations(new_documents, splan_local_id, new_spatial_plan["local_id"], new_participation_and_evaluation, new_spatial_plan_commentaries, new_regulations, new_guidances)
 
         return new_spatial_plan["local_id"]
 
@@ -138,8 +140,7 @@ class VersionControl:
     def create_documents(self, old_splan_local_id: str) -> Dict[str, DictRow]:
         old_docs = self.db.select(sql.SQL(
             '''
-                SELECT {schema}.get_document_local_ids({splan_local_id}) AS local_id
-                RETRUNING *;
+                SELECT {schema}.get_document_local_ids({splan_local_id}) AS local_id;
             ''').format(
                 schema=sql.Identifier(self.schema),
                 splan_local_id=sql.Literal(old_splan_local_id)
@@ -192,7 +193,7 @@ class VersionControl:
                 OR referenced_document_local_id IN ({old_local_ids});
             ''').format(
                 schema=sql.Identifier(self.schema),
-                old_local_ids=sql.SQL(', ').join(sql.Literal(local_id) for local_id in old_docs)
+                old_local_ids=self.format_ids_for_query(old_docs)
             )
         )
 
@@ -201,16 +202,18 @@ class VersionControl:
 
         doc_docs = self.convert_keys_to_new(doc_docs, new_doc_local_ids, new_doc_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.document_document (
-                referencing_document_local_id,
-                referenced_document_local_id
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values=sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in doc_docs)
-        ))
+        if len(doc_docs) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.document_document (
+                    referencing_document_local_id,
+                    referenced_document_local_id
+                )
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values=sql.SQL(", ").join(sql.SQL("({})").format(sql.SQL(', ').join(map(sql.Literal, row))) for row in doc_docs)
+            ))
 
         return new_docs
 
@@ -221,7 +224,6 @@ class VersionControl:
             SELECT local_id
             FROM {schema}.participation_and_evalution_plan
             WHERE spatial_plan = {old_spatial_plan_local_id}
-            RETURNING *;
             ''').format(
                 schema=sql.Identifier(self.schema),
                 old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
@@ -247,7 +249,7 @@ class VersionControl:
                     {new_spatial_plan_local_id}
                 FROM {schema}.participation_and_evalution_plan
                 WHERE local_id = {old_participation_and_evalution_plan_local_id}
-                RETRUNING *;
+                RETURNING *;
                 ''').format(
                     schema=sql.Identifier(self.schema),
                     new_spatial_plan_local_id=sql.Literal(new_splan_local_id),
@@ -262,8 +264,7 @@ class VersionControl:
             '''
             SELECT local_id
             FROM {schema}.spatial_plan_commentary
-            WHERE spatial_plan = {old_spatial_plan_local_id}
-            RETURNING *;
+            WHERE spatial_plan = {old_splan_local_id}
             ''').format(
                 schema=sql.Identifier(self.schema),
                 old_splan_local_id=sql.Literal(old_splan_local_id)
@@ -290,7 +291,7 @@ class VersionControl:
                     {new_spatial_plan_local_id}
                 FROM {schema}.spatial_plan_commentary
                 WHERE local_id = {old_commentary_local_id}
-                RETRUNING *;
+                RETURNING *;
                 ''').format(
                     schema=sql.Identifier(self.schema),
                     new_spatial_plan_local_id=sql.Literal(new_splan_local_id),
@@ -298,13 +299,13 @@ class VersionControl:
                 ))
             new_commentaries[commentary] = new_commentary[0]
 
+
         return new_commentaries
 
     def create_regulation_groups(self, old_splan_local_id: str):
         old_regulation_groups = self.db.select(sql.SQL(
             '''
-            SELECT {schema}.get_regulation_group_local_ids({old_spatial_plan_local_id}) AS local_id
-            RETURNING *;
+            SELECT {schema}.get_regulation_group_local_ids({old_spatial_plan_local_id}) AS local_id;
             ''').format(
                 schema=sql.Identifier(self.schema),
                 old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
@@ -331,7 +332,7 @@ class VersionControl:
                     name
                 FROM {schema}.plan_regulation_group
                 WHERE local_id = {old_regulation_group_local_id}
-                RETRUNING *;
+                RETURNING *;
                 ''').format(
                     schema=sql.Identifier(self.schema),
                     old_regulation_group_local_id=sql.Literal(group)
@@ -343,8 +344,7 @@ class VersionControl:
     def create_regulations(self, old_splan_local_id) -> Dict[str, DictRow]:
         old_regulations = self.db.select(sql.SQL(
             '''
-            SELECT {SCHEMA}.get_plan_regulation_local_ids({old_spatial_plan_local_id}) AS local_id
-            RETURNING *;
+            SELECT {schema}.get_plan_regulation_local_ids({old_spatial_plan_local_id}) AS local_id;
             ''').format(
                 schema=sql.Identifier(self.schema),
                 old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
@@ -438,18 +438,19 @@ class VersionControl:
         element_local_ids = self.convert_to_key_dict(new_elements)
         relations = self.convert_keys_to_new(relations, element_local_ids, guidance_local_ids)
 
-        self.db.insert(sql.SQL(
-            f'''
-            INSERT INTO {{schema}}.{table_name} (
-                {element_key},
-                plan_guidance_local_id
-            )
-            VALUES {{values}}
-            '''
-        ).format(
-            schema=sql.Identifier(self.schema),
-            values=self.format_values_for_insert(relations)
-        ))
+        if len(relations) > 0:
+            self.db.insert(sql.SQL(
+                f'''
+                INSERT INTO {{schema}}.{table_name} (
+                    {element_key},
+                    plan_guidance_local_id
+                )
+                VALUES {{values}}
+                '''
+            ).format(
+                schema=sql.Identifier(self.schema),
+                values=self.format_values_for_insert(relations)
+            ))
 
     def create_guidance_relations(
         self,
@@ -460,13 +461,13 @@ class VersionControl:
         new_planned_spaces: Dict[str, DictRow],
         new_planning_detail_lines: Dict[str, DictRow],
     ) -> None:
-        old_guidance_local_ids = sql.SQL(', ').join(sql.Literal(guidance_local_id) for guidance_local_id in new_guidances)
+        old_guidance_local_ids = self.format_ids_for_query(new_guidances)
         guidance_local_ids = self.convert_to_key_dict(new_guidances)
 
         spatial_plan_relations = self.db.select(sql.SQL(
             '''
             SELECT
-                spatial_plan_local_id
+                spatial_plan_local_id,
                 plan_guidance_local_id
             FROM {schema}.spatial_plan_plan_guidance
             WHERE spatial_plan_local_id = {old_spatial_plan_local_id}
@@ -483,18 +484,19 @@ class VersionControl:
 
         spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, guidance_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.spatial_plan_plan_guidance (
-                spatial_plan_local_id,
-                plan_guidance_local_id
+        if len(spatial_plan_relations) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.spatial_plan_plan_guidance (
+                    spatial_plan_local_id,
+                    plan_guidance_local_id
+                )
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values=self.format_values_for_insert(spatial_plan_relations)
+                )
             )
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values=self.format_values_for_insert(spatial_plan_relations)
-            )
-        )
 
         relations_data = [
             ('zoning_element_plan_guidance', 'zoning_element_local_id', new_zoning_elements),
@@ -530,18 +532,19 @@ class VersionControl:
         element_local_ids = self.convert_to_key_dict(new_elements)
         relations = self.convert_keys_to_new(relations, element_local_ids, document_local_ids)
 
-        self.db.insert(sql.SQL(
-            f'''
-            INSERT INTO {{schema}}.{table_name} (
-                {element_key},
-                document_local_id
-            )
-            VALUES {{values}}
-            '''
-        ).format(
-            schema=sql.Identifier(self.schema),
-            values=self.format_values_for_insert(relations)
-        ))
+        if len(relations) > 0:
+            self.db.insert(sql.SQL(
+                f'''
+                INSERT INTO {{schema}}.{table_name} (
+                    {element_key},
+                    document_local_id
+                )
+                VALUES {{values}}
+                '''
+            ).format(
+                schema=sql.Identifier(self.schema),
+                values=self.format_values_for_insert(relations)
+            ))
 
     def create_document_relations(
         self,
@@ -553,13 +556,13 @@ class VersionControl:
         new_regulations: Dict[str, DictRow],
         new_guidances: Dict[str, DictRow]
     ) -> None:
-        old_document_local_ids = sql.SQL(', ').join(sql.Literal(document_local_id) for document_local_id in new_documents)
+        old_document_local_ids = self.format_ids_for_query(new_documents)
         document_local_ids = self.convert_to_key_dict(new_documents)
 
         spatial_plan_relations = self.db.select(sql.SQL(
             '''
             SELECT
-                spatial_plan_local_id
+                spatial_plan_local_id,
                 document_local_id
             FROM {schema}.spatial_plan_document
             WHERE spatial_plan_local_id = {old_spatial_plan_local_id}
@@ -576,18 +579,19 @@ class VersionControl:
 
         spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, document_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.spatial_plan_document (
-                spatial_plan_local_id,
-                document_local_id
+        if len(spatial_plan_relations) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.spatial_plan_document (
+                    spatial_plan_local_id,
+                    document_local_id
+                )
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values=self.format_values_for_insert(spatial_plan_relations)
+                )
             )
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values=self.format_values_for_insert(spatial_plan_relations)
-            )
-        )
 
         relations_data = [
             ('patricipation_evalution_plan_document', 'participation_and_evalution_plan_local_id', new_part_eval_plans),
@@ -624,18 +628,19 @@ class VersionControl:
         element_local_ids = self.convert_to_key_dict(new_elements)
         relations = self.convert_keys_to_new(relations, element_local_ids, regulation_local_ids)
 
-        self.db.insert(sql.SQL(
-            f'''
-            INSERT INTO {{schema}}.{table_name} (
-                {element_key},
-                plan_regulation_local_id
-            )
-            VALUES {{values}}
-            '''
-        ).format(
-            schema=sql.Identifier(self.schema),
-            values=self.format_values_for_insert(relations)
-        ))
+        if len(relations) > 0:
+            self.db.insert(sql.SQL(
+                f'''
+                INSERT INTO {{schema}}.{table_name} (
+                    {element_key},
+                    plan_regulation_local_id
+                )
+                VALUES {{values}}
+                '''
+            ).format(
+                schema=sql.Identifier(self.schema),
+                values=self.format_values_for_insert(relations)
+            ))
 
     def create_regulation_relations(
         self,
@@ -647,13 +652,13 @@ class VersionControl:
         new_planning_detail_lines: Dict[str, DictRow],
         new_regulation_groups: Dict[str, DictRow]
     ) -> None:
-        old_regulation_local_ids = sql.SQL(', ').join(sql.Literal(regulation_local_id) for regulation_local_id in new_regulations)
+        old_regulation_local_ids = self.format_ids_for_query(new_regulations)
         regulation_local_ids = self.convert_to_key_dict(new_regulations)
 
         spatial_plan_relations = self.db.select(sql.SQL(
             '''
             SELECT
-                spatial_plan_local_id
+                spatial_plan_local_id,
                 plan_regulation_local_id
             FROM {schema}.spatial_plan_plan_regulation
             WHERE spatial_plan_local_id = {old_spatial_plan_local_id}
@@ -670,18 +675,19 @@ class VersionControl:
 
         spatial_plan_relations = self.convert_keys_to_new(spatial_plan_relations, spatial_plan_local_ids, regulation_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.spatial_plan_plan_regulation (
-                spatial_plan_local_id,
-                plan_regulation_local_id
+        if len(spatial_plan_relations) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.spatial_plan_plan_regulation (
+                    spatial_plan_local_id,
+                    plan_regulation_local_id
+                )
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values=self.format_values_for_insert(spatial_plan_relations)
+                )
             )
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values=self.format_values_for_insert(spatial_plan_relations)
-            )
-        )
 
         relations_data = [
             ('zoning_element_plan_regulation', 'zoning_element_local_id', new_zoning_elements),
@@ -694,34 +700,34 @@ class VersionControl:
             self.insert_regulation_relations(table_name, element_key, new_elements, old_regulation_local_ids, regulation_local_ids)
 
     def create_plan_values(self, plan_items: Dict[str, DictRow], value_type: str, columns: List[str], table_type: ValueTableType) -> Dict[str, DictRow]:
-        if table_type not in ValueTableType.__members__:
-            raise ValueError("table_type must be one of " + ', '.join([e.name for e in ValueTableType]))
+        if not isinstance(table_type, ValueTableType):
+            raise ValueError(f"Wrong table type {table_type}. Must be an instance of ValueTableType")
 
         new_values: Dict[str, DictRow] = {}
         old_values = self.db.select(
             sql.SQL(
                 f'''
-                SELECT DISTINCT fk_{value_type}_value
-                FROM {{schema}}.{table_type}_{value_type}_value
-                WHERE fk_{table_type} IN ({{old_item_local_ids}})
+                SELECT DISTINCT fk_{value_type}
+                FROM {{schema}}.{table_type.value}_{value_type}
+                WHERE fk_{table_type.value} IN ({{old_item_local_ids}})
                 ''').format(
                     schema=sql.Identifier(self.schema),
                     old_item_local_ids=self.format_ids_for_query(plan_items)
             )
         )
 
-        old_values = [item[f"fk_{value_type}_value"] for item in old_values]
+        old_values = [item[f"fk_{value_type}"] for item in old_values]
 
         for value in old_values:
             new_value = self.db.insert_with_return(sql.SQL(
                 f'''
-                INSERT INTO {{schema}}.{value_type}_value (
+                INSERT INTO {{schema}}.{value_type} (
                     {{columns}}
                 )
                 SELECT
                     {{columns}}
-                FROM {{schema}}.{value_type}_value
-                WHERE {value_type}_value_uuid = {{old_{value_type}_value_uuid}}
+                FROM {{schema}}.{value_type}
+                WHERE {value_type}_uuid = {{old_value_uuid}}
                 RETURNING *;
                 ''').format(
                     schema=sql.Identifier(self.schema),
@@ -734,37 +740,38 @@ class VersionControl:
         plan_values = self.db.select(sql.SQL(
             f'''
             SELECT
-                fk_{table_type},
-                fk_{value_type}_value
-            FROM {{schema}}.{table_type}_{value_type}_value
-            WHERE fk_{value_type}_value IN ({{value_uuids}})
+                fk_{table_type.value},
+                fk_{value_type}
+            FROM {{schema}}.{table_type.value}_{value_type}
+            WHERE fk_{value_type} IN ({{value_uuids}})
             ''').format(
                 schema=sql.Identifier(self.schema),
                 value_uuids=self.format_ids_for_query(old_values)
             )
         )
 
-        plan_values = [[d[f"fk_{table_type}"], d[f"fk_{value_type}_value"]] for d in plan_values]
-        if (table_type == 'supplementary_information'):
+        plan_values = [[d[f"fk_{table_type.value}"], d[f"fk_{value_type}"]] for d in plan_values]
+        if (table_type.value == 'supplementary_information'):
             new_item_local_ids = self.convert_to_key_dict(plan_items, 'producer_specific_id')
         else:
             new_item_local_ids = self.convert_to_key_dict(plan_items)
-        value_uuids = self.convert_to_key_dict(new_values, f"{value_type}_value_uuid")
+        value_uuids = self.convert_to_key_dict(new_values, f"{value_type}_uuid")
 
         plan_values = self.convert_keys_to_new(plan_values, new_item_local_ids, value_uuids)
 
-        self.db.insert(sql.SQL(
-            f'''
-            INSERT INTO {{schema}}.{table_type}_{value_type}_value (
-                fk_{table_type},
-                fk_{value_type}_value
+        if len(plan_values) > 0:
+            self.db.insert(sql.SQL(
+                f'''
+                INSERT INTO {{schema}}.{table_type.value}_{value_type} (
+                    fk_{table_type.value},
+                    fk_{value_type}
+                )
+                VALUES {{values}}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values=self.format_values_for_insert(plan_values)
+                )
             )
-            VALUES {{values}}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values=self.format_values_for_insert(plan_values)
-            )
-        )
 
         return new_values
 
@@ -822,7 +829,6 @@ class VersionControl:
         old_plan_guidances = self.db.select(sql.SQL(
             '''
             SELECT {schema}.get_plan_guidance_local_ids({old_spatial_plan_local_id}) AS local_id
-            RETURNING *
             ''').format(
                 schema=sql.Identifier(self.schema),
                 old_spatial_plan_local_id=sql.Literal(old_splan_local_id)
@@ -1024,17 +1030,18 @@ class VersionControl:
 
         zoning_element_planned_spaces = self.convert_keys_to_new(zoning_element_planned_spaces, new_zoning_elements_local_ids, planned_space_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.zoning_element_planned_space (
-                zoning_element_local_id,
-                planned_space_local_id)
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values = self.format_values_for_insert(zoning_element_planned_spaces)
+        if len(zoning_element_planned_spaces) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.zoning_element_planned_space (
+                    zoning_element_local_id,
+                    planned_space_local_id)
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values = self.format_values_for_insert(zoning_element_planned_spaces)
+                )
             )
-        )
 
         return new_planned_spaces
 
@@ -1106,17 +1113,18 @@ class VersionControl:
 
         zoning_element_planning_detail_lines = self.convert_keys_to_new(zoning_element_planning_detail_lines, new_zoning_elements_local_ids, planning_detail_line_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.zoning_element_plan_detail_line (
-                zoning_element_local_id,
-                planning_detail_line_local_id)
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values = self.format_values_for_insert(zoning_element_planning_detail_lines)
+        if len(zoning_element_planning_detail_lines) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.zoning_element_plan_detail_line (
+                    zoning_element_local_id,
+                    planning_detail_line_local_id)
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values = self.format_values_for_insert(zoning_element_planning_detail_lines)
+                )
             )
-        )
 
         planned_space_planning_detail_lines = self.db.select(sql.SQL(
             '''
@@ -1136,17 +1144,18 @@ class VersionControl:
 
         planned_space_planning_detail_lines = self.convert_keys_to_new(planned_space_planning_detail_lines, new_planned_space_local_ids, planning_detail_line_local_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.planned_space_plan_detail_line (
-                planned_space_local_id,
-                planning_detail_line_local_id)
-            VALUES {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values = self.format_values_for_insert(planned_space_planning_detail_lines)
+        if len(planned_space_planning_detail_lines) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.planned_space_plan_detail_line (
+                    planned_space_local_id,
+                    planning_detail_line_local_id)
+                VALUES {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values = self.format_values_for_insert(planned_space_planning_detail_lines)
+                )
             )
-        )
 
         return new_planning_detail_lines
 
@@ -1317,13 +1326,17 @@ class VersionControl:
     def convert_to_key_dict(keys: Dict[str, DictRow], key_name: str = None) -> List[Dict[str, str]]:
         result = []
         for old_key, value in keys.items():
-            new_key = value.get(key_name) or value["local_id"] if value.get("local_id") else value["identifier"]
+            new_key = value[key_name] if key_name is not None else (value.get("local_id") or value["identifier"])
             result.append({"old_key": old_key, "new_key": new_key})
         return result
 
     @staticmethod
     def format_ids_for_query(elements: Dict[str, DictRow]):
-        return sql.SQL(', ').join(sql.Literal(element) for element in elements)
+        return (
+            sql.SQL(', ').join(sql.Literal(element) for element in elements)
+            if elements
+            else sql.SQL('NULL')
+        )
 
     @staticmethod
     def format_values_for_insert(value_list_list: List[List[str]]):
