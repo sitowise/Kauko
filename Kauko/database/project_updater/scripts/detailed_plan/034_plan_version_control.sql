@@ -557,7 +557,27 @@ BEGIN
         INNER JOIN SCHEMANAME.planning_detail_line pdl ON pdlprg.planning_detail_line_local_id = pdl.local_id
         INNER JOIN SCHEMANAME.zoning_element_plan_detail_line zepdl ON zepdl.planning_detail_line_local_id = pdl.local_id
         INNER JOIN SCHEMANAME.zoning_element ze ON zepdl.zoning_element_local_id = ze.local_id
-    WHERE ze.spatial_plan = p_spatial_plan_local_id;
+    WHERE ze.spatial_plan = p_spatial_plan_local_id
   );
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+    max_group_number INTEGER;
+BEGIN
+    -- Find the max group_number value
+    SELECT MAX(group_number) INTO max_group_number FROM SCHEMANAME.plan_regulation_group;
+
+    -- If no value found (empty table), set max_group_number to 0
+    IF max_group_number IS NULL THEN
+        max_group_number := 0;
+    END IF;
+
+    -- Add the identity constraint to group_number
+execute format('
+    ALTER TABLE SCHEMANAME.plan_regulation_group
+    ALTER COLUMN group_number ADD GENERATED ALWAYS AS IDENTITY (INCREMENT BY 1 MINVALUE %s)', max_group_number + 1);
+
 END;
 $$ LANGUAGE plpgsql;
