@@ -208,33 +208,36 @@ def get_kauko_fields(element: Element) -> Dict[str, Any]:
     for subelement in element:
         LOGGER.info("importing subelement")
         LOGGER.info(subelement.tag)
-        target_column = XML_FIELD_MAP[subelement.tag]
-        if callable(target_column):
-            # Value should be saved in a separate table.
-            target_column(element.tag, element.attrib["{" + NAMESPACES["gml"] + "}id"], subelement)
+        if subelement.tag in XML_FIELD_MAP:
+            target_column = XML_FIELD_MAP[subelement.tag]
+            if callable(target_column):
+                # Value should be saved in a separate table.
+                target_column(element.tag, element.attrib["{" + NAMESPACES["gml"] + "}id"], subelement)
+            else:
+                # Value should be saved in this table. Whether data is in element or
+                # subelement depends on element type.
+                try:
+                    # Simple elements contain all their data in attributes and text.
+                    # However, name element may be present multiple times.
+                    value = XML_TYPE_MAP[subelement.tag](subelement)
+                    LOGGER.info('got value')
+                    LOGGER.info(value)
+                    if target_column in kauko_row:
+                        LOGGER.info('column found, appending')
+                        kauko_row[target_column].update(value)
+                    else:
+                        LOGGER.info('column not found, adding')
+                        kauko_row[target_column] = value
+                except KeyError:
+                    LOGGER.info('value not found in element')
+                    # More complex elements are nested and have special types
+                    for type_element in subelement:
+                        kauko_row[target_column] = XML_TYPE_MAP[type_element.tag](type_element)
+                        LOGGER.info("value from subelement")
+                        LOGGER.info(kauko_row[target_column])
+            LOGGER.info(kauko_row)
         else:
-            # Value should be saved in this table. Whether data is in element or
-            # subelement depends on element type.
-            try:
-                # Simple elements contain all their data in attributes and text.
-                # However, name element may be present multiple times.
-                value = XML_TYPE_MAP[subelement.tag](subelement)
-                LOGGER.info('got value')
-                LOGGER.info(value)
-                if target_column in kauko_row:
-                    LOGGER.info('column found, appending')
-                    kauko_row[target_column].update(value)
-                else:
-                    LOGGER.info('column not found, adding')
-                    kauko_row[target_column] = value
-            except KeyError:
-                LOGGER.info('value not found in element')
-                # More complex elements are nested and have special types
-                for type_element in subelement:
-                    kauko_row[target_column] = XML_TYPE_MAP[type_element.tag](type_element)
-                    LOGGER.info("value from subelement")
-                    LOGGER.info(kauko_row[target_column])
-        LOGGER.info(kauko_row)
+            LOGGER.info('skipping subelement ' + subelement.tag)
     return kauko_row
 
 
