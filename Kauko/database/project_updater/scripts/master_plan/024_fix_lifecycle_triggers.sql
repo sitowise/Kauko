@@ -41,7 +41,8 @@ BEGIN
   SET lifecycle_status = sp.lifecycle_status
   FROM SCHEMANAME.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
-      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05', '15');
+      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+      AND ze.lifecycle_status <> sp.lifecycle_status;
 
   UPDATE SCHEMANAME.zoning_element ze
   SET lifecycle_status = '11'
@@ -100,8 +101,9 @@ BEGIN
   FROM SCHEMANAME.zoning_element ze
   JOIN SCHEMANAME.zoning_element_planned_space ze_ps
       ON ze_ps.zoning_element_local_id = ze.local_id
+      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
   WHERE ps.local_id = ze_ps.planned_space_local_id
-      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15');
+      AND ps.lifecycle_status <> ze.lifecycle_status;
 
   UPDATE SCHEMANAME.planned_space ps
   SET
@@ -153,8 +155,9 @@ BEGIN
   FROM SCHEMANAME.zoning_element ze
   JOIN SCHEMANAME.zoning_element_plan_detail_line ze_pdl
     ON ze_pdl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15');
+    AND pdl.lifecycle_status <> ze.lifecycle_status;
 
   UPDATE SCHEMANAME.planning_detail_line pdl
   SET lifecycle_status = '11'
@@ -198,7 +201,8 @@ BEGIN
   JOIN SCHEMANAME.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
-  WHERE dl.identifier = ze_dl.describing_line_id;
+  WHERE dl.identifier = ze_dl.describing_line_id
+    AND ze.lifecycle_status <> dl.lifecycle_status;
 
   UPDATE SCHEMANAME.describing_line dl
   SET lifecycle_status = '11'
@@ -251,7 +255,8 @@ BEGIN
   JOIN SCHEMANAME.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
-  WHERE dt.identifier = ze_dt.describing_text_id;
+  WHERE dt.identifier = ze_dt.describing_text_id
+    AND ze.lifecycle_status <> dt.lifecycle_status;
 
   UPDATE SCHEMANAME.describing_text dt
   SET lifecycle_status = '12'
