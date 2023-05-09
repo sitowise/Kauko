@@ -573,7 +573,7 @@ def upsert_object(table_name: str, row: Dict[str, Any], db: Database, schema=Non
     key_placeholders = ", ".join(["{}"]*len(keys))
     # GML geometry must be converted to ST_Geometry.
     # geom function must be inserted at the right value.
-    value_placeholders = ", ".join(["ST_Multi(ST_SetSRID(ST_GeomFromGML(%s), 3879))" if key == "geom" else "%s" for key in keys])
+    value_placeholders = ", ".join(["ST_Multi(ST_GeomFromGML(%s))" if key == "geom" else "%s" for key in keys])
     query = SQL("Insert into {}.{} (" + key_placeholders + ") values (" + value_placeholders + ")").format(
         Identifier(schema), Identifier(table_name), *key_identifiers
     )
