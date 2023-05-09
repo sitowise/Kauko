@@ -581,3 +581,9 @@ execute format('
 
 END;
 $$ LANGUAGE plpgsql;
+
+ALTER TABLE SCHEMANAME.zoning_element_describing_text DROP CONSTRAINT zoning_element_describing_text_fk_zoning_element;
+ALTER TABLE SCHEMANAME.zoning_element_describing_text ADD CONSTRAINT zoning_element_describing_text_fk_zoning_element FOREIGN KEY (zoning_element_local_id) REFERENCES SCHEMANAME.zoning_element(local_id) ON DELETE CASCADE;
+
+ALTER TABLE SCHEMANAME.zoning_element_describing_line DROP CONSTRAINT zoning_element_describing_line_fk_zoning_element;
+ALTER TABLE SCHEMANAME.zoning_element_describing_line ADD CONSTRAINT zoning_element_describing_line_fk_zoning_element FOREIGN KEY (zoning_element_local_id) REFERENCES SCHEMANAME.zoning_element(local_id) ON DELETE CASCADE;

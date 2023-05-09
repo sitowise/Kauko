@@ -1218,17 +1218,18 @@ class VersionControl:
 
         zoning_element_describing_lines = self.convert_keys_to_new(zoning_element_describing_lines, new_zoning_elements_local_ids, describing_line_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.zoning_element_describing_line (
-                zoning_element_local_id,
-                describing_line_id)
-            Values {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values = self.format_values_for_insert(zoning_element_describing_lines)
+        if len(zoning_element_describing_lines) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.zoning_element_describing_line (
+                    zoning_element_local_id,
+                    describing_line_id)
+                Values {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values = self.format_values_for_insert(zoning_element_describing_lines)
+                )
             )
-        )
 
         return new_describing_lines
 
@@ -1301,17 +1302,18 @@ class VersionControl:
 
         zoning_element_describing_texts = self.convert_keys_to_new(zoning_element_describing_texts, new_zoning_elements_local_ids, describing_text_ids)
 
-        self.db.insert(sql.SQL(
-            '''
-            INSERT INTO {schema}.zoning_element_describing_text (
-                zoning_element_local_id,
-                describing_text_id)
-            Values {values}
-            ''').format(
-                schema=sql.Identifier(self.schema),
-                values = self.format_values_for_insert(zoning_element_describing_texts)
+        if len(zoning_element_describing_texts) > 0:
+            self.db.insert(sql.SQL(
+                '''
+                INSERT INTO {schema}.zoning_element_describing_text (
+                    zoning_element_local_id,
+                    describing_text_id)
+                Values {values}
+                ''').format(
+                    schema=sql.Identifier(self.schema),
+                    values = self.format_values_for_insert(zoning_element_describing_texts)
+                )
             )
-        )
 
         return new_describing_texts
 
