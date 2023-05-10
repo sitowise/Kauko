@@ -18,14 +18,14 @@ CREATE INDEX sidx_elevation_range_value_geom ON SCHEMANAME.elevation_range_value
 
 CREATE TABLE SCHEMANAME.elevation_position_value (
     id serial4 NOT NULL,
-	elevation_position_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+	elevation_position_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
 	value float8 NOT NULL,
 	unit_of_measure varchar NULL,
     reference_point GEOMETRY(point, PROJECTSRID) NOT NULL,
     verical_reference_system INT NOT NULL,
-	CONSTRAINT elevation_position_elevation_position_uuid_key UNIQUE (elevation_position_uuid),
-	CONSTRAINT elevation_position_pkey PRIMARY KEY (id),
-    CONSTRAINT elevation_position_vertical_system_fk FOREIGN KEY (verical_reference_system)
+	CONSTRAINT elevation_position_value_elevation_position_value_uuid_key UNIQUE (elevation_position_value_uuid),
+	CONSTRAINT elevation_position_value_pkey PRIMARY KEY (id),
+    CONSTRAINT elevation_position_value_vertical_system_fk FOREIGN KEY (verical_reference_system)
         REFERENCES code_lists.finnish_vertical_coordinate_reference_system(value)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;

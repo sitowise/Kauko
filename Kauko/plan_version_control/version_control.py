@@ -15,6 +15,8 @@ VALUE_TYPE_COLUMNS = {
     "numeric_range": ["minimum_value", "maximum_value", "unit_of_measure"],
     "time_instant_value": ["value"],
     "time_period_value": ["time_period_from", "time_period_to"],
+    "elevation_position_value": ["value", "unit_of_measure", "reference_point", "verical_reference_system"],
+    "elevation_range_value": ["minimum_value", "maximum_value", "unit_of_measure", "reference_point", "verical_reference_system"]
 }
 
 class ValueTableType(Enum):
