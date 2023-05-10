@@ -574,12 +574,12 @@ def upsert_object(table_name: str, row: Dict[str, Any], db: Database, schema=Non
         Identifier(schema), Identifier(table_name), *key_identifiers
     )
     try:
-        db.insert(query.as_string, values)
+        db.insert(query, values)
     except psycopg2.errors.UniqueViolation:
         query = SQL("Update {}.{} set (" + key_placeholders + ")=(" + value_placeholders + ") where producer_specific_id=%s").format(
         Identifier(schema), Identifier(table_name), *key_identifiers
     )
-        db.update(query.as_string, (*values, row["producer_specific_id"]))
+        db.update(query, (*values, row["producer_specific_id"]))
 
 
 def get_spatial_plan_ids_and_names(db: Database, schema=None) -> Dict[int, str]:

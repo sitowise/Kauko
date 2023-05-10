@@ -35,12 +35,12 @@ class Database:
         except psycopg2.OperationalError:
             return False
 
-    def insert(self, query: str, vars: Tuple = ()) -> bool:
+    def insert(self, query: Composed | str, vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to insert
         """Used to insert to database
 
-        :param query: str
+        :param query: Composed | str
         :param vars: Values to pass to query
         :return: Boolean
         """
@@ -57,12 +57,12 @@ class Database:
                     cur.execute(query, vars)
                 return True
 
-    def update(self, query: Composed, vars: Tuple = ()) -> bool:
+    def update(self, query: Composed | str, vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to update
         """Used to update to database
 
-        :param query: str
+        :param query: Composed | str
         :param vars: Values to pass to query
         :return: Boolean
         """
