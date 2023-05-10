@@ -540,10 +540,8 @@ def set_object_reference_id(table_name: str, producer_specific_id: str, referenc
     """
     if schema == "":
         return
-    query = SQL("Update {}.{} set reference_id=%s where producer_specific_id={}").format(
-        Identifier(schema), Identifier(table_name), Identifier(producer_specific_id)
-    )
-    db.update(query, (reference_id,))
+    query = f"Update {schema}.{table_name} set reference_id='{reference_id}' where producer_specific_id='{producer_specific_id}'"
+    db.update(query)
 
 
 # Better be explicit here. We don't want all plan fields to be editable.
@@ -553,10 +551,8 @@ def set_object_storage_time(table_name: str, producer_specific_id: str, storage_
     """
     if schema == "":
         return
-    query = SQL("Update {}.{} set storage_time=%s where producer_specific_id={}").format(
-        Identifier(schema), Identifier(table_name), Identifier(producer_specific_id)
-    )
-    db.update(query, (storage_time,))
+    query = f"Update {schema}.{table_name} set storage_time='{storage_time}' where producer_specific_id='{producer_specific_id}'"
+    db.update(query)
 
 
 # Only overwrite fields that are explicitly named in incoming row dict.
@@ -578,12 +574,12 @@ def upsert_object(table_name: str, row: Dict[str, Any], db: Database, schema=Non
         Identifier(schema), Identifier(table_name), *key_identifiers
     )
     try:
-        db.insert(query, values)
+        db.insert(query.as_string, values)
     except psycopg2.errors.UniqueViolation:
         query = SQL("Update {}.{} set (" + key_placeholders + ")=(" + value_placeholders + ") where producer_specific_id=%s").format(
         Identifier(schema), Identifier(table_name), *key_identifiers
     )
-        db.update(query, (*values, row["producer_specific_id"]))
+        db.update(query.as_string, (*values, row["producer_specific_id"]))
 
 
 def get_spatial_plan_ids_and_names(db: Database, schema=None) -> Dict[int, str]:

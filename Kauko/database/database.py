@@ -35,12 +35,12 @@ class Database:
         except psycopg2.OperationalError:
             return False
 
-    def insert(self, query: Composed, vars: Tuple) -> bool:
+    def insert(self, query: str, vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to insert
         """Used to insert to database
 
-        :param query: Composed sql
+        :param query: str
         :param vars: Values to pass to query
         :return: Boolean
         """
@@ -51,15 +51,18 @@ class Database:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 # if not cur.mogrify(query, vars).lower().startswith("insert"):
                 #     raise IllegalOperation()
-                cur.execute(query, vars)
+                if not vars:
+                    cur.execute(query)
+                else:
+                    cur.execute(query, vars)
                 return True
 
-    def update(self, query: Composed, vars: Tuple) -> bool:
+    def update(self, query: Composed, vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to update
         """Used to update to database
 
-        :param query: Composed sql
+        :param query: str
         :param vars: Values to pass to query
         :return: Boolean
         """
@@ -68,7 +71,10 @@ class Database:
         LOGGER.info(vars)
         with psycopg2.connect(**self.params) as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-                cur.execute(query, vars)
+                if not vars:
+                    cur.execute(query)
+                else:
+                    cur.execute(query, vars)
                 return True
 
     def select(self, query: str) -> List[psycopg2.extras.DictRow]:
