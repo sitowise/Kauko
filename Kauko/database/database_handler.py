@@ -194,7 +194,7 @@ def get_zoning_elements(fk: str, db: Database, schema=None) -> Dict[str, DictRow
     if schema == "":
         return
     try:
-        query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.zoning_element WHERE spatial_plan='{fk}'"
+        query = f"Select *, ST_asGML(3, geom, 15, 17, '', null) as gml FROM {schema}.zoning_element WHERE spatial_plan='{fk}'"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -211,7 +211,7 @@ def get_planned_spaces(fk: str, db: Database, schema=None) -> Dict[str, DictRow]
     if schema == "":
         return
     try:
-        query = f"Select DISTINCT *, ST_asGML(3, planned_space.geom, 15, 1, '', null) as gml FROM {schema}.planned_space JOIN {schema}.zoning_element_planned_space ON planned_space.local_id=planned_space_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        query = f"Select DISTINCT *, ST_asGML(3, planned_space.geom, 15, 17, '', null) as gml FROM {schema}.planned_space JOIN {schema}.zoning_element_planned_space ON planned_space.local_id=planned_space_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -228,7 +228,7 @@ def get_plan_detail_lines(fk: str, db: Database, schema=None) -> Dict[str, DictR
     if schema == "":
         return
     try:
-        query = f"Select DISTINCT *, ST_asGML(3, planning_detail_line.geom, 15, 1, '', null) as gml FROM {schema}.planning_detail_line JOIN {schema}.zoning_element_plan_detail_line ON planning_detail_line.local_id=planning_detail_line_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        query = f"Select DISTINCT *, ST_asGML(3, planning_detail_line.geom, 15, 17, '', null) as gml FROM {schema}.planning_detail_line JOIN {schema}.zoning_element_plan_detail_line ON planning_detail_line.local_id=planning_detail_line_local_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
         rows = db.select(query)
         return {row["local_id"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -245,7 +245,7 @@ def get_describing_lines(fk: str, db: Database, schema=None) -> Dict[str, DictRo
     if schema == "":
         return
     try:
-        query = f"Select DISTINCT *, ST_asGML(3, describing_line.geom, 15, 1, '', null) as gml FROM {schema}.describing_line JOIN {schema}.zoning_element_describing_line ON describing_line.identifier=describing_line_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        query = f"Select DISTINCT *, ST_asGML(3, describing_line.geom, 15, 17, '', null) as gml FROM {schema}.describing_line JOIN {schema}.zoning_element_describing_line ON describing_line.identifier=describing_line_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
         rows = db.select(query)
         return {row["identifier"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -262,7 +262,7 @@ def get_describing_texts(fk: str, db: Database, schema=None) -> Dict[str, DictRo
     if schema == "":
         return
     try:
-        query = f"Select DISTINCT *, ST_asGML(3, describing_text.geom, 15, 1, '', null) as gml FROM {schema}.describing_text JOIN {schema}.zoning_element_describing_text ON describing_text.identifier=describing_text_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
+        query = f"Select DISTINCT *, ST_asGML(3, describing_text.geom, 15, 17, '', null) as gml FROM {schema}.describing_text JOIN {schema}.zoning_element_describing_text ON describing_text.identifier=describing_text_id WHERE zoning_element_local_id in (SELECT local_id FROM {schema}.zoning_element WHERE spatial_plan='{fk}')"
         rows = db.select(query)
         return {row["identifier"]: row for row in rows}
     except psycopg2.errors.UndefinedTable:
@@ -381,7 +381,7 @@ def get_values(
     for value_type in VALUE_TYPES:
         fields = "*"
         if "geometry" in value_type:
-            fields += ", ST_asGML(3, value, 15, 1, '', null) as gml"
+            fields += ", ST_asGML(3, value, 15, 17, '', null) as gml"
         uuid_field = f"{value_type}_uuid"
         query = f"Select {fields} FROM {schema}.{value_type} JOIN {schema}.{object_table}_{value_type} ON {uuid_field}=fk_{value_type} WHERE fk_{object_table} in ('{fk_string}')"
         # TODO: Try-except can be removed once all value tables have consistent fields. Currently, time_instant_value
@@ -524,7 +524,7 @@ def get_spatial_plan(identifier: int, db: Database, schema=None) -> DictRow:
     if schema == "":
         return
     try:
-        query = f"Select *, ST_asGML(3, geom, 15, 1, '', null) as gml FROM {schema}.spatial_plan WHERE identifier={identifier}"
+        query = f"Select *, ST_asGML(3, geom, 15, 17, '', null) as gml FROM {schema}.spatial_plan WHERE identifier={identifier}"
         return db.select(query)[0]
     except psycopg2.errors.UndefinedTable:
         iface.messageBar().pushMessage("Virhe!",
