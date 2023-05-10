@@ -5,11 +5,11 @@ CREATE TABLE SCHEMANAME.elevation_range_value (
 	maximum_value float8 NULL,
 	unit_of_measure varchar NULL,
     reference_point GEOMETRY(point, PROJECTSRID) NOT NULL,
-    verical_reference_system INT NOT NULL,
+    vertical_reference_system INT NOT NULL,
 	CONSTRAINT elevation_range_value_elevation_range_value_uuid_key UNIQUE (elevation_range_value_uuid),
 	CONSTRAINT elevation_range_value_pkey PRIMARY KEY (id),
 	CONSTRAINT elevation_range_value_value_check CHECK ((minimum_value <= maximum_value)),
-    CONSTRAINT elevation_range_vertical_system_fk FOREIGN KEY (verical_reference_system)
+    CONSTRAINT elevation_range_vertical_system_fk FOREIGN KEY (vertical_reference_system)
         REFERENCES code_lists.finnish_vertical_coordinate_reference_system(value)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
@@ -22,10 +22,10 @@ CREATE TABLE SCHEMANAME.elevation_position_value (
 	value float8 NOT NULL,
 	unit_of_measure varchar NULL,
     reference_point GEOMETRY(point, PROJECTSRID) NOT NULL,
-    verical_reference_system INT NOT NULL,
+    vertical_reference_system INT NOT NULL,
 	CONSTRAINT elevation_position_value_elevation_position_value_uuid_key UNIQUE (elevation_position_value_uuid),
 	CONSTRAINT elevation_position_value_pkey PRIMARY KEY (id),
-    CONSTRAINT elevation_position_value_vertical_system_fk FOREIGN KEY (verical_reference_system)
+    CONSTRAINT elevation_position_value_vertical_system_fk FOREIGN KEY (vertical_reference_system)
         REFERENCES code_lists.finnish_vertical_coordinate_reference_system(value)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
