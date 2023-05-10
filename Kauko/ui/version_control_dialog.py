@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from qgis.PyQt import uic, QtWidgets
 from qgis.PyQt.QtCore import pyqtSignal
@@ -14,6 +14,7 @@ FROM_CLASS, _ = uic.loadUiType(os.path.join(
 class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
     new_version_clicked = pyqtSignal(str, str)
     delete_version_clicked = pyqtSignal(str, str, str)
+    locate_map_clicked = pyqtSignal()
 
     def __init__(self, iface: QgisInterface, parent=None):
         super(VersionControlDialog, self).__init__(parent)
@@ -25,6 +26,7 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
         self.versionComboBox.currentTextChanged.connect(self.version_changed)
         self.createNewPushButton.clicked.connect(self.create_new_version)
         self.deleteVersionPushButton.clicked.connect(self.delete_version)
+        self.locateMapPushButton.clicked.connect(self.locate_from_map)
 
 
     def create_new_version(self):
@@ -52,6 +54,9 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
         else:
             return name_sv
 
+    def locate_from_map(self):
+        self.locate_map_clicked.emit()
+
     def plan_changed(self):
         current_plan = self.get_current_plan()
         current_version = self.find_version_by_name(current_plan)
@@ -68,6 +73,12 @@ class VersionControlDialog(QtWidgets.QDialog, FROM_CLASS):
 
     def get_current_plan(self) -> str:
         return self.spatialPlanNameComboBox.currentText()
+
+    def set_current_plan(self, plan_name: Dict[str,str]) -> None:
+        plan_name = self.get_version_name(plan_name)
+        index = self.spatialPlanNameComboBox.findText(plan_name)
+        if index != -1:
+            self.spatialPlanNameComboBox.setCurrentIndex(index)
 
     def get_current_version(self) -> str:
         return self.versionComboBox.currentText()

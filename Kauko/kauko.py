@@ -27,9 +27,9 @@ from typing import Callable, List
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import DictRow
-from qgis.core import (Qgis, QgsApplication, QgsProject)
-from qgis.gui import QgisInterface
-from qgis.PyQt.QtCore import QSettings
+from qgis.core import (Qgis, QgsApplication, QgsProject, QgsPointXY)
+from qgis.gui import QgisInterface, QgsMapToolEmitPoint
+from qgis.PyQt.QtCore import QSettings, Qt, QEventLoop
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QWidget, QMessageBox
 from .database.database import Database
@@ -467,31 +467,20 @@ class Kauko:
     def version_control(self):
         self._start(True)
         dlg = VersionControlDialog(self.iface)
+        dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
         dlg.new_version_clicked.connect(self.create_new_version)
-        def delete_version(plan_name:str, version_name:str,  version_local_id: str) -> None:
-            msg = QMessageBox()
-            msg.setWindowTitle("Poista versio")
-            msg.setText(f"Haluatko varmasti poistaa version '{version_name}' kaavasta {plan_name}? Tätä toimintoa ei voida peruuttaa.")
-            msg.setIcon(QMessageBox.Warning)
-            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            confirm_delete = msg.exec_()
+
+        def change_active_plan(point: QgsPointXY):
+            plan_names = self._get_current_plan_name(point, db)
+            dlg.set_current_plan(plan_names)
+
+        def delete_version(plan_name: str, version_name: str, version_local_id: str) -> None:
+            confirm_delete = show_delete_version_confirmation_dialog(plan_name, version_name)
 
             if confirm_delete != QMessageBox.Yes:
                 return
 
-            db = self.database_initializer.database
-
-            delete_query = sql.SQL(
-                '''
-                DELETE FROM {schema}.spatial_plan
-                WHERE local_id = {local_id}
-                AND is_active = FALSE
-                ''').format(
-                    schema=sql.Identifier(self.schema),
-                    local_id=sql.Literal(version_local_id)
-                )
-
-            if(db.update(delete_query)):
+            if delete_version_from_database(self.schema, db, version_local_id):
                 self.iface.messageBar().pushMessage(
                     "Versio poistettu.",
                     level=Qgis.Success, duration=5)
@@ -502,20 +491,54 @@ class Kauko:
 
             plans = self._get_plans(db)
             dlg.add_versions(plans)
+
+        def locate_map():
+            canvas = self.iface.mapCanvas()
+            point_tool = QgsMapToolEmitPoint(canvas)
+            point_tool.canvasClicked.connect(change_active_plan)
+            event_loop = QEventLoop()
+            point_tool.canvasClicked.connect(event_loop.quit)
+            canvas.setMapTool(point_tool)
+
+            # Run the event loop
+            event_loop.exec_()
+
+        def show_delete_version_confirmation_dialog(plan_name: str, version_name: str) -> int:
+            msg = QMessageBox()
+            msg.setWindowTitle("Poista versio")
+            msg.setText(f"Haluatko varmasti poistaa version '{version_name}' kaavasta {plan_name}? Tätä toimintoa ei voida peruuttaa.")
+            msg.setIcon(QMessageBox.Warning)
+            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            return msg.exec_()
+
+        def delete_version_from_database(schema: str, db: Database, version_local_id: str) -> bool:
+            delete_query = sql.SQL(
+                '''
+                DELETE FROM {schema}.spatial_plan
+                WHERE local_id = {local_id}
+                AND is_active = FALSE
+                ''').format(
+                    schema=sql.Identifier(schema),
+                    local_id=sql.Literal(version_local_id)
+                )
+            return db.update(delete_query)
+
+        dlg.locate_map_clicked.connect(locate_map)
         dlg.delete_version_clicked.connect(delete_version)
+
         if not self.database_initializer.initialize_database(self.connection):
             return
-        db = self.database_initializer.database
 
+        db = self.database_initializer.database
         plans = self._get_plans(db)
         dlg.add_versions(plans)
 
-
-
         dlg.show()
+
         if dlg.exec_():
             old_local_id, new_local_id = dlg.get_old_and_new_version()
             self.change_active_plan(db, old_local_id, new_local_id)
+
 
 
     def create_new_version(self, version_name, local_id):
@@ -528,6 +551,24 @@ class Kauko:
 
         if dlg.exec_():
             self._create_version(db, dlg)
+
+    def _get_current_plan_name(self, point: QgsPointXY, db: Database) -> DictRow[str, str]:
+        query = sql.SQL(
+            '''
+            SELECT
+            spm."name" ->> 'fin' as name_fi,
+            spm."name" ->> 'swe' as name_sv
+            FROM {schema}.spatial_plan_metadata spm
+            JOIN {schema}.spatial_plan sp ON sp.plan_id = spm.plan_id
+            WHERE ST_Intersects(sp.geom, ST_SetSRID(ST_MakePoint({x}, {y}), ST_SRID(sp.geom)))
+            AND is_active = TRUE
+            ''').format(
+                schema=sql.Identifier(self.schema),
+                x=sql.Literal(point.x()),
+                y=sql.Literal(point.y())
+            )
+        return db.select(query)[0]
+
 
     def _create_version(self, db, dlg):
         version_control = VersionControl(db, self.schema)

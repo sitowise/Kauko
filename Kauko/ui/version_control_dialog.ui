@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>453</width>
-    <height>190</height>
+    <width>485</width>
+    <height>194</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,8 +18,8 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>431</width>
-     <height>171</height>
+     <width>464</width>
+     <height>174</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -45,9 +45,29 @@
         </property>
         <property name="maximumSize">
          <size>
-          <width>230</width>
+          <width>196</width>
           <height>16777215</height>
          </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="locateMapPushButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Paikanna kartalta</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/Kauko/icons/mActionFindReplace.svg</normaloff>:/Kauko/icons/mActionFindReplace.svg</iconset>
         </property>
        </widget>
       </item>
@@ -192,7 +212,6 @@
    </layout>
   </widget>
  </widget>
- <resources/>
  <connections>
   <connection>
    <sender>rejectPushButton</sender>
