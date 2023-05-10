@@ -14,8 +14,8 @@ SELECT Row_Number() OVER () AS id,
     info_numeric_range.minimum_value || '-' || info_numeric_range.maximum_value || ' ' || info_numeric_range.unit_of_measure AS supplementary_numeric_range
 FROM (
         SELECT
-            plan_regulation.name AS name,
             plan_regulation.local_id AS local_id,
+            plan_regulation.name AS name,
             plan_regulation.type AS type,
             spatial_plan.geom AS geom
         FROM SCHEMANAME.plan_regulation
@@ -24,6 +24,7 @@ FROM (
         UNION
         -- add plan geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
+            plan_regulation.name AS name,
             plan_regulation.type AS type,
             zoning_element.geom AS geom
         FROM SCHEMANAME.plan_regulation
@@ -32,6 +33,7 @@ FROM (
         UNION
         -- add element geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
+            plan_regulation.name AS name,
             plan_regulation.type AS type,
             planned_space.geom AS geom
         FROM SCHEMANAME.plan_regulation
@@ -40,6 +42,7 @@ FROM (
         UNION
         -- add planned space geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
+            plan_regulation.name AS name,
             plan_regulation.type AS type,
             geometry_area_value.value as geom
         FROM SCHEMANAME.plan_regulation

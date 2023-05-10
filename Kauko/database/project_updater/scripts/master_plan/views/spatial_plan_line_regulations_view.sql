@@ -24,6 +24,7 @@ FROM (
         UNION
         -- add plan detail line to regulation
         SELECT plan_regulation.local_id AS local_id,
+            plan_regulation.name AS name,
             plan_regulation.type AS type,
             geometry_line_value.value as geom
         FROM SCHEMANAME.plan_regulation
