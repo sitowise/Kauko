@@ -74,3 +74,13 @@ def parse_layer_source(source: str) -> dict:
 
     params["geom"] = "geom" if source[-6:] == "(geom)" else None
     return params
+
+def sanitize_version_name(version_name: str) -> str:
+    """Removes all special characters from version name.
+
+    :param version_name: version name
+    :return: sanitized version name
+    """
+    allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöåÄÖÅ0123456789.,-"
+    version_name = "".join([char for char in version_name if char in allowed_characters])
+    return version_name
