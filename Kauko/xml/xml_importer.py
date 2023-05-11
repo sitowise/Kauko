@@ -266,8 +266,20 @@ def add_extra_fields(root: Element, element: Element, table_name: str, row: Dict
     if table_name == "zoning_element":
         # TODO: Kaatio XML API has no such field. We have to make things up.
         row["localized_name"] = "Zoning element localized name"
-        # Zoning element type is determined by the linked zoning order.
-        type_element = get_zoning_order(root, element).find(f".//{TYPE}", NAMESPACES)
+        # Zoning element type and lifecycle status are determined by the linked zoning order.
+        zoning_order_element = get_zoning_order(root, element)
+        ns_xlink = NAMESPACES["xlink"]
+        LOGGER.info("read values from zoning order")
+        typeAttr = zoning_order_element.find(f".//{TYPE}", NAMESPACES).attrib
+        landUseKind = typeAttr["{" + ns_xlink + "}href"].split('/')[-1]
+        LOGGER.info("land_use_kind " + landUseKind)
+        lifecAttr = zoning_order_element.find(f".//{LIFECYCLE_STATUS}", NAMESPACES).attrib
+        lifec = lifecAttr["{" + ns_xlink + "}href"].split('/')[-1]
+        LOGGER.info("lifecycle_status " + lifec)
+        row["type"] = 1 # Using default value
+        row["up_to_dateness"] = 2 # Using default value
+        row["land_use_kind"] = landUseKind
+        row["lifecycle_status"] = lifec
     return row
 
 
@@ -302,10 +314,11 @@ class XMLImporter:
             LOGGER.info("importing element")
             LOGGER.info(element.tag)
             table_name = get_destination_table(self.plan, element)
-            row_to_add = get_kauko_fields(element)
-            row_to_add = add_extra_fields(self.plan, element, table_name, row_to_add)
-            LOGGER.info(row_to_add)
-            upsert_object(table_name, row_to_add, self.db, self.schema)
-            LOGGER.info("element added or updated")
+            if table_name in ("spatial_plan", "zoning_element"): # TODO: All the other tables 
+                row_to_add = get_kauko_fields(element)
+                row_to_add = add_extra_fields(self.plan, element, table_name, row_to_add)
+                LOGGER.info(row_to_add)
+                upsert_object(table_name, row_to_add, self.db, self.schema)
+                LOGGER.info("element added or updated")
         #self.add_references()
         LOGGER.info("element references added")
