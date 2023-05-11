@@ -421,7 +421,7 @@ CREATE TRIGGER create_or_update_spatial_plan
 BEFORE UPDATE ON SCHEMANAME.spatial_plan_metadata
 FOR EACH ROW
 WHEN (pg_trigger_depth() < 1)
-EXECUTE PROCEDURE create_or_update_spatial_plan();
+EXECUTE PROCEDURE SCHEMANAME.create_or_update_spatial_plan();
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.get_plan_regulation_local_ids(p_spatial_plan_local_id TEXT)
 RETURNS TABLE(local_id VARCHAR) AS $$
