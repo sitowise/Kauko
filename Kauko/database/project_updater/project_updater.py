@@ -155,8 +155,8 @@ class ProjectUpdater:
                 schema.srid, schema.municipality_code)
                 if self._db.insert(query):
                     self.__mark_script_as_executed(schema, script)
-            for view in schema.views_to_execute:
-                filename = f'/project_updater/scripts/views/{view}'
+            for view in self._view_scripts[schema.plan_type]:
+                filename = f'{script_paths[schema.plan_type]}views/{view}'
                 query = get_query(schema.name, filename, schema.srid, schema.municipality_code)
                 try:
                     self._db.insert(query)
