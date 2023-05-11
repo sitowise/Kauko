@@ -3,8 +3,7 @@ CREATE MATERIALIZED VIEW SCHEMANAME.plan_regulations_area_view AS
 SELECT Row_Number() OVER () AS id,
     regulation.type AS type,
     regulation.geom AS geom,
-    regulation.name ->> 'fin' AS name_fin,
-    regulation.name ->> 'swe' AS name_swe,
+    mprk.preflabel_fi AS type_name_fin,
     SCHEMANAME.text_value.value->>'fin' AS text_value_fin,
     SCHEMANAME.text_value.value->>'swe' AS text_value_swe,
     SCHEMANAME.numeric_double_value.value || ' ' || SCHEMANAME.numeric_double_value.unit_of_measure AS numeric_value,
@@ -15,7 +14,6 @@ SELECT Row_Number() OVER () AS id,
 FROM (
         SELECT
             plan_regulation.local_id AS local_id,
-            plan_regulation.name AS name,
             plan_regulation.type AS type,
             spatial_plan.geom AS geom
         FROM SCHEMANAME.plan_regulation
@@ -24,16 +22,19 @@ FROM (
         UNION
         -- add plan geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
-            plan_regulation.name AS name,
             plan_regulation.type AS type,
             zoning_element.geom AS geom
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.zoning_element_plan_regulation ON plan_regulation.local_id = zoning_element_plan_regulation.plan_regulation_local_id
             INNER JOIN SCHEMANAME.zoning_element ON zoning_element.local_id = zoning_element_plan_regulation.zoning_element_local_id
         UNION
+        SELECT zoning_element.local_id AS local_id,
+            zoning_element.land_use_kind AS type,
+            zoning_element.geom AS geom
+        FROM SCHEMANAME.zoning_element
+        UNION
         -- add element geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
-            plan_regulation.name AS name,
             plan_regulation.type AS type,
             planned_space.geom AS geom
         FROM SCHEMANAME.plan_regulation
@@ -42,13 +43,13 @@ FROM (
         UNION
         -- add planned space geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
-            plan_regulation.name AS name,
             plan_regulation.type AS type,
             geometry_area_value.value as geom
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.plan_regulation_geometry_area_value ON plan_regulation.local_id = plan_regulation_geometry_area_value.fk_plan_regulation
             INNER JOIN SCHEMANAME.geometry_area_value ON geometry_area_value.geometry_area_value_uuid = plan_regulation_geometry_area_value.fk_geometry_area_value -- add geometry area value to regulation
     ) AS regulation
+    INNER JOIN code_lists.master_plan_regulation_kind mprk ON mprk.codevalue = regulation.type
     LEFT OUTER JOIN (
         SCHEMANAME.plan_regulation_text_value
         INNER JOIN SCHEMANAME.text_value ON text_value.text_value_uuid = plan_regulation_text_value.fk_text_value
