@@ -18,6 +18,7 @@ $$ LANGUAGE plpgsql;
 DO $$
 DECLARE
   _table_names text[] := ARRAY[
+        'spatial_plan',
         'zoning_element',
         'planned_space',
         'planning_detail_line',
