@@ -57,6 +57,15 @@ class Database:
                     cur.execute(query, vars)
                 return True
 
+    def insert_with_return(self, query: str) -> List[psycopg2.extras.DictRow]:
+        try:
+            with psycopg2.connect(**self.params) as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                    cur.execute(query)
+                    return cur.fetchall()
+        except psycopg2.OperationalError:
+            return []
+
     def update(self, query: Composed | str, vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to update
