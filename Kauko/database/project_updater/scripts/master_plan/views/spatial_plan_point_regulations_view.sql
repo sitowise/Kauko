@@ -3,8 +3,7 @@ CREATE MATERIALIZED VIEW SCHEMANAME.plan_regulations_point_view AS
 SELECT Row_Number() OVER () AS id,
     regulation.type AS type,
     regulation.geom AS geom,
-    regulation.name ->> 'fin' AS name_fin,
-    regulation.name ->> 'swe' AS name_swe,
+    mprk.preflabel_fi AS type_name_fin,
     SCHEMANAME.text_value.value ->> 'fin' AS text_value_fin,
     SCHEMANAME.text_value.value ->> 'swe' AS text_value_swe,
     SCHEMANAME.numeric_double_value.value || ' ' || SCHEMANAME.numeric_double_value.unit_of_measure AS numeric_value,
@@ -15,7 +14,6 @@ SELECT Row_Number() OVER () AS id,
 FROM (
         SELECT
             plan_regulation.local_id AS local_id,
-            plan_regulation.name AS name,
             plan_regulation.type AS type,
             geometry_point_value.value as geom
         FROM SCHEMANAME.plan_regulation
@@ -23,6 +21,7 @@ FROM (
             INNER JOIN SCHEMANAME.geometry_point_value ON geometry_point_value.geometry_point_value_uuid = plan_regulation_geometry_point_value.fk_geometry_point_value
         -- add geometry point value to regulation
     ) AS regulation
+    INNER JOIN code_lists.master_plan_regulation_kind mprk ON mprk.codevalue = regulation.type
     LEFT OUTER JOIN (
         SCHEMANAME.plan_regulation_text_value
         INNER JOIN SCHEMANAME.text_value ON text_value.text_value_uuid = plan_regulation_text_value.fk_text_value

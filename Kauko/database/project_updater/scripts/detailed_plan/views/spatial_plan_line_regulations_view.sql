@@ -3,8 +3,7 @@ CREATE MATERIALIZED VIEW SCHEMANAME.plan_regulations_line_view AS
 SELECT Row_Number() OVER () AS id,
     regulation.type AS type,
     regulation.geom AS geom,
-    regulation.name ->> 'fin' AS name_fin,
-    regulation.name ->> 'swe' AS name_swe,
+    dprk.preflabel_fi AS type_name_fin,
     SCHEMANAME.text_value.value ->> 'fin' AS text_value_fin,
     SCHEMANAME.text_value.value ->> 'swe' AS text_value_swe,
     SCHEMANAME.numeric_double_value.value || ' ' || SCHEMANAME.numeric_double_value.unit_of_measure AS numeric_value,
@@ -14,7 +13,6 @@ SELECT Row_Number() OVER () AS id,
     info_numeric_range.minimum_value || '-' || info_numeric_range.maximum_value || ' ' || info_numeric_range.unit_of_measure AS supplementary_numeric_range
 FROM (
         SELECT
-            plan_regulation.name as name,
             plan_regulation.local_id AS local_id,
             plan_regulation.type AS type,
             planning_detail_line.geom AS geom
@@ -24,7 +22,6 @@ FROM (
         UNION
         -- add plan detail line to regulation
         SELECT plan_regulation.local_id AS local_id,
-            plan_regulation.name AS name,
             plan_regulation.type AS type,
             geometry_line_value.value as geom
         FROM SCHEMANAME.plan_regulation
@@ -32,6 +29,7 @@ FROM (
             INNER JOIN SCHEMANAME.geometry_line_value ON geometry_line_value.geometry_line_value_uuid = plan_regulation_geometry_line_value.fk_geometry_line_value
         -- add geometry line value to regulation
     ) AS regulation
+    INNER JOIN code_lists.detail_plan_regulation_kind dprk ON dprk.codevalue = regulation.type
     LEFT OUTER JOIN (
         SCHEMANAME.plan_regulation_text_value
         INNER JOIN SCHEMANAME.text_value ON text_value.text_value_uuid = plan_regulation_text_value.fk_text_value
