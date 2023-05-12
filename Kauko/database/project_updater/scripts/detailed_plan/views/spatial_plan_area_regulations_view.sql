@@ -20,6 +20,12 @@ FROM (
             INNER JOIN SCHEMANAME.spatial_plan_plan_regulation ON plan_regulation.local_id = spatial_plan_plan_regulation.plan_regulation_local_id
             INNER JOIN SCHEMANAME.spatial_plan ON spatial_plan.local_id = spatial_plan_plan_regulation.spatial_plan_local_id
         UNION
+        SELECT
+            zoning_element.local_id AS local_id,
+            zoning_element.land_use_kind as type,
+            zoning_element.geom AS geom
+        FROM SCHEMANAME.zoning_element
+        UNION
         -- add plan geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
             plan_regulation.type AS type,
@@ -73,3 +79,5 @@ FROM (
     ) ON supplementary_information.fk_plan_regulation = regulation.local_id -- supplementary information numeric range is used in parking regulations to make the structure extra complex,
     -- e.g. pysäköintipaikkojen lukumäärä per kerrosneliömetri
 ;
+
+ALTER SCHEMANAME.plan_regulations_area_view OWNER TO qgis_editor_MUNICIPALITYCODE;
