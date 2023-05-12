@@ -239,7 +239,8 @@ UPDATE
     ON SCHEMANAME.zoning_element FOR EACH ROW
     WHEN (
         old.geom IS DISTINCT
-        FROM new.geom
+        FROM new.geom OR
+        old.land_use_kind IS DISTINCT FROM new.land_use_kind
     ) EXECUTE PROCEDURE SCHEMANAME.refresh_plan_regulations_area_view();
 CREATE TRIGGER planned_space_refresh_area_view_on_update
 AFTER
