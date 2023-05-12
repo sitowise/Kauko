@@ -19,6 +19,7 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.planning_detail_line_plan_regulation ON plan_regulation.local_id = planning_detail_line_plan_regulation.plan_regulation_local_id
             INNER JOIN SCHEMANAME.planning_detail_line ON planning_detail_line.local_id = planning_detail_line_plan_regulation.planning_detail_line_local_id
+        WHERE planning_detail_line.is_active
         UNION
         -- add plan detail line to regulation
         SELECT plan_regulation.local_id AS local_id,
@@ -27,6 +28,7 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.plan_regulation_geometry_line_value ON plan_regulation.local_id = plan_regulation_geometry_line_value.fk_plan_regulation
             INNER JOIN SCHEMANAME.geometry_line_value ON geometry_line_value.geometry_line_value_uuid = plan_regulation_geometry_line_value.fk_geometry_line_value
+        WHERE geometry_line_value.is_active
         -- add geometry line value to regulation
     ) AS regulation
     INNER JOIN code_lists.detail_plan_regulation_kind dprk ON dprk.codevalue = regulation.type
@@ -59,4 +61,4 @@ FROM (
     -- e.g. pysäköintipaikkojen lukumäärä per kerrosneliömetri
 ;
 
-ALTER SCHEMANAME.plan_regulations_line_view OWNER TO qgis_editor_MUNICIPALITYCODE;
+ALTER TABLE SCHEMANAME.plan_regulations_line_view OWNER TO qgis_editor_MUNICIPALITYCODE;

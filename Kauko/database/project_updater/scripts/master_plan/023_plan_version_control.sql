@@ -63,9 +63,20 @@ ALTER TABLE SCHEMANAME.describing_line
     ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
 ALTER TABLE SCHEMANAME.describing_text
     ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE SCHEMANAME.geometry_area_value
+    ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE SCHEMANAME.geometry_line_value
+    ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE SCHEMANAME.geometry_point_value
+    ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
 
 CREATE OR REPLACE FUNCTION SCHEMANAME.update_active_plan(p_old_active_plan_local_id varchar, p_new_active_plan_local_id varchar)
 RETURNS void AS $$
+DECLARE
+    v_old_plan_regulation_local_ids varchar[];
+    v_old_plan_guidance_local_ids varchar[];
+    v_new_plan_regulation_local_ids varchar[];
+    v_new_plan_guidance_local_ids varchar[];
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM SCHEMANAME.spatial_plan WHERE local_id = p_old_active_plan_local_id LIMIT 1) THEN
         RAISE EXCEPTION 'Old active plan does not exist';
@@ -120,6 +131,78 @@ BEGIN
     WHERE ze.spatial_plan = p_old_active_plan_local_id
     AND dt.identifier = zedt.describing_text_id;
 
+    SELECT SCHEMANAME.get_plan_regulation_local_ids(p_old_active_plan_local_id)
+    INTO v_old_plan_regulation_local_ids;
+
+    SELECT SCHEMANAME.get_plan_guidance_local_ids(p_old_active_plan_local_id)
+    INTO v_old_plan_guidance_local_ids;
+
+    UPDATE SCHEMANAME.geometry_area_value gav
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_regulation_geometry_area_value prgav
+    WHERE gav.geometry_area_value_uuid = prgav.fk_geometry_area_value
+    AND prgav.fk_plan_regulation = ANY(v_old_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_area_value gav
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_guidance_geometry_area_value pggav
+    WHERE gav.geometry_area_value_uuid = pggav.fk_geometry_area_value
+    AND pggav.fk_plan_guidance = ANY(v_old_plan_guidance_local_ids);
+
+    UPDATE SCHEMANAME.geometry_area_value gav
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_regulation pr
+    JOIN SCHEMANAME.plan_regulation_supplementary_information prsi
+        ON prsi.fk_plan_regulation = pr.local_id
+    JOIN SCHEMANAME.supplementary_information_geometry_area_value sigav
+        ON sigav.fk_supplementary_information = prsi.fk_supplementary_information
+    WHERE gav.geometry_area_value_uuid = sigav.fk_geometry_area_value
+    AND pr.local_id = ANY(v_old_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_line_value glv
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_regulation_geometry_line_value prglv
+    WHERE glv.geometry_line_value_uuid = prglv.fk_geometry_line_value
+    AND prglv.fk_plan_regulation = ANY(v_old_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_line_value glv
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_guidance_geometry_line_value pgglv
+    WHERE glv.geometry_line_value_uuid = pgglv.fk_geometry_line_value
+    AND pgglv.fk_plan_guidance = ANY(v_old_plan_guidance_local_ids);
+
+    UPDATE SCHEMANAME.geometry_line_value glv
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_regulation pr
+    JOIN SCHEMANAME.plan_regulation_supplementary_information prsi
+        ON prsi.fk_plan_regulation = pr.local_id
+    JOIN SCHEMANAME.supplementary_information_geometry_line_value siglv
+        ON siglv.fk_supplementary_information = prsi.fk_supplementary_information
+    WHERE glv.geometry_line_value_uuid = siglv.fk_geometry_line_value
+    AND pr.local_id = ANY(v_old_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_point_value gpv
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_regulation_geometry_point_value prgpv
+    WHERE gpv.geometry_point_value_uuid = prgpv.fk_geometry_point_value
+    AND prgpv.fk_plan_regulation = ANY(v_old_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_point_value gpv
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_guidance_geometry_point_value pggpv
+    WHERE gpv.geometry_point_value_uuid = pggpv.fk_geometry_point_value
+    AND pggpv.fk_plan_guidance = ANY(v_old_plan_guidance_local_ids);
+
+    UPDATE SCHEMANAME.geometry_point_value gpv
+    SET is_active = FALSE
+    FROM SCHEMANAME.plan_regulation pr
+    JOIN SCHEMANAME.plan_regulation_supplementary_information prsi
+        ON prsi.fk_plan_regulation = pr.local_id
+    JOIN SCHEMANAME.supplementary_information_geometry_point_value sigpv
+        ON sigpv.fk_supplementary_information = prsi.fk_supplementary_information
+    WHERE gpv.geometry_point_value_uuid = sigpv.fk_geometry_point_value
+    AND pr.local_id = ANY(v_old_plan_regulation_local_ids);
+
     -- Activate new plan
     UPDATE SCHEMANAME.spatial_plan
     SET is_active = TRUE
@@ -160,6 +243,78 @@ BEGIN
         ON ze.local_id = zedt.zoning_element_local_id
     WHERE ze.spatial_plan = p_new_active_plan_local_id
     AND dt.identifier = zedt.describing_text_id;
+
+    SELECT SCHEMANAME.get_plan_regulation_local_ids(p_old_active_plan_local_id)
+    INTO v_new_plan_regulation_local_ids;
+
+    SELECT SCHEMANAME.get_plan_guidance_local_ids(p_old_active_plan_local_id)
+    INTO v_new_plan_guidance_local_ids;
+
+    UPDATE SCHEMANAME.geometry_area_value gav
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_regulation_geometry_area_value prgav
+    WHERE gav.geometry_area_value_uuid = prgav.fk_geometry_area_value
+    AND prgav.fk_plan_regulation = ANY(v_new_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_area_value gav
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_guidance_geometry_area_value pggav
+    WHERE gav.geometry_area_value_uuid = pggav.fk_geometry_area_value
+    AND pggav.fk_plan_guidance = ANY(v_new_plan_guidance_local_ids);
+
+    UPDATE SCHEMANAME.geometry_area_value gav
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_regulation pr
+    JOIN SCHEMANAME.plan_regulation_supplementary_information prsi
+        ON prsi.fk_plan_regulation = pr.local_id
+    JOIN SCHEMANAME.supplementary_information_geometry_area_value sigav
+        ON sigav.fk_supplementary_information = prsi.fk_supplementary_information
+    WHERE gav.geometry_area_value_uuid = sigav.fk_geometry_area_value
+    AND pr.local_id = ANY(v_new_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_line_value glv
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_regulation_geometry_line_value prglv
+    WHERE glv.geometry_line_value_uuid = prglv.fk_geometry_line_value
+    AND prglv.fk_plan_regulation = ANY(v_new_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_line_value glv
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_guidance_geometry_line_value pgglv
+    WHERE glv.geometry_line_value_uuid = pgglv.fk_geometry_line_value
+    AND pgglv.fk_plan_guidance = ANY(v_new_plan_guidance_local_ids);
+
+    UPDATE SCHEMANAME.geometry_line_value glv
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_regulation pr
+    JOIN SCHEMANAME.plan_regulation_supplementary_information prsi
+        ON prsi.fk_plan_regulation = pr.local_id
+    JOIN SCHEMANAME.supplementary_information_geometry_line_value siglv
+        ON siglv.fk_supplementary_information = prsi.fk_supplementary_information
+    WHERE glv.geometry_line_value_uuid = siglv.fk_geometry_line_value
+    AND pr.local_id = ANY(v_new_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_point_value gpv
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_regulation_geometry_point_value prgpv
+    WHERE gpv.geometry_point_value_uuid = prgpv.fk_geometry_point_value
+    AND prgpv.fk_plan_regulation = ANY(v_new_plan_regulation_local_ids);
+
+    UPDATE SCHEMANAME.geometry_point_value gpv
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_guidance_geometry_point_value pggpv
+    WHERE gpv.geometry_point_value_uuid = pggpv.fk_geometry_point_value
+    AND pggpv.fk_plan_guidance = ANY(v_new_plan_guidance_local_ids);
+
+    UPDATE SCHEMANAME.geometry_point_value gpv
+    SET is_active = TRUE
+    FROM SCHEMANAME.plan_regulation pr
+    JOIN SCHEMANAME.plan_regulation_supplementary_information prsi
+        ON prsi.fk_plan_regulation = pr.local_id
+    JOIN SCHEMANAME.supplementary_information_geometry_point_value sigpv
+        ON sigpv.fk_supplementary_information = prsi.fk_supplementary_information
+    WHERE gpv.geometry_point_value_uuid = sigpv.fk_geometry_point_value
+    AND pr.local_id = ANY(v_new_plan_regulation_local_ids);
 END;
 $$ LANGUAGE plpgsql;
 
