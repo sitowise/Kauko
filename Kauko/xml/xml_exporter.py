@@ -41,8 +41,12 @@ from .tools import (
     CORE_NS,
     SPLAN_NS,
     NAMESPACES,
-    XML_VALUE_MAP,
+    XML_VALUE_MAP_SIMPLE,
 )
+
+# This is probably the only sensible usage for import *
+# tags.py must *only* contain a consistent set of upper-case constants
+from .tags import *   # noqa: F403
 
 LOGGER = logging.getLogger("kauko")
 
@@ -54,74 +58,8 @@ FEATURECOLLECTION_ATTRIBUTES[
     "xsi:schemaLocation"
 ] = "http://tietomallit.ymparisto.fi/kaavatiedot/xml/1.2 https://tietomallit.ymparisto.fi/kehitys/kaatio/xml/spatialplan-1.2.xsd"
 
-# lud-core tags
-FEATUREMEMBER = CORE_NS + ":featureMember"
-PRODUCER_SPECIFIC_IDENTIFIER = CORE_NS + ":producerSpecificIdentifier"
-OBJECT_IDENTIFIER = CORE_NS + ":objectIdentifier"
-LATEST_CHANGE = CORE_NS + ":latestChange"
-STORAGE_TIME = CORE_NS + ":storageTime"
-NAME = CORE_NS + ":loc_name"
-BOUNDARY = CORE_NS + ":boundary"
-LEGAL_EFFECTIVENESS = CORE_NS + ":legalEffectiveness"
-RESPONSIBLE_ORGANIZATION = CORE_NS + ":responsibleOrganization"
-VALIDITY_TIME = CORE_NS + ":validityTime"
-ANNEX = CORE_NS + ":annex"
-DOCUMENT = CORE_NS + ":Document"
-CORE_TYPE = CORE_NS + ":type"
-ADDITIONAL_INFORMATION_LINK = CORE_NS + ":additionalInformationLink"
-CODE_SPACE = "http://uri.suomi.fi/object/rytj/kaava"
 
-# splan tags
-SPATIAL_PLAN = SPLAN_NS + ":SpatialPlan"
-SPATIAL_PLAN_REF = SPLAN_NS + ":spatialPlan"
-VALIDITY_TIME_INSIDE_SPLAN = SPLAN_NS + ":validityTime"
-NAME_INSIDE_SPLAN = SPLAN_NS + ":loc_name"
-PLAN_IDENTIFIER = SPLAN_NS + ":planIdentifier"
-PLAN_OBJECT = SPLAN_NS + ":PlanObject"
-PLAN_ORDER = SPLAN_NS + ":PlanOrder"
-GENERAL_ORDER = SPLAN_NS + ":generalOrder"
-PLAN_RECOMMENDATION = SPLAN_NS + ":PlanRecommendation"
-GENERAL_RECOMMENDATION = SPLAN_NS + ":generalRecommendation"
-VALUE = SPLAN_NS + ":value"
-PLAN_ORDER_GROUP = SPLAN_NS + ":PlanOrderGroup"
-SUPPLEMENTARY_INFO = SPLAN_NS + ":supplementaryInfo"
-SUPPLEMENTARY_INFORMATION = SPLAN_NS + ":SupplementaryInformation"
-TARGET = SPLAN_NS + ":target"
-MEMBER = SPLAN_NS + ":member"
-GROUP_NUMBER = SPLAN_NS + ":groupNumber"
-GEOMETRY = SPLAN_NS + ":geometry"
-GROUND_RELATIVE_POSITION = SPLAN_NS + ":groundRelativePosition"
-BINDINGNESS_OF_LOCATION = SPLAN_NS + ":bindingnessOfLocation"
-TYPE = SPLAN_NS + ":type"
-LIFECYCLE_STATUS = SPLAN_NS + ":lifecycleStatus"
-COMMENTARY = SPLAN_NS + ":SpatialPlanCommentary"
-PARTICIPATION_AND_EVALUATION_PLAN = SPLAN_NS + ":ParticipationAndEvaluationPlan"
-PARTICIPATION_AND_EVALUATION_PLAN_REF = SPLAN_NS + ":participationAndEvalutionPlan"
-PLANNER = SPLAN_NS + ":Planner"
-PLANNER_REF = SPLAN_NS + ":planner"
-PERSON_NAME = SPLAN_NS + ":personName"
-PROFESSION_TITLE = SPLAN_NS + ":professionTitle"
-ROLE = SPLAN_NS + ":role"
-DOCUMENT_INSIDE_SPLAN = SPLAN_NS + ":document"
-RELATED_DOCUMENT = SPLAN_NS + ":relatedDocument"
-
-# GML tags
-GML_POINT = "gml:Point"
-GML_LINESTRING = "gml:LineString"
-GML_POLYGON = "gml:Polygon"
-GML_EXTERIOR = "gml:exterior"
-GML_LINEAR_RING = "gml:LinearRing"
-POS = "pos"
-POS_LIST = "posList"
-TIME_INSTANT = "gml:TimeInstant"
-TIME_POSITION = "gml:timePosition"
-TIME_PERIOD = "gml:TimePeriod"
-BEGIN_POSITION = "gml:beginPosition"
-END_POSITION = "gml:endPosition"
-REFERENCE_IDENTIFIER = "gml:identifier"
-
-
-VALUE_TYPE_MAP = flatten_and_flip(XML_VALUE_MAP)
+VALUE_TYPE_MAP = flatten_and_flip(XML_VALUE_MAP_SIMPLE)
 
 
 def get_gml_id(entry: Union[DictRow, Dict]) -> Union[str, None]:
@@ -458,10 +396,6 @@ class XMLExporter:
         :param plan_data: Plan data from Kauko database
         :return: Created plan element
         """
-        PLAN_IDENTIFIER = SPLAN_NS + ":planIdentifier"
-        INITIATION_TIME = SPLAN_NS + ":initiationTime"
-        APPROVAL_TIME = SPLAN_NS + ":approvalTime"
-        DIGITAL_ORIGIN = SPLAN_NS + ":digitalOrigin"
 
         plan = self.add_lud_core_element(plan_data, SPATIAL_PLAN)
 
@@ -862,8 +796,10 @@ class XMLExporter:
             group = next(iter(group_by_target.values()))
             self.add_plan_order_group_element(
                 group,
+                # TODO: Here we assume that gml ids are local ids. Local ids are used for all db queries.
                 [get_gml_id({"local_id": id}) for id in target_ids],
-                [get_gml_id({"local_id": id}) for id in member_ids]
+                # TODO: Here we assume that gml ids are local ids. Local ids are used for all db queries.
+                [get_gml_id({"local_id": id}) for id in member_ids],
             )
 
     def add_planning_detail_lines(self, detail_lines: Dict[str, DictRow]) -> None:

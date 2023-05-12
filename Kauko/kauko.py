@@ -52,6 +52,7 @@ from .resources import *
 from .ui.change_to_unfinished import ChangeToUnfinished
 from .ui.delete_project_dialog import InitiateDeleteProjectDialog
 from .ui.export_plan_dialog import ExportPlanDialog
+from .ui.import_plan_dialog import ImportPlanDialog
 from .ui.get_regulations_dialog import InitiateRegulationsDialog
 from .ui.open_project_dialog import InitiateOpenProjectDialog
 from .ui.schema_creator_dialog import InitiateSchemaDialog
@@ -236,6 +237,13 @@ class Kauko:
             parent=self.iface.mainWindow(),
             add_to_toolbar=False)
 
+        self.add_action(
+            ':/Kauko/icons/mActionSharingImport.svg',
+            text='Tuo kaava',
+            callback=self.import_plan,
+            parent=self.iface.mainWindow(),
+            add_to_toolbar=False)
+        
         self.add_action(
             ':/Kauko/icons/mActionDuplicateLayer.svg',
             text="Kaavan versionhallinta",
@@ -464,6 +472,20 @@ class Kauko:
                 level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
                 duration=bar_msg["duration"])
 
+    def import_plan(self):
+        self._start(True)
+        dlg = ImportPlanDialog(self.iface)
+        if not self.database_initializer.initialize_database(self.connection):
+            return
+        db = self.database_initializer.database
+
+        if dlg.exec_():
+            bar_msg = dlg.import_plan(db, self.schema)
+            self.iface.messageBar().pushMessage(
+                bar_msg["details"],
+                level=Qgis.Info if bar_msg["success"] else Qgis.Warning,
+                duration=bar_msg["duration"])
+            
     def version_control(self):
         self._start(True)
         dlg = VersionControlDialog(self.iface)
