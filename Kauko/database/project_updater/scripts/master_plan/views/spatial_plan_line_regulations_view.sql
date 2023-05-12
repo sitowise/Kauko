@@ -60,5 +60,3 @@ FROM (
     ) ON supplementary_information.fk_plan_regulation = regulation.local_id -- supplementary information numeric range is used in parking regulations to make the structure extra complex,
     -- e.g. pysäköintipaikkojen lukumäärä per kerrosneliömetri
 ;
-
-ALTER TABLE SCHEMANAME.plan_regulations_line_view OWNER TO qgis_editor_MUNICIPALITYCODE;
