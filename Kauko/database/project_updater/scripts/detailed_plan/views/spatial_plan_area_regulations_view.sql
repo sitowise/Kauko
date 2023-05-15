@@ -19,6 +19,14 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.spatial_plan_plan_regulation ON plan_regulation.local_id = spatial_plan_plan_regulation.plan_regulation_local_id
             INNER JOIN SCHEMANAME.spatial_plan ON spatial_plan.local_id = spatial_plan_plan_regulation.spatial_plan_local_id
+        WHERE spatial_plan.is_active
+        UNION
+        SELECT
+            zoning_element.local_id AS local_id,
+            zoning_element.land_use_kind as type,
+            zoning_element.geom AS geom
+        FROM SCHEMANAME.zoning_element
+        WHERE zoning_element.is_active
         UNION
         -- add plan geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
@@ -27,6 +35,7 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.zoning_element_plan_regulation ON plan_regulation.local_id = zoning_element_plan_regulation.plan_regulation_local_id
             INNER JOIN SCHEMANAME.zoning_element ON zoning_element.local_id = zoning_element_plan_regulation.zoning_element_local_id
+        WHERE zoning_element.is_active
         UNION
         -- add element geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
@@ -35,6 +44,7 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.planned_space_plan_regulation ON plan_regulation.local_id = planned_space_plan_regulation.plan_regulation_local_id
             INNER JOIN SCHEMANAME.planned_space ON planned_space.local_id = planned_space_plan_regulation.planned_space_local_id
+        WHERE planned_space.is_active
         UNION
         -- add planned space geometry to regulation
         SELECT plan_regulation.local_id AS local_id,
@@ -43,6 +53,7 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.plan_regulation_geometry_area_value ON plan_regulation.local_id = plan_regulation_geometry_area_value.fk_plan_regulation
             INNER JOIN SCHEMANAME.geometry_area_value ON geometry_area_value.geometry_area_value_uuid = plan_regulation_geometry_area_value.fk_geometry_area_value -- add geometry area value to regulation
+        WHERE geometry_area_value.is_active
     ) AS regulation
     INNER JOIN code_lists.detail_plan_regulation_kind dprk ON dprk.codevalue = regulation.type
     LEFT OUTER JOIN (

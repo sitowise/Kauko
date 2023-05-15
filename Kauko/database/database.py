@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import psycopg2
 import psycopg2.extras
@@ -35,7 +35,7 @@ class Database:
         except psycopg2.OperationalError:
             return False
 
-    def insert(self, query: Composed | str, vars: Tuple = ()) -> bool:
+    def insert(self, query: Union[Composed, str], vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to insert
         """Used to insert to database
@@ -66,7 +66,7 @@ class Database:
         except psycopg2.OperationalError:
             return []
 
-    def update(self, query: Composed | str, vars: Tuple = ()) -> bool:
+    def update(self, query: Union[Composed, str], vars: Tuple = ()) -> bool:
         # TODO: Implement error handling
         # TODO: Implement limiting query to update
         """Used to update to database
@@ -93,8 +93,6 @@ class Database:
         :param query: str
         :return: List of tuples.
         """
-        if not query.lower().startswith("select"):
-            raise IllegalOperation()
         try:
             with psycopg2.connect(**self.params) as conn:
                 with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:

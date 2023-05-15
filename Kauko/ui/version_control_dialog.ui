@@ -66,7 +66,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset>
           <normaloff>:/Kauko/icons/mActionFindReplace.svg</normaloff>:/Kauko/icons/mActionFindReplace.svg</iconset>
         </property>
        </widget>
@@ -83,15 +83,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="currentVersionLineEdit">
-        <property name="maximumSize">
-         <size>
-          <width>230</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
+       <widget class="QLabel" name="currentVersionLineEdit">
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
@@ -107,15 +101,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="currentLifecycleLineEdit">
-        <property name="maximumSize">
-         <size>
-          <width>230</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
+       <widget class="QLabel" name="currentLifecycleLineEdit">
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
@@ -212,6 +200,7 @@
    </layout>
   </widget>
  </widget>
+ <resources/>
  <connections>
   <connection>
    <sender>rejectPushButton</sender>

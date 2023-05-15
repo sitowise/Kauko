@@ -19,6 +19,7 @@ FROM (
         FROM SCHEMANAME.plan_regulation
             INNER JOIN SCHEMANAME.plan_regulation_geometry_point_value ON plan_regulation.local_id = plan_regulation_geometry_point_value.fk_plan_regulation
             INNER JOIN SCHEMANAME.geometry_point_value ON geometry_point_value.geometry_point_value_uuid = plan_regulation_geometry_point_value.fk_geometry_point_value
+        WHERE geometry_point_value.is_active
         -- add geometry point value to regulation
     ) AS regulation
     INNER JOIN code_lists.detail_plan_regulation_kind dprk ON dprk.codevalue = regulation.type
