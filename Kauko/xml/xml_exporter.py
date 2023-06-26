@@ -992,14 +992,12 @@ class XMLExporter:
             detail_line_regulation_groups.keys(),
         )
         # regulation groups by group id and target id:
-        regulation_groups = {
-            group_id: {
-                **(zoning_element_regulation_groups[group_id]),
-                **(planned_space_regulation_groups[group_id]),
-                **(detail_line_regulation_groups[group_id]),
-            }
-            for group_id in group_ids
-        }
+        regulation_groups = {}
+        for group_id in group_ids:
+            regulation_groups[group_id] = {}
+            regulation_groups[group_id].update(zoning_element_regulation_groups.get(group_id, {}))
+            regulation_groups[group_id].update(planned_space_regulation_groups.get(group_id, {}))
+            regulation_groups[group_id].update(detail_line_regulation_groups.get(group_id, {}))
         LOGGER.info("got groups:")
         LOGGER.info(regulation_groups)
         # get all regulations in groups:
@@ -1060,18 +1058,14 @@ class XMLExporter:
             group_regulations.keys(),
         )
         # regulations by regulation id and target id:
-        regulations = {
-            regulation_id: {
-                **(plan_regulations[regulation_id]),
-                **(zoning_element_regulations[regulation_id]),
-                **(planned_space_regulations[regulation_id]),
-                **(detail_line_regulations[regulation_id]),
-                None: group_regulations.get(
-                    regulation_id, None
-                ),  # group regulations have no target
-            }
-            for regulation_id in regulation_ids
-        }
+        regulations = {}
+        for regulation_id in regulation_ids:
+            regulations[regulation_id] = {}
+            regulations[regulation_id].update(plan_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(zoning_element_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(planned_space_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(detail_line_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(group_regulations.get(regulation_id, {}))
         LOGGER.info("got regulations:")
         LOGGER.info(regulations)
         guidance_ids = set().union(
