@@ -1074,15 +1074,13 @@ class XMLExporter:
             planned_space_guidances.keys(),
             detail_line_guidances.keys(),
         )
-        guidances = {
-            guidance_id: {
-                **plan_guidances[guidance_id],
-                **zoning_element_guidances[guidance_id],
-                **planned_space_guidances[guidance_id],
-                **detail_line_guidances[guidance_id],
-            }
-            for guidance_id in guidance_ids
-        }
+        guidances = {}
+        for guidance_id in guidance_ids:
+            guidances[guidance_id] = {}
+            guidances[guidance_id].update(plan_guidances.get(guidance_id, {}))
+            guidances[guidance_id].update(zoning_element_guidances.get(guidance_id, {}))
+            guidances[guidance_id].update(planned_space_guidances.get(guidance_id, {}))
+            guidances[guidance_id].update(detail_line_guidances.get(guidance_id, {}))
         LOGGER.info("got guidances:")
         LOGGER.info(guidances)
         self.add_regulations(regulations)
