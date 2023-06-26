@@ -1065,7 +1065,7 @@ class XMLExporter:
             regulations[regulation_id].update(zoning_element_regulations.get(regulation_id, {}))
             regulations[regulation_id].update(planned_space_regulations.get(regulation_id, {}))
             regulations[regulation_id].update(detail_line_regulations.get(regulation_id, {}))
-            regulations[regulation_id].update(group_regulations.get(regulation_id, {}))
+            regulations[regulation_id][None] = group_regulations.get(regulation_id, None)
         LOGGER.info("got regulations:")
         LOGGER.info(regulations)
         guidance_ids = set().union(
