@@ -699,7 +699,7 @@ class XMLExporter:
             add_reference_element(group, MEMBER, "#" + member_gml_id)
 
     def add_regulations(
-        self, regulations: Dict[str, Dict[str, DictRow]], guidance: bool = False
+        self, regulations: Dict[str, Dict[str, DictRow]], guidance: bool = False, is_master_plan: bool = False
     ) -> None:
         """
         Add Kauko database regulations (or guidances), their values, documents (for guidances),
@@ -709,6 +709,7 @@ class XMLExporter:
         :param regulations: Plan regulations (or guidances) from Kauko database, indexed with regulation ids and target ids.
                             Each regulation may be present in multiple targets.
         :param guidance: True if we want to add guidances instead. Default is regulation.
+        :param is_master_plan: True if we want to use code lists for master plan.
         """
         regulation_values = get_values(
             "plan_regulation" if not guidance else "plan_guidance",
@@ -757,6 +758,7 @@ class XMLExporter:
                 supplementary_information_values,
                 # TODO: Here we assume that gml ids are local ids. Local ids are used for all db queries.
                 [get_gml_id({"local_id": id}) for id in target_ids],
+                master_plan=is_master_plan,
                 recommendation=guidance,
             )
 
@@ -907,6 +909,14 @@ class XMLExporter:
             add_reference_element(
                 self.plan, PLANNER_REF, f"#id-planner-{planner['identifier']}"
             )
+
+    def is_master_plan(self, type: int) -> bool:
+        """
+        Check if the plan is a master plan
+        
+        :param type: Code value in the spatial plan kind code list
+        """
+        return str(type)[0] == '2'
 
     def get_xml(self, plan_id: int, save_path: str = None) -> bytes:
         """
@@ -1083,7 +1093,7 @@ class XMLExporter:
             guidances[guidance_id].update(detail_line_guidances.get(guidance_id, {}))
         LOGGER.info("got guidances:")
         LOGGER.info(guidances)
-        self.add_regulations(regulations)
+        self.add_regulations(regulations, is_master_plan=self.is_master_plan(plan_data["type"]))
 
         # 8) Fetch and create all planners smack in the middle of the regulation thing.
         # For reasons beyond our comprehension, the Kaatio
