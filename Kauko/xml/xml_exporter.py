@@ -273,14 +273,17 @@ def add_value_element(parent: Element, value_type: str, value: DictRow) -> Eleme
         unit_element = SubElement(type_element, UNIT_OF_MEASURE)
         unit_element.text = value["unit_of_measure"]
     elif value_type == "numeric_range":
-        MINIMUM_VALUE = SPLAN_NS + ":minimumValue"
-        MAXIMUM_VALUE = SPLAN_NS + ":maximumValue"
-        minimum_element = SubElement(type_element, MINIMUM_VALUE)
-        minimum_element.text = str(value["minimum_value"])
-        maximum_element = SubElement(type_element, MAXIMUM_VALUE)
-        maximum_element.text = str(value["maximum_value"])
-        unit_element = SubElement(type_element, UNIT_OF_MEASURE)
-        unit_element.text = value["unit_of_measure"]
+        if value["minimum_value"] is not None:
+            MINIMUM_VALUE = SPLAN_NS + ":minimumValue"
+            minimum_element = SubElement(type_element, MINIMUM_VALUE)
+            minimum_element.text = str(value["minimum_value"])
+        if value["maximum_value"] is not None:
+            MAXIMUM_VALUE = SPLAN_NS + ":maximumValue"
+            maximum_element = SubElement(type_element, MAXIMUM_VALUE)
+            maximum_element.text = str(value["maximum_value"])
+        if value["unit_of_measure"] is not None:
+            unit_element = SubElement(type_element, UNIT_OF_MEASURE)
+            unit_element.text = value["unit_of_measure"]
     elif value_type == "time_instant_value":
         value_element = SubElement(type_element, VALUE)
         add_time_position(value_element, value["value"])
