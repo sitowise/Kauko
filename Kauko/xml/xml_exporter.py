@@ -273,14 +273,17 @@ def add_value_element(parent: Element, value_type: str, value: DictRow) -> Eleme
         unit_element = SubElement(type_element, UNIT_OF_MEASURE)
         unit_element.text = value["unit_of_measure"]
     elif value_type == "numeric_range":
-        MINIMUM_VALUE = SPLAN_NS + ":minimumValue"
-        MAXIMUM_VALUE = SPLAN_NS + ":maximumValue"
-        minimum_element = SubElement(type_element, MINIMUM_VALUE)
-        minimum_element.text = str(value["minimum_value"])
-        maximum_element = SubElement(type_element, MAXIMUM_VALUE)
-        maximum_element.text = str(value["maximum_value"])
-        unit_element = SubElement(type_element, UNIT_OF_MEASURE)
-        unit_element.text = value["unit_of_measure"]
+        if value["minimum_value"] is not None:
+            MINIMUM_VALUE = SPLAN_NS + ":minimumValue"
+            minimum_element = SubElement(type_element, MINIMUM_VALUE)
+            minimum_element.text = str(value["minimum_value"])
+        if value["maximum_value"] is not None:
+            MAXIMUM_VALUE = SPLAN_NS + ":maximumValue"
+            maximum_element = SubElement(type_element, MAXIMUM_VALUE)
+            maximum_element.text = str(value["maximum_value"])
+        if value["unit_of_measure"] is not None:
+            unit_element = SubElement(type_element, UNIT_OF_MEASURE)
+            unit_element.text = value["unit_of_measure"]
     elif value_type == "time_instant_value":
         value_element = SubElement(type_element, VALUE)
         add_time_position(value_element, value["value"])
@@ -699,7 +702,7 @@ class XMLExporter:
             add_reference_element(group, MEMBER, "#" + member_gml_id)
 
     def add_regulations(
-        self, regulations: Dict[str, Dict[str, DictRow]], guidance: bool = False
+        self, regulations: Dict[str, Dict[str, DictRow]], guidance: bool = False, is_master_plan: bool = False
     ) -> None:
         """
         Add Kauko database regulations (or guidances), their values, documents (for guidances),
@@ -709,6 +712,7 @@ class XMLExporter:
         :param regulations: Plan regulations (or guidances) from Kauko database, indexed with regulation ids and target ids.
                             Each regulation may be present in multiple targets.
         :param guidance: True if we want to add guidances instead. Default is regulation.
+        :param is_master_plan: True if we want to use code lists for master plan.
         """
         regulation_values = get_values(
             "plan_regulation" if not guidance else "plan_guidance",
@@ -757,6 +761,7 @@ class XMLExporter:
                 supplementary_information_values,
                 # TODO: Here we assume that gml ids are local ids. Local ids are used for all db queries.
                 [get_gml_id({"local_id": id}) for id in target_ids],
+                master_plan=is_master_plan,
                 recommendation=guidance,
             )
 
@@ -908,6 +913,14 @@ class XMLExporter:
                 self.plan, PLANNER_REF, f"#id-planner-{planner['identifier']}"
             )
 
+    def is_master_plan(self, type: int) -> bool:
+        """
+        Check if the plan is a master plan
+        
+        :param type: Code value in the spatial plan kind code list
+        """
+        return str(type)[0] == '2'
+
     def get_xml(self, plan_id: int, save_path: str = None) -> bytes:
         """
         Return Kaatio XML generated from a plan in Kauko database. Optionally, also save generated XML
@@ -992,14 +1005,12 @@ class XMLExporter:
             detail_line_regulation_groups.keys(),
         )
         # regulation groups by group id and target id:
-        regulation_groups = {
-            group_id: {
-                **(zoning_element_regulation_groups[group_id]),
-                **(planned_space_regulation_groups[group_id]),
-                **(detail_line_regulation_groups[group_id]),
-            }
-            for group_id in group_ids
-        }
+        regulation_groups = {}
+        for group_id in group_ids:
+            regulation_groups[group_id] = {}
+            regulation_groups[group_id].update(zoning_element_regulation_groups.get(group_id, {}))
+            regulation_groups[group_id].update(planned_space_regulation_groups.get(group_id, {}))
+            regulation_groups[group_id].update(detail_line_regulation_groups.get(group_id, {}))
         LOGGER.info("got groups:")
         LOGGER.info(regulation_groups)
         # get all regulations in groups:
@@ -1060,18 +1071,14 @@ class XMLExporter:
             group_regulations.keys(),
         )
         # regulations by regulation id and target id:
-        regulations = {
-            regulation_id: {
-                **(plan_regulations[regulation_id]),
-                **(zoning_element_regulations[regulation_id]),
-                **(planned_space_regulations[regulation_id]),
-                **(detail_line_regulations[regulation_id]),
-                None: group_regulations.get(
-                    regulation_id, None
-                ),  # group regulations have no target
-            }
-            for regulation_id in regulation_ids
-        }
+        regulations = {}
+        for regulation_id in regulation_ids:
+            regulations[regulation_id] = {}
+            regulations[regulation_id].update(plan_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(zoning_element_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(planned_space_regulations.get(regulation_id, {}))
+            regulations[regulation_id].update(detail_line_regulations.get(regulation_id, {}))
+            regulations[regulation_id][None] = group_regulations.get(regulation_id, None)
         LOGGER.info("got regulations:")
         LOGGER.info(regulations)
         guidance_ids = set().union(
@@ -1080,18 +1087,16 @@ class XMLExporter:
             planned_space_guidances.keys(),
             detail_line_guidances.keys(),
         )
-        guidances = {
-            guidance_id: {
-                **plan_guidances[guidance_id],
-                **zoning_element_guidances[guidance_id],
-                **planned_space_guidances[guidance_id],
-                **detail_line_guidances[guidance_id],
-            }
-            for guidance_id in guidance_ids
-        }
+        guidances = {}
+        for guidance_id in guidance_ids:
+            guidances[guidance_id] = {}
+            guidances[guidance_id].update(plan_guidances.get(guidance_id, {}))
+            guidances[guidance_id].update(zoning_element_guidances.get(guidance_id, {}))
+            guidances[guidance_id].update(planned_space_guidances.get(guidance_id, {}))
+            guidances[guidance_id].update(detail_line_guidances.get(guidance_id, {}))
         LOGGER.info("got guidances:")
         LOGGER.info(guidances)
-        self.add_regulations(regulations)
+        self.add_regulations(regulations, is_master_plan=self.is_master_plan(plan_data["type"]))
 
         # 8) Fetch and create all planners smack in the middle of the regulation thing.
         # For reasons beyond our comprehension, the Kaatio
