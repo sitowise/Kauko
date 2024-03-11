@@ -8,39 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Scripts\001_init_database.sql" />
-    <None Remove="Scripts\002_create_code_lists_tables.sql" />
-    <None Remove="Scripts\003_insert_code_lists_data.sql" />
-    <None Remove="Scripts\004_create_qgis_project_table.sql" />
-    <None Remove="Scripts\005_create_schemaInformation_table.sql" />
-    <None Remove="Scripts\006_update_schema_information_table.sql" />
-    <None Remove="Scripts\007_add_viewer_role.sql" />
-    <None Remove="Scripts\008_update_codelists_to_rytj.sql" />
-    <None Remove="Scripts\009_add_rytj_codelist.sql" />
-    <None Remove="Scripts\010_check_for_language_string.sql" />
-    <None Remove="Scripts\011_versioning_triggers.sql" />
-    <None Remove="Scripts\012_update_schema_information_table.sql" />
-    <None Remove="Scripts\013_code_lists_for_master_plan.sql" />
-    <None Remove="Scripts\014_fix_for_schemainformation_table.sql" />
-    <None Remove="Scripts\015_update_finnish_municipalties_code_list.sql" />
+    <None Remove="Scripts\001_create_initial_tables.sql" />
+    <None Remove="Scripts\002_create_code_list_tables.sql" />
+    <None Remove="Scripts\003_create_triggers_and_functions.sql" />
+    <None Remove="Scripts\004_create_public_schema_tables.sql" />
+    <None Remove="Scripts\005_create_public_schema_triggers_and_functions.sql" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Scripts\001_init_database.sql" />
-    <EmbeddedResource Include="Scripts\002_create_code_lists_tables.sql" />
-    <EmbeddedResource Include="Scripts\003_insert_code_lists_data.sql" />
-    <EmbeddedResource Include="Scripts\004_create_qgis_project_table.sql" />
-    <EmbeddedResource Include="Scripts\005_create_schemaInformation_table.sql" />
-    <EmbeddedResource Include="Scripts\006_update_schema_information_table.sql" />
-    <EmbeddedResource Include="Scripts\007_add_viewer_role.sql" />
-    <EmbeddedResource Include="Scripts\008_update_codelists_to_rytj.sql" />
-    <EmbeddedResource Include="Scripts\009_add_rytj_codelist.sql" />
-    <EmbeddedResource Include="Scripts\010_check_for_language_string.sql" />
-    <EmbeddedResource Include="Scripts\011_versioning_triggers.sql" />
-    <EmbeddedResource Include="Scripts\012_update_schema_information_table.sql" />
-    <EmbeddedResource Include="Scripts\013_code_lists_for_master_plan.sql" />
-    <EmbeddedResource Include="Scripts\014_fix_for_schemainformation_table.sql" />
-    <EmbeddedResource Include="Scripts\015_update_finnish_municipalties_code_list.sql" />
+  <I<None Remove="Scripts\001_create_initial_tables.sql" />
+    <None Remove="Scripts\002_create_code_list_tables.sql" />
+    <None Remove="Scripts\003_create_triggers_and_functions.sql" />
+    <None Remove="Scripts\004_create_public_schema_tables.sql" />
+    <None Remove="Scripts\005_create_public_schema_triggers_and_functions.sql" />
   </ItemGroup>
 
   <ItemGroup>
