@@ -63,7 +63,7 @@ namespace Kauko.DbUpdater
 					  .WithVariable("function", "$function$") // This is a bug or at least a misfeature in DbUp
 					  .WithVariable("PROJECTSRID", srid.ToString())
 					  .WithVariable("MUNICIPALITYCODE", municipalityCode)
-					  .WithVariable("SCHEMANAME", municipalityName.ToLower() + "_" + gkNumber)
+					  .WithVariable("SCHEMANAME", municipalityName.ToLower() + "_gk" + gkNumber)
                       .LogToConsole()
                       .Build();
                 }
