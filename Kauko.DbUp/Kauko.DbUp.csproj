@@ -15,11 +15,12 @@
     <None Remove="Scripts\005_create_public_schema_triggers_and_functions.sql" />
   </ItemGroup>
 
-  <I<None Remove="Scripts\001_create_initial_tables.sql" />
-    <None Remove="Scripts\002_create_code_list_tables.sql" />
-    <None Remove="Scripts\003_create_triggers_and_functions.sql" />
-    <None Remove="Scripts\004_create_public_schema_tables.sql" />
-    <None Remove="Scripts\005_create_public_schema_triggers_and_functions.sql" />
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\001_create_initial_tables.sql" />
+    <EmbeddedResource Include="Scripts\002_create_code_list_tables.sql" />
+    <EmbeddedResource Include="Scripts\003_create_triggers_and_functions.sql" />
+    <EmbeddedResource Include="Scripts\004_create_public_schema_tables.sql" />
+    <EmbeddedResource Include="Scripts\005_create_public_schema_triggers_and_functions.sql" />
   </ItemGroup>
 
   <ItemGroup>
