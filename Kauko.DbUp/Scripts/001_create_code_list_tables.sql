@@ -1,3 +1,19 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE SCHEMA IF NOT EXISTS $SCHEMANAME$;
+CREATE SCHEMA IF NOT EXISTS code_lists;
+
+
+
+CREATE SEQUENCE code_lists.detail_plan_regulation_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
 -- Table: code_lists.detail_plan_regulation_kind
 
 -- DROP TABLE IF EXISTS code_lists.detail_plan_regulation_kind;
@@ -18,16 +34,14 @@ CREATE TABLE IF NOT EXISTS code_lists.detail_plan_regulation_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_detail_plan_regulation_kind
+CREATE SEQUENCE code_lists.master_plan_regulation_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_detail_plan_regulation_kind ON code_lists.detail_plan_regulation_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_detail_plan_regulation_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.detail_plan_regulation_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/');
-	
 -- Table: code_lists.master_plan_regulation_kind
 
 -- DROP TABLE IF EXISTS code_lists.master_plan_regulation_kind;
@@ -49,16 +63,14 @@ CREATE TABLE IF NOT EXISTS code_lists.master_plan_regulation_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_master_plan_regulation_kind
+CREATE SEQUENCE code_lists.spatial_plan_lifecycle_status_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_master_plan_regulation_kind ON code_lists.master_plan_regulation_kind;
-
-CREATE OR REPLACE TRIGGER upsert_master_plan_regulation_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.master_plan_regulation_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_YK/code/');
-	
 -- Table: code_lists.spatial_plan_lifecycle_status
 
 -- DROP TABLE IF EXISTS code_lists.spatial_plan_lifecycle_status;
@@ -81,17 +93,16 @@ CREATE TABLE IF NOT EXISTS code_lists.spatial_plan_lifecycle_status
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_spatial_plan_lifecycle_status
-
--- DROP TRIGGER IF EXISTS upsert_url_spatial_plan_lifecycle_status ON code_lists.spatial_plan_lifecycle_status;
-
-CREATE OR REPLACE TRIGGER upsert_url_spatial_plan_lifecycle_status
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.spatial_plan_lifecycle_status
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/');
-	
 -- END OF NON-QUESTIONMARK TABLES 
+
+
+CREATE SEQUENCE code_lists.bindingness_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 -- Table: code_lists.bindingness_kind
 
@@ -111,16 +122,15 @@ CREATE TABLE IF NOT EXISTS code_lists.bindingness_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_bindingness_kind
 
--- DROP TRIGGER IF EXISTS upsert_url_bindingness_kind ON code_lists.bindingness_kind;
+CREATE SEQUENCE code_lists.detail_plan_addition_information_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
-CREATE OR REPLACE TRIGGER upsert_url_bindingness_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.bindingness_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Sitovuuslaji/code/');
-	
 -- Table: code_lists.detail_plan_addition_information_kind
 
 -- DROP TABLE IF EXISTS code_lists.detail_plan_addition_information_kind;
@@ -143,16 +153,14 @@ CREATE TABLE IF NOT EXISTS code_lists.detail_plan_addition_information_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_detail_plan_addition_information_kind
+CREATE SEQUENCE code_lists.detail_plan_theme_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_detail_plan_addition_information_kind ON code_lists.detail_plan_addition_information_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_detail_plan_addition_information_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.detail_plan_addition_information_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_LisatiedonLaji_AK/code/');
-	
 -- Table: code_lists.detail_plan_theme
 
 -- DROP TABLE IF EXISTS code_lists.detail_plan_theme;
@@ -173,15 +181,13 @@ CREATE TABLE IF NOT EXISTS code_lists.detail_plan_theme
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_detail_plan_theme
-
--- DROP TRIGGER IF EXISTS upsert_url_detail_plan_theme ON code_lists.detail_plan_theme;
-
-CREATE OR REPLACE TRIGGER upsert_url_detail_plan_theme
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.detail_plan_theme
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavoitusteema_AK/code/');
+CREATE SEQUENCE code_lists.digital_origin_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 -- Table: code_lists.digital_origin_kind
 
@@ -200,16 +206,14 @@ CREATE TABLE IF NOT EXISTS code_lists.digital_origin_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_digital_origin_kind
+CREATE SEQUENCE code_lists.document_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_digital_origin_kind ON code_lists.digital_origin_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_digital_origin_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.digital_origin_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/');
-	
 -- Table: code_lists.document_kind
 
 -- DROP TABLE IF EXISTS code_lists.document_kind;
@@ -230,16 +234,14 @@ CREATE TABLE IF NOT EXISTS code_lists.document_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_document_kind_kind
+CREATE SEQUENCE code_lists.finnish_municipalities_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_document_kind_kind ON code_lists.document_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_document_kind_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.document_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_AsiakirjanLaji_YKAK/code/');
-	
 -- Table: code_lists.finnish_municipalities
 
 -- DROP TABLE IF EXISTS code_lists.finnish_municipalities;
@@ -258,16 +260,14 @@ CREATE TABLE IF NOT EXISTS code_lists.finnish_municipalities
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_finnish_municipalities
+CREATE SEQUENCE code_lists.finnish_vertical_coordinate_reference_system_identifier_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_finnish_municipalities ON code_lists.finnish_municipalities;
-
-CREATE OR REPLACE TRIGGER upsert_url_finnish_municipalities
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.finnish_municipalities
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/jhs/kunta_1_20230101/code/');
-	
 -- Table: code_lists.finnish_vertical_coordinate_reference_system
 
 -- DROP TABLE IF EXISTS code_lists.finnish_vertical_coordinate_reference_system;
@@ -282,6 +282,14 @@ CREATE TABLE IF NOT EXISTS code_lists.finnish_vertical_coordinate_reference_syst
 )
 
 TABLESPACE pg_default;
+
+CREATE SEQUENCE code_lists.ground_relativeness_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 -- Table: code_lists.ground_relativeness_kind
 
@@ -300,16 +308,14 @@ CREATE TABLE IF NOT EXISTS code_lists.ground_relativeness_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_ground_relativeness_kind
+CREATE SEQUENCE code_lists.iso_639_language_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_ground_relativeness_kind ON code_lists.ground_relativeness_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_ground_relativeness_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.ground_relativeness_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_MaanalaisuudenLaji/code/');
-	
 -- Table: code_lists.iso_639_language
 
 -- DROP TABLE IF EXISTS code_lists.iso_639_language;
@@ -324,6 +330,14 @@ CREATE TABLE IF NOT EXISTS code_lists.iso_639_language
 )
 
 TABLESPACE pg_default;
+
+CREATE SEQUENCE code_lists.legal_effectiveness_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 -- Table: code_lists.legal_effectiveness_kind
 
@@ -343,16 +357,14 @@ CREATE TABLE IF NOT EXISTS code_lists.legal_effectiveness_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_legal_effectiveness_kind
+CREATE SEQUENCE code_lists.master_plan_envrionmental_change_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_url_legal_effectiveness_kind ON code_lists.legal_effectiveness_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_legal_effectiveness_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.legal_effectiveness_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_OikeusvaikutteisuudenLaji/code/');
-	
 -- Table: code_lists.master_plan_envrionmental_change_kind
 
 -- DROP TABLE IF EXISTS code_lists.master_plan_envrionmental_change_kind;
@@ -373,16 +385,14 @@ CREATE TABLE IF NOT EXISTS code_lists.master_plan_envrionmental_change_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_master_plan_envrionmental_change_kind
+CREATE SEQUENCE code_lists.master_plan_theme_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_master_plan_envrionmental_change_kind ON code_lists.master_plan_envrionmental_change_kind;
-
-CREATE OR REPLACE TRIGGER upsert_master_plan_envrionmental_change_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.master_plan_envrionmental_change_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_ymparistomuutoksenLaji_YK/code/');
-	
 -- Table: code_lists.master_plan_theme
 
 -- DROP TABLE IF EXISTS code_lists.master_plan_theme;
@@ -403,16 +413,14 @@ CREATE TABLE IF NOT EXISTS code_lists.master_plan_theme
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_master_plan_theme
+CREATE SEQUENCE code_lists.spatial_plan_kind_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP TRIGGER IF EXISTS upsert_master_plan_theme ON code_lists.master_plan_theme;
-
-CREATE OR REPLACE TRIGGER upsert_master_plan_theme
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.master_plan_theme
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavoitusteema_YK/code/');
-	
 -- Table: code_lists.spatial_plan_kind
 
 -- DROP TABLE IF EXISTS code_lists.spatial_plan_kind;
@@ -434,13 +442,3 @@ CREATE TABLE IF NOT EXISTS code_lists.spatial_plan_kind
 
 TABLESPACE pg_default;
 
--- Trigger: upsert_url_spatial_plan_kind
-
--- DROP TRIGGER IF EXISTS upsert_url_spatial_plan_kind ON code_lists.spatial_plan_kind;
-
-CREATE OR REPLACE TRIGGER upsert_url_spatial_plan_kind
-    BEFORE INSERT OR UPDATE 
-    ON code_lists.spatial_plan_kind
-    FOR EACH ROW
-    EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavalaji/code/');
-	

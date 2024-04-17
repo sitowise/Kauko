@@ -40,16 +40,6 @@ END)
 
 TABLESPACE pg_default;
 
--- Trigger: check_update
-
--- DROP TRIGGER IF EXISTS check_update ON public.schema_information;
-
-CREATE OR REPLACE TRIGGER check_update
-    BEFORE INSERT OR UPDATE OF schema_version, project_version
-    ON public.schema_information
-    FOR EACH ROW
-    EXECUTE FUNCTION public.check_update();
-	
 -- Table: public.schemaversions
 
 -- DROP TABLE IF EXISTS public.schemaversions;
@@ -80,4 +70,3 @@ CREATE TABLE IF NOT EXISTS public.spatial_ref_sys
 )
 
 TABLESPACE pg_default;
-
