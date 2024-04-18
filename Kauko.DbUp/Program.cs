@@ -10,11 +10,11 @@ namespace Kauko.DbUpdater
         {
             try
             {
-                if (args.Length <= 1)
+                if (args.Length <= 5)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("");
-                    Console.WriteLine("Usage: ./Kauko.DbUp.exe [Operation] [ConnectionString]");
+                    Console.WriteLine("Usage: ./Kauko.DbUp.exe [Operation] [ConnectionString] [Srid] [MunicipalityCode] [MunicipalityName] [GkNumber]");
                     Console.WriteLine("");
                     Console.WriteLine("Examples of [ConnectionString]:");
                     Console.WriteLine("\"Server=127.0.0.1;Port=5432;Database=myDataBase;Integrated Security=true;\"");
@@ -30,16 +30,22 @@ namespace Kauko.DbUpdater
                     return -1;
                 }
 
-                System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
-                System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+                Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+                Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
 
                 var connectionString = args[1];
+				int srid = int.Parse(args[2]);
+				var municipalityCode = args[3];
+				var municipalityName = args[4];
+				var gkNumber = args[5];
 
                 EnsureDatabase.For.PostgresqlDatabase(connectionString);
 
                 DatabaseUpgradeResult result;
 
                 UpgradeEngine upgrader;
+
+
 
                 if (args.FirstOrDefault() == "markinitial")
                 {
@@ -50,6 +56,12 @@ namespace Kauko.DbUpdater
                     upgrader = DeployChanges.To
                       .PostgresqlDatabase(connectionString)
                       .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+					  .WithVariablesEnabled()
+					  .WithVariable("BODY", "$BODY$") // This is a bug or at least a misfeature in DbUp
+					  .WithVariable("function", "$function$") // This is a bug or at least a misfeature in DbUp
+					  .WithVariable("PROJECTSRID", srid.ToString())
+					  .WithVariable("MUNICIPALITYCODE", municipalityCode)
+					  .WithVariable("SCHEMANAME", municipalityName.ToLower() + "_gk" + gkNumber)
                       .LogToConsole()
                       .Build();
                 }

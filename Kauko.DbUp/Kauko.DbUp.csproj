@@ -2,51 +2,28 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Scripts\001_init_database.sql" />
-    <None Remove="Scripts\002_create_code_lists_tables.sql" />
-    <None Remove="Scripts\003_insert_code_lists_data.sql" />
-    <None Remove="Scripts\004_create_qgis_project_table.sql" />
-    <None Remove="Scripts\005_create_schemaInformation_table.sql" />
-    <None Remove="Scripts\006_update_schema_information_table.sql" />
-    <None Remove="Scripts\007_add_viewer_role.sql" />
-    <None Remove="Scripts\008_update_codelists_to_rytj.sql" />
-    <None Remove="Scripts\009_add_rytj_codelist.sql" />
-    <None Remove="Scripts\010_check_for_language_string.sql" />
-    <None Remove="Scripts\011_versioning_triggers.sql" />
-    <None Remove="Scripts\012_update_schema_information_table.sql" />
-    <None Remove="Scripts\013_code_lists_for_master_plan.sql" />
-    <None Remove="Scripts\014_fix_for_schemainformation_table.sql" />
-    <None Remove="Scripts\015_update_finnish_municipalties_code_list.sql" />
+    <EmbeddedResource Include="Scripts\001_initialization.sql" />
+    <EmbeddedResource Include="Scripts\002_insert_code_list_data.sql" />
+    <EmbeddedResource Include="Scripts\003_create_public_schema_tables.sql" />
+    <EmbeddedResource Include="Scripts\004_create_public_schema_functions.sql" />
+    <EmbeddedResource Include="Scripts\005_create_initial_tables.sql" />
+    <EmbeddedResource Include="Scripts\006_create_initial_functions.sql" />
+  	<EmbeddedResource Include="Scripts\007_create_initial_triggers.sql" />
+	  <EmbeddedResource Include="Scripts\008_create_code_list_triggers.sql" />
+	  <EmbeddedResource Include="Scripts\009_create_public_schema_triggers.sql" />
+	  <EmbeddedResource Include="Scripts\010_create_initial_indexing.sql" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\001_init_database.sql" />
-    <EmbeddedResource Include="Scripts\002_create_code_lists_tables.sql" />
-    <EmbeddedResource Include="Scripts\003_insert_code_lists_data.sql" />
-    <EmbeddedResource Include="Scripts\004_create_qgis_project_table.sql" />
-    <EmbeddedResource Include="Scripts\005_create_schemaInformation_table.sql" />
-    <EmbeddedResource Include="Scripts\006_update_schema_information_table.sql" />
-    <EmbeddedResource Include="Scripts\007_add_viewer_role.sql" />
-    <EmbeddedResource Include="Scripts\008_update_codelists_to_rytj.sql" />
-    <EmbeddedResource Include="Scripts\009_add_rytj_codelist.sql" />
-    <EmbeddedResource Include="Scripts\010_check_for_language_string.sql" />
-    <EmbeddedResource Include="Scripts\011_versioning_triggers.sql" />
-    <EmbeddedResource Include="Scripts\012_update_schema_information_table.sql" />
-    <EmbeddedResource Include="Scripts\013_code_lists_for_master_plan.sql" />
-    <EmbeddedResource Include="Scripts\014_fix_for_schemainformation_table.sql" />
-    <EmbeddedResource Include="Scripts\015_update_finnish_municipalties_code_list.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="dbup-core" Version="4.6.3" />
-    <PackageReference Include="dbup-postgresql" Version="4.6.3" />
-    <PackageReference Include="Npgsql" Version="6.0.6" />
+    <PackageReference Include="dbup-core" Version="5.0.87" />
+    <PackageReference Include="dbup-postgresql" Version="5.0.40" />
+    <PackageReference Include="Npgsql" Version="8.0.2" />
   </ItemGroup>
 
 </Project>
