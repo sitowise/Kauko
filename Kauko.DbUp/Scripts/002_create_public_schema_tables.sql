@@ -4,13 +4,11 @@
 
 CREATE TABLE IF NOT EXISTS public.qgis_projects
 (
-    name text COLLATE pg_catalog."default" NOT NULL,
+    name text NOT NULL,
     metadata jsonb,
     content bytea,
     CONSTRAINT qgis_projects_pkey PRIMARY KEY (name)
-)
-
-TABLESPACE pg_default;
+);
 
 -- Table: public.schema_information
 
@@ -18,14 +16,14 @@ TABLESPACE pg_default;
 
 CREATE TABLE IF NOT EXISTS public.schema_information
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name character varying COLLATE pg_catalog."default" NOT NULL,
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    name character varying NOT NULL,
     srid integer NOT NULL,
-    municipality character varying(3) COLLATE pg_catalog."default" NOT NULL,
+    municipality character varying(3) NOT NULL,
     is_master_plan boolean NOT NULL,
     created date NOT NULL DEFAULT now(),
-    schema_version character(4) COLLATE pg_catalog."default",
-    project_version character(4) COLLATE pg_catalog."default",
+    schema_version character(4),
+    project_version character(4),
     schema_updated timestamp(6) without time zone,
     project_updated timestamp(6) without time zone,
     CONSTRAINT schema_information_pkey PRIMARY KEY (identifier),
@@ -36,37 +34,4 @@ CASE
     WHEN name::text !~~ '%y'::text AND is_master_plan IS FALSE THEN true
     ELSE false
 END)
-)
-
-TABLESPACE pg_default;
-
--- Table: public.schemaversions
-
--- DROP TABLE IF EXISTS public.schemaversions;
-
-CREATE TABLE IF NOT EXISTS public.schemaversions
-(
-    schemaversionsid integer NOT NULL DEFAULT nextval('schemaversions_schemaversionsid_seq'::regclass),
-    scriptname character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    applied timestamp without time zone NOT NULL,
-    CONSTRAINT "PK_schemaversions_Id" PRIMARY KEY (schemaversionsid)
-)
-
-TABLESPACE pg_default;
-
--- Table: public.spatial_ref_sys
-
--- DROP TABLE IF EXISTS public.spatial_ref_sys;
-
-CREATE TABLE IF NOT EXISTS public.spatial_ref_sys
-(
-    srid integer NOT NULL,
-    auth_name character varying(256) COLLATE pg_catalog."default",
-    auth_srid integer,
-    srtext character varying(2048) COLLATE pg_catalog."default",
-    proj4text character varying(2048) COLLATE pg_catalog."default",
-    CONSTRAINT spatial_ref_sys_pkey PRIMARY KEY (srid),
-    CONSTRAINT spatial_ref_sys_srid_check CHECK (srid > 0 AND srid <= 998999)
-)
-
-TABLESPACE pg_default;
+);

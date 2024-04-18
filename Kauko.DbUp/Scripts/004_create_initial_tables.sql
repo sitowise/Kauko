@@ -1,376 +1,13 @@
-CREATE SEQUENCE $SCHEMANAME$.contact_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-
-CREATE SEQUENCE $SCHEMANAME$.localized_objective_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.numeric_value_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planned_space_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planned_space_numeric_value_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planned_space_regulation_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planning_detail_line_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planning_detail_line_numeric_value_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planning_detail_point_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.planning_detail_point_numeric_value_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.referenced_document_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.regulative_text_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.spatial_plan_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.spatial_plan_regulation_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.zoning_element_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.zoning_element_numeric_value_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.zoning_element_regulation_identifier_seq
-    INCREMENT 1
-    START 1
-    MINVALUE 1
-    MAXVALUE 9999999;
-
-CREATE SEQUENCE $SCHEMANAME$.code_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-CREATE SEQUENCE $SCHEMANAME$.document_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.document_document_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-CREATE SEQUENCE $SCHEMANAME$.elevation_position_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.elevation_range_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.geometry_area_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-CREATE SEQUENCE $SCHEMANAME$.geometry_line_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.geometry_point_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-CREATE SEQUENCE $SCHEMANAME$.spatial_plan_metadata_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.numeric_double_value_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.numeric_range_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.participation_and_evalution_plan_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.patricipation_evalution_plan_document_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_guidance_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_guidance_document_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_guidance_theme_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_regulation_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.regulation_document_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_regulation_document_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_regulation_group_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_regulation_group_regulation_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_regulation_supplementary_information_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.supplementary_information_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.plan_regulation_theme_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.planned_space_plan_regulation_group_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.planning_detail_line_plan_regulation_group_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.spatial_plan_commentary_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.spatial_plan_commentary_document_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.spatial_plan_document_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.text_value_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.time_instant_value_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.time_period_value_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-CREATE SEQUENCE $SCHEMANAME$.zoning_element_plan_regulation_group_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
 -- Table: $SCHEMANAME$.code_value
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.code_value;
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.code_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.code_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     code_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value character varying COLLATE pg_catalog."default" NOT NULL,
-    code_list character varying COLLATE pg_catalog."default",
+    value TEXT NOT NULL,
+    code_list TEXT,
     title jsonb,
     CONSTRAINT code_value_pkey PRIMARY KEY (id),
     CONSTRAINT code_value_code_value_uuid_key UNIQUE (code_value_uuid),
@@ -392,10 +29,10 @@ CREATE SEQUENCE $SCHEMANAME$.describing_line_identifier_seq
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.describing_line
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.describing_line_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     geom geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     type integer NOT NULL,
-    lifecycle_status character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
     CONSTRAINT describing_line_pkey PRIMARY KEY (identifier),
     CONSTRAINT describing_line_lifecycle_status_fkey FOREIGN KEY (lifecycle_status)
@@ -418,16 +55,16 @@ CREATE SEQUENCE $SCHEMANAME$.describing_text_identifier_seq
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.describing_text
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.describing_text_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     created timestamp without time zone NOT NULL DEFAULT now(),
     geom geometry(Point,$PROJECTSRID$) NOT NULL,
-    text character varying COLLATE pg_catalog."default" NOT NULL,
+    text TEXT NOT NULL,
     label_x double precision,
     label_y double precision,
     label_rotation double precision,
     callouts boolean NOT NULL DEFAULT true,
     big_letters boolean,
-    lifecycle_status character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
     CONSTRAINT describing_text_pkey PRIMARY KEY (identifier),
     CONSTRAINT describing_text_lifecycle_status_fkey FOREIGN KEY (lifecycle_status)
@@ -442,22 +79,22 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.describing_text
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.document_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     storage_time timestamp without time zone,
-    document_identifier character varying COLLATE pg_catalog."default",
+    document_identifier TEXT,
     name jsonb,
-    additional_information_link character varying COLLATE pg_catalog."default",
-    metadata character varying COLLATE pg_catalog."default",
-    type character varying COLLATE pg_catalog."default" NOT NULL,
+    additional_information_link TEXT,
+    metadata TEXT,
+    type TEXT NOT NULL,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
     CONSTRAINT document_pkey PRIMARY KEY (id),
     CONSTRAINT document_local_id_key UNIQUE (local_id),
@@ -467,7 +104,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
     CONSTRAINT document_name_check CHECK (check_language_string(name))
-);	
+);
 
 -- Table: $SCHEMANAME$.document_document
 
@@ -475,9 +112,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.document_document_id_seq'::regclass),
-    referencing_document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    referenced_document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    referencing_document_local_id TEXT NOT NULL,
+    referenced_document_local_id TEXT NOT NULL,
     role jsonb,
     CONSTRAINT document_document_pkey PRIMARY KEY (id),
     CONSTRAINT fk_referenced_document FOREIGN KEY (referenced_document_local_id)
@@ -500,10 +137,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.elevation_position_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     elevation_position_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value double precision NOT NULL,
-    unit_of_measure character varying COLLATE pg_catalog."default",
+    unit_of_measure TEXT,
     reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
     vertical_reference_system integer NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
@@ -521,11 +158,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.elevation_range_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     elevation_range_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     minimum_value double precision,
     maximum_value double precision,
-    unit_of_measure character varying COLLATE pg_catalog."default",
+    unit_of_measure TEXT,
     reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
     vertical_reference_system integer NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
@@ -544,7 +181,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.geometry_area_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     geometry_area_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
@@ -559,7 +196,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.geometry_line_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     geometry_line_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
@@ -574,7 +211,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.geometry_point_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     geometry_point_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value geometry(Point,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
@@ -591,8 +228,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_metadata
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.spatial_plan_metadata_id_seq'::regclass),
-    plan_id text COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    plan_id text NOT NULL,
     name jsonb NOT NULL,
     created timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT spatial_plan_metadata_pkey PRIMARY KEY (id),
@@ -606,39 +243,39 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_metadata
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.spatial_plan_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
-    plan_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT (uuid_generate_v4())::text,
+    plan_id TEXT NOT NULL DEFAULT (uuid_generate_v4())::text,
     approval_time date,
     approved_by integer,
-    epsg character(9) COLLATE pg_catalog."default" NOT NULL DEFAULT 'EPSG:$PROJECTSRID$'::bpchar,
+    epsg character(9) NOT NULL DEFAULT 'EPSG:$PROJECTSRID$'::bpchar,
     vertical_coordinate_system integer,
-    land_administration_authority character(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '$MUNICIPALITYCODE$'::bpchar,
+    land_administration_authority character(3) NOT NULL DEFAULT '$MUNICIPALITYCODE$'::bpchar,
     language integer NOT NULL,
     valid_from date,
     valid_to date,
     is_released boolean NOT NULL DEFAULT false,
-    type character varying(3) COLLATE pg_catalog."default" NOT NULL,
-    digital_origin character varying(3) COLLATE pg_catalog."default" NOT NULL,
-    ground_relative_position character varying(3) COLLATE pg_catalog."default" NOT NULL,
-    legal_effectiveness character varying(2) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    type character varying(3) NOT NULL,
+    digital_origin character varying(3) NOT NULL,
+    ground_relative_position character varying(3) NOT NULL,
+    legal_effectiveness character varying(2) NOT NULL DEFAULT '01'::TEXT,
     validity_time daterange,
-    lifecycle_status character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     name jsonb NOT NULL,
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     initiation_time date,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
-    version_name text COLLATE pg_catalog."default" NOT NULL,
+    version_name text NOT NULL,
     CONSTRAINT spatial_plan_pkey PRIMARY KEY (identifier),
     CONSTRAINT spatial_plan_local_id_key UNIQUE (local_id),
     CONSTRAINT spatial_plan_planning_object_identifier_key UNIQUE (producer_specific_id),
@@ -706,8 +343,8 @@ END),
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.localized_objective
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.localized_objective_identifier_seq'::regclass),
-    objective text COLLATE pg_catalog."default" NOT NULL,
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    objective text NOT NULL,
     fk_spatial_plan uuid NOT NULL,
     CONSTRAINT localized_objective_pkey PRIMARY KEY (identifier),
     CONSTRAINT spatial_plan_objective_fkey FOREIGN KEY (fk_spatial_plan)
@@ -717,17 +354,17 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.localized_objective
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT localized_objective_objective_check CHECK (objective <> ''::text)
 );
-	
+
 -- Table: $SCHEMANAME$.numeric_double_value
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_double_value;
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_double_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.numeric_double_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     numeric_double_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value double precision NOT NULL,
-    unit_of_measure character varying COLLATE pg_catalog."default",
+    unit_of_measure TEXT,
     obligatory boolean NOT NULL,
     CONSTRAINT numeric_double_value_pkey PRIMARY KEY (id),
     CONSTRAINT numeric_double_value_numeric_double_value_uuid_key UNIQUE (numeric_double_value_uuid)
@@ -739,11 +376,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_double_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.numeric_range_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     numeric_range_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     minimum_value double precision,
     maximum_value double precision,
-    unit_of_measure character varying COLLATE pg_catalog."default",
+    unit_of_measure TEXT,
     CONSTRAINT numeric_range_pkey PRIMARY KEY (id),
     CONSTRAINT numeric_range_numeric_range_uuid_key UNIQUE (numeric_range_uuid),
     CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value)
@@ -755,15 +392,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.numeric_value_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     numeric_value_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     obligatory boolean NOT NULL,
     value double precision NOT NULL,
     value_type integer NOT NULL,
     target_type integer NOT NULL,
-    localized_name character varying COLLATE pg_catalog."default",
-    description_fi character varying COLLATE pg_catalog."default",
-    description_se character varying COLLATE pg_catalog."default",
+    localized_name TEXT,
+    description_fi TEXT,
+    description_se TEXT,
     CONSTRAINT numeric_value_pkey PRIMARY KEY (identifier),
     CONSTRAINT numeric_value_numeric_value_id_key UNIQUE (numeric_value_id)
 )	;
@@ -774,15 +411,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.participation_and_evalution_plan
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.participation_and_evalution_plan_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     storage_time timestamp without time zone NOT NULL DEFAULT now(),
-    spatial_plan character varying COLLATE pg_catalog."default" NOT NULL,
+    spatial_plan TEXT NOT NULL,
     CONSTRAINT participation_and_evalution_plan_pkey PRIMARY KEY (id),
     CONSTRAINT participation_and_evalution_plan_local_id_key UNIQUE (local_id),
     CONSTRAINT participation_and_evalution_plan_producer_specific_id_key UNIQUE (producer_specific_id),
@@ -800,9 +437,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.participation_and_evalution_plan
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.patricipation_evalution_plan_document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.patricipation_evalution_plan_document_id_seq'::regclass),
-    participation_and_evalution_plan_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    participation_and_evalution_plan_local_id TEXT NOT NULL,
+    document_local_id TEXT NOT NULL,
     role jsonb,
     CONSTRAINT patricipation_evalution_plan_document_pkey PRIMARY KEY (id),
     CONSTRAINT patricipation_evalution_plan_document_fk_document FOREIGN KEY (document_local_id)
@@ -824,22 +461,22 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.patricipation_evalution_plan_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_guidance_id_seq'::regclass),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     producer_specific_id uuid DEFAULT uuid_generate_v4(),
     storage_time timestamp without time zone,
     name jsonb,
-    life_cycle_status character varying COLLATE pg_catalog."default" NOT NULL,
+    life_cycle_status TEXT NOT NULL,
     validity_time daterange,
     valid_from date,
     valid_to date,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
     CONSTRAINT plan_guidance_pkey PRIMARY KEY (id),
     CONSTRAINT plan_guidance_local_id_key UNIQUE (local_id),
@@ -857,9 +494,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance_document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_guidance_document_id_seq'::regclass),
-    plan_guidance_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    plan_guidance_local_id TEXT NOT NULL,
+    document_local_id TEXT NOT NULL,
     role jsonb,
     CONSTRAINT plan_guidance_document_pkey PRIMARY KEY (id),
     CONSTRAINT plan_guidance_document_plan_guidance_local_id_document_loca_key UNIQUE (plan_guidance_local_id, document_local_id),
@@ -882,9 +519,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance_theme
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_guidance_theme_id_seq'::regclass),
-    plan_guidance_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    theme_code character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    plan_guidance_local_id TEXT NOT NULL,
+    theme_code TEXT NOT NULL,
     CONSTRAINT plan_guidance_theme_pkey PRIMARY KEY (id),
     CONSTRAINT plan_guidance_theme_plan_guidance_local_id_theme_code_key UNIQUE (plan_guidance_local_id, theme_code),
     CONSTRAINT plan_guidance_theme_fk_plan_guidance FOREIGN KEY (plan_guidance_local_id)
@@ -905,23 +542,23 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance_theme
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_regulation_id_seq'::regclass),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     producer_specific_id uuid DEFAULT uuid_generate_v4(),
     storage_time timestamp without time zone,
     name jsonb,
-    type character varying COLLATE pg_catalog."default" NOT NULL,
-    life_cycle_status character varying COLLATE pg_catalog."default" NOT NULL,
+    type TEXT NOT NULL,
+    life_cycle_status TEXT NOT NULL,
     validity_time daterange,
     valid_from date,
     valid_to date,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
     CONSTRAINT plan_regulation_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_local_id_key UNIQUE (local_id),
@@ -944,9 +581,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_regulation_document_id_seq'::regclass),
-    plan_regulation_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    plan_regulation_local_id TEXT NOT NULL,
+    document_local_id TEXT NOT NULL,
     role jsonb,
     CONSTRAINT plan_regulation_document_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_document_plan_regulation_local_id_document__key UNIQUE (plan_regulation_local_id, document_local_id),
@@ -969,11 +606,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_regulation_group_id_seq'::regclass),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     producer_specific_id uuid DEFAULT uuid_generate_v4(),
     storage_time timestamp without time zone NOT NULL DEFAULT now(),
@@ -990,9 +627,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group_regulation
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_regulation_group_regulation_id_seq'::regclass),
-    plan_regulation_group_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    plan_regulation_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    plan_regulation_group_local_id TEXT NOT NULL,
+    plan_regulation_local_id TEXT NOT NULL,
     CONSTRAINT plan_regulation_group_regulation_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_group_regulat_plan_regulation_group_local_i_key UNIQUE (plan_regulation_group_local_id, plan_regulation_local_id),
     CONSTRAINT plan_regulation_group_regulation_fk_plan_regulation FOREIGN KEY (plan_regulation_local_id)
@@ -1013,11 +650,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group_regulation
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.supplementary_information_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid DEFAULT uuid_generate_v4(),
-    type character varying COLLATE pg_catalog."default" NOT NULL,
+    type TEXT NOT NULL,
     name jsonb,
-    fk_plan_regulation character varying COLLATE pg_catalog."default" NOT NULL,
+    fk_plan_regulation TEXT NOT NULL,
     CONSTRAINT supplementary_information_pkey PRIMARY KEY (id),
     CONSTRAINT supplementary_information_producer_specific_id_key UNIQUE (producer_specific_id),
     CONSTRAINT supplementary_information_fk_plan_regulation FOREIGN KEY (fk_plan_regulation)
@@ -1038,8 +675,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_supplementary_information
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_regulation_supplementary_information_id_seq'::regclass),
-    fk_plan_regulation character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_plan_regulation TEXT NOT NULL,
     fk_supplementary_information uuid NOT NULL,
     CONSTRAINT plan_regulation_supplementary_information_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_supplementary_fk_plan_regulation_fk_supplem_key UNIQUE (fk_plan_regulation, fk_supplementary_information),
@@ -1061,9 +698,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_supplementary_informatio
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_theme
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.plan_regulation_theme_id_seq'::regclass),
-    plan_regulation_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    theme_code character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    plan_regulation_local_id TEXT NOT NULL,
+    theme_code TEXT NOT NULL,
     CONSTRAINT plan_regulation_theme_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_theme_plan_regulation_local_id_theme_code_key UNIQUE (plan_regulation_local_id, theme_code),
     CONSTRAINT plan_regulation_theme_fk_plan_regulation FOREIGN KEY (plan_regulation_local_id)
@@ -1084,25 +721,25 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_theme
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planned_space_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
     valid_from date,
     valid_to date,
-    bindingness_of_location character varying(3) COLLATE pg_catalog."default" NOT NULL,
-    ground_relative_position character varying(3) COLLATE pg_catalog."default" NOT NULL,
+    bindingness_of_location character varying(3) NOT NULL,
+    ground_relative_position character varying(3) NOT NULL,
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     validity_time daterange,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
-    lifecycle_status character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
     CONSTRAINT planned_space_pkey PRIMARY KEY (identifier),
     CONSTRAINT planned_space_local_id_key UNIQUE (local_id),
@@ -1136,7 +773,7 @@ END)
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_numeric_value
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planned_space_numeric_value_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planned_space_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
     CONSTRAINT planned_space_numeric_value_pkey PRIMARY KEY (identifier),
@@ -1159,22 +796,22 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planning_detail_line_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     storage_time timestamp without time zone,
     geom geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
-    bindingness_of_location character varying(2) COLLATE pg_catalog."default" NOT NULL,
-    ground_relative_position character varying(2) COLLATE pg_catalog."default" NOT NULL,
-    lifecycle_status character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    bindingness_of_location character varying(2) NOT NULL,
+    ground_relative_position character varying(2) NOT NULL,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     name jsonb,
     is_active boolean DEFAULT true,
     CONSTRAINT planning_detail_line_pkey PRIMARY KEY (identifier),
@@ -1203,8 +840,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_line
 (
     identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    planned_space_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    planning_detail_line_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    planned_space_local_id TEXT NOT NULL,
+    planning_detail_line_local_id TEXT NOT NULL,
     CONSTRAINT planned_space_detail_line_pkey PRIMARY KEY (identifier),
     CONSTRAINT planned_space_plan_detail_line_fk_planned_space FOREIGN KEY (planned_space_local_id)
         REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
@@ -1224,9 +861,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_line
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_regulation_group
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planned_space_plan_regulation_group_id_seq'::regclass),
-    planned_space_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    plan_regulation_group_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    planned_space_local_id TEXT NOT NULL,
+    plan_regulation_group_local_id TEXT NOT NULL,
     CONSTRAINT planned_space_plan_regulation_group_pkey PRIMARY KEY (id),
     CONSTRAINT planned_space_plan_regulation_planned_space_local_id_plan_r_key UNIQUE (planned_space_local_id, plan_regulation_group_local_id),
     CONSTRAINT planned_space_plan_regulation_group_fk_plan_regulation_group FOREIGN KEY (plan_regulation_group_local_id)
@@ -1247,11 +884,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_regulation_group
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.regulative_text
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.regulative_text_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     regulative_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     type integer NOT NULL,
-    description_fi character varying COLLATE pg_catalog."default",
-    description_se character varying COLLATE pg_catalog."default",
+    description_fi TEXT,
+    description_se TEXT,
     validity integer NOT NULL DEFAULT 1,
     CONSTRAINT regulative_text_pkey PRIMARY KEY (identifier),
     CONSTRAINT regulative_text_regulative_id_key UNIQUE (regulative_id)
@@ -1263,7 +900,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.regulative_text
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planned_space_regulation_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planned_space_id uuid NOT NULL,
     regulative_id uuid NOT NULL,
     CONSTRAINT planned_space_regulation_pkey PRIMARY KEY (identifier),
@@ -1286,18 +923,18 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.contact_identifier_seq'::regclass),
-    name character varying COLLATE pg_catalog."default" NOT NULL,
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    name TEXT NOT NULL,
     professional_title jsonb,
     role jsonb,
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL,
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     storage_time timestamp without time zone NOT NULL DEFAULT now(),
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    fk_spatial_plan text COLLATE pg_catalog."default",
+    fk_spatial_plan text,
     CONSTRAINT contact_pkey PRIMARY KEY (identifier),
     CONSTRAINT planner_local_id_key UNIQUE (local_id),
     CONSTRAINT planner_fk_spatial_plan FOREIGN KEY (fk_spatial_plan)
@@ -1318,7 +955,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planning_detail_line_numeric_value_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planning_detail_line_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
     CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (identifier),
@@ -1341,9 +978,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planning_detail_line_plan_regulation_group_id_seq'::regclass),
-    planning_detail_line_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    plan_regulation_group_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    planning_detail_line_local_id TEXT NOT NULL,
+    plan_regulation_group_local_id TEXT NOT NULL,
     CONSTRAINT planning_detail_line_plan_regulation_group_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_line_plan_reg_planning_detail_line_local_id_key UNIQUE (planning_detail_line_local_id, plan_regulation_group_local_id),
     CONSTRAINT planning_detail_line_plan_regulation_group_fk_plan_regulation_g FOREIGN KEY (plan_regulation_group_local_id)
@@ -1364,7 +1001,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_gro
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.planning_detail_point_numeric_value_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planning_detail_point_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
     CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (identifier),
@@ -1382,10 +1019,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.referenced_document
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.referenced_document_identifier_seq'::regclass),
-    reference character varying COLLATE pg_catalog."default" NOT NULL,
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    reference TEXT NOT NULL,
     referenced_on date NOT NULL,
-    name character varying COLLATE pg_catalog."default" NOT NULL,
+    name TEXT NOT NULL,
     fk_spatial_plan uuid NOT NULL,
     language integer NOT NULL,
     role integer NOT NULL,
@@ -1399,25 +1036,21 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.referenced_document
 );
 
 
-
-
-
-
 -- Table: $SCHEMANAME$.spatial_plan_commentary
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_commentary;
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_commentary
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.spatial_plan_commentary_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     storage_time timestamp without time zone NOT NULL DEFAULT now(),
-    spatial_plan character varying COLLATE pg_catalog."default" NOT NULL,
+    spatial_plan TEXT NOT NULL,
     CONSTRAINT spatial_plan_commentary_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_commentary_local_id_key UNIQUE (local_id),
     CONSTRAINT spatial_plan_commentary_producer_specific_id_key UNIQUE (producer_specific_id),
@@ -1435,9 +1068,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_commentary
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_commentary_document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.spatial_plan_commentary_document_id_seq'::regclass),
-    spatial_plan_commentary_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    spatial_plan_commentary_local_id TEXT NOT NULL,
+    document_local_id TEXT NOT NULL,
     role jsonb,
     CONSTRAINT spatial_plan_commentary_document_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_commentary_document_fk_document FOREIGN KEY (document_local_id)
@@ -1459,9 +1092,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_commentary_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_document
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.spatial_plan_document_id_seq'::regclass),
-    spatial_plan_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    document_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    spatial_plan_local_id TEXT NOT NULL,
+    document_local_id TEXT NOT NULL,
     role jsonb,
     CONSTRAINT spatial_plan_document_pkey PRIMARY KEY (id),
     CONSTRAINT fk_document FOREIGN KEY (document_local_id)
@@ -1484,7 +1117,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_regulation
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.spatial_plan_regulation_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     spatial_plan_id uuid NOT NULL,
     regulative_id uuid NOT NULL,
     CONSTRAINT spatial_plan_regulation_pkey PRIMARY KEY (identifier),
@@ -1509,10 +1142,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_regulation
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.text_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     text_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value jsonb NOT NULL,
-    syntax character varying COLLATE pg_catalog."default",
+    syntax TEXT,
     CONSTRAINT text_value_pkey PRIMARY KEY (id),
     CONSTRAINT text_value_text_value_uuid_key UNIQUE (text_value_uuid),
     CONSTRAINT text_value_value_check CHECK (check_language_string(value))
@@ -1524,7 +1157,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.time_instant_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     time_instant_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value timestamp without time zone NOT NULL,
     CONSTRAINT time_instant_value_pkey PRIMARY KEY (id),
@@ -1537,7 +1170,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.time_period_value_id_seq'::regclass),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     time_period_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value tsrange NOT NULL,
     time_period_from timestamp without time zone,
@@ -1553,20 +1186,20 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.versions
 (
     identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999 CACHE 1 ),
-    scriptname character varying COLLATE pg_catalog."default" NOT NULL,
+    scriptname TEXT NOT NULL,
     applied timestamp(6) without time zone NOT NULL DEFAULT now(),
     CONSTRAINT versions_pkey PRIMARY KEY (identifier),
     CONSTRAINT versions_scriptname_key UNIQUE (scriptname)
 );
 
--- FUNCTION: $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, character varying)
+-- FUNCTION: $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, TEXT)
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, character varying);
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, TEXT);
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.validate_zoning_element_validity_dates(
 	valid_from date,
 	valid_to date,
-	spatial_plan character varying)
+	spatial_plan TEXT)
     RETURNS boolean
     LANGUAGE 'plpgsql'
     COST 100
@@ -1600,33 +1233,33 @@ $BODY$;
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.zoning_element_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
-    localized_name character varying COLLATE pg_catalog."default" NOT NULL,
+    localized_name TEXT NOT NULL,
     name jsonb,
     type integer NOT NULL,
     up_to_dateness integer NOT NULL,
     valid_from date,
     valid_to date,
-    block_number character varying COLLATE pg_catalog."default",
-    parcel_number character varying COLLATE pg_catalog."default",
-    bindingness_of_location character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
-    ground_relative_position character varying(3) COLLATE pg_catalog."default" NOT NULL,
-    land_use_kind character varying(6) COLLATE pg_catalog."default" NOT NULL,
+    block_number TEXT,
+    parcel_number TEXT,
+    bindingness_of_location character varying(3) NOT NULL DEFAULT '01'::TEXT,
+    ground_relative_position character varying(3) NOT NULL,
+    land_use_kind character varying(6) NOT NULL,
     identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    local_id character varying COLLATE pg_catalog."default" NOT NULL DEFAULT uuid_generate_v4(),
-    namespace character varying COLLATE pg_catalog."default",
-    reference_id character varying COLLATE pg_catalog."default",
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    namespace TEXT,
+    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
-    spatial_plan character varying COLLATE pg_catalog."default",
+    spatial_plan TEXT,
     validity_time daterange,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    created_by text COLLATE pg_catalog."default" NOT NULL,
-    modified_by text COLLATE pg_catalog."default" NOT NULL,
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
     modified_at timestamp without time zone NOT NULL,
-    lifecycle_status character varying(3) COLLATE pg_catalog."default" NOT NULL DEFAULT '01'::character varying,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
     CONSTRAINT zoning_element_pkey PRIMARY KEY (identifier),
     CONSTRAINT zoning_element_local_id_key UNIQUE (local_id),
@@ -1675,7 +1308,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_line
 (
     identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     describing_line_id integer NOT NULL,
-    zoning_element_local_id character varying COLLATE pg_catalog."default",
+    zoning_element_local_id TEXT,
     CONSTRAINT zoning_element_describing_line_pkey PRIMARY KEY (identifier),
     CONSTRAINT zoning_element_describing_line_fk_describing_line FOREIGN KEY (describing_line_id)
         REFERENCES $SCHEMANAME$.describing_line (identifier) MATCH SIMPLE
@@ -1696,7 +1329,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_text
 (
     identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     describing_text_id integer NOT NULL,
-    zoning_element_local_id character varying COLLATE pg_catalog."default",
+    zoning_element_local_id TEXT,
     CONSTRAINT zoning_element_describing_text_pkey PRIMARY KEY (identifier),
     CONSTRAINT zoning_element_describing_text_fk_describing_text FOREIGN KEY (describing_text_id)
         REFERENCES $SCHEMANAME$.describing_text (identifier) MATCH SIMPLE
@@ -1715,7 +1348,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_text
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_numeric_value
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.zoning_element_numeric_value_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     zoning_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
     CONSTRAINT zoning_element_numeric_value_pkey PRIMARY KEY (identifier),
@@ -1739,8 +1372,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_numeric_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_detail_line
 (
     identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    zoning_element_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    planning_detail_line_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    zoning_element_local_id TEXT NOT NULL,
+    planning_detail_line_local_id TEXT NOT NULL,
     CONSTRAINT zoning_element_plan_detail_line_pkey PRIMARY KEY (identifier),
     CONSTRAINT zoning_element_plan_detail_line_fk_planning_detail_line FOREIGN KEY (planning_detail_line_local_id)
         REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
@@ -1760,9 +1393,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_detail_line
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_regulation_group
 (
-    id integer NOT NULL DEFAULT nextval('$SCHEMANAME$.zoning_element_plan_regulation_group_id_seq'::regclass),
-    zoning_element_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    plan_regulation_group_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    zoning_element_local_id TEXT NOT NULL,
+    plan_regulation_group_local_id TEXT NOT NULL,
     CONSTRAINT zoning_element_plan_regulation_group_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_plan_regulatio_zoning_element_local_id_plan__key UNIQUE (zoning_element_local_id, plan_regulation_group_local_id),
     CONSTRAINT zoning_element_plan_regulation_group_fk_plan_regulation_group FOREIGN KEY (plan_regulation_group_local_id)
@@ -1784,8 +1417,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_regulation_group
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_planned_space
 (
     identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    zoning_element_local_id character varying COLLATE pg_catalog."default" NOT NULL,
-    planned_space_local_id character varying COLLATE pg_catalog."default" NOT NULL,
+    zoning_element_local_id TEXT NOT NULL,
+    planned_space_local_id TEXT NOT NULL,
     CONSTRAINT zoning_element_planned_space_pkey PRIMARY KEY (identifier),
     CONSTRAINT zoning_element_planned_space_fk_planned_space FOREIGN KEY (planned_space_local_id)
         REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
@@ -1805,7 +1438,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_planned_space
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_regulation
 (
-    identifier integer NOT NULL DEFAULT nextval('$SCHEMANAME$.zoning_element_regulation_identifier_seq'::regclass),
+    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     zoning_element_id uuid NOT NULL,
     regulative_id uuid NOT NULL,
     CONSTRAINT zoning_element_regulation_pkey PRIMARY KEY (identifier),
