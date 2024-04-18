@@ -1,7 +1,5 @@
 ﻿using DbUp;
 using DbUp.Engine;
-using DbUp.Helpers;
-using Npgsql;
 using System.Reflection;
 
 namespace Kauko.DbUpdater
@@ -32,8 +30,8 @@ namespace Kauko.DbUpdater
                     return -1;
                 }
 
-                System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
-                System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+                Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+                Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
 
                 var connectionString = args[1];
 				int srid = int.Parse(args[2]);
@@ -46,8 +44,8 @@ namespace Kauko.DbUpdater
                 DatabaseUpgradeResult result;
 
                 UpgradeEngine upgrader;
-				
-				
+
+
 
                 if (args.FirstOrDefault() == "markinitial")
                 {
