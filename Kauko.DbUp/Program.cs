@@ -10,7 +10,7 @@ namespace Kauko.DbUpdater
         {
             try
             {
-                if (args.Length <= 2)
+                if (args.Length <= 5)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("");
