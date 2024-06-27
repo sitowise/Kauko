@@ -545,6 +545,8 @@ CREATE OR REPLACE TRIGGER delete_geom_relations
     WHEN (old.geom IS DISTINCT FROM new.geom)
     EXECUTE FUNCTION $SCHEMANAME$.delete_geom_relations();
 
+
+
 -- Trigger: geom_relations
 
 -- DROP TRIGGER IF EXISTS geom_relations ON $SCHEMANAME$.planning_detail_line;
@@ -554,6 +556,8 @@ CREATE OR REPLACE TRIGGER geom_relations
     ON $SCHEMANAME$.planning_detail_line
     FOR EACH STATEMENT
     EXECUTE FUNCTION $SCHEMANAME$.geom_relations();
+
+
 
 -- Trigger: planning_detail_line_modified_trigger
 
@@ -565,6 +569,7 @@ CREATE OR REPLACE TRIGGER planning_detail_line_modified_trigger
     FOR EACH ROW
     EXECUTE FUNCTION public.versioned_object_modified_trigger();
 
+
 -- Trigger: planning_detail_line_refresh_line_view
 
 -- DROP TRIGGER IF EXISTS planning_detail_line_refresh_line_view ON $SCHEMANAME$.planning_detail_line;
@@ -574,6 +579,7 @@ CREATE OR REPLACE TRIGGER planning_detail_line_refresh_line_view
     ON $SCHEMANAME$.planning_detail_line
     FOR EACH ROW
     EXECUTE FUNCTION $SCHEMANAME$.refresh_plan_regulations_line_view();
+
 
 -- Trigger: planning_detail_line_refresh_line_view_on_update
 
@@ -586,6 +592,7 @@ CREATE OR REPLACE TRIGGER planning_detail_line_refresh_line_view_on_update
     WHEN (old.geom IS DISTINCT FROM new.geom)
     EXECUTE FUNCTION $SCHEMANAME$.refresh_plan_regulations_line_view();
 
+
 -- Trigger: update_validity
 
 -- DROP TRIGGER IF EXISTS update_validity ON $SCHEMANAME$.planning_detail_line;
@@ -597,6 +604,7 @@ CREATE OR REPLACE TRIGGER update_validity
     WHEN (pg_trigger_depth() < 1)
     EXECUTE FUNCTION $SCHEMANAME$.update_validity();
 
+
 -- Trigger: upsert_creator_and_modifier_trigger
 
 -- DROP TRIGGER IF EXISTS upsert_creator_and_modifier_trigger ON $SCHEMANAME$.planning_detail_line;
@@ -607,6 +615,7 @@ CREATE OR REPLACE TRIGGER upsert_creator_and_modifier_trigger
     FOR EACH ROW
     EXECUTE FUNCTION $SCHEMANAME$.upsert_creator_and_modifier_trigger();
 
+
 -- Trigger: validate_planning_detail_line_geom
 
 -- DROP TRIGGER IF EXISTS validate_planning_detail_line_geom ON $SCHEMANAME$.planning_detail_line;
@@ -616,6 +625,7 @@ CREATE OR REPLACE TRIGGER validate_planning_detail_line_geom
     ON $SCHEMANAME$.planning_detail_line
     FOR EACH ROW
     EXECUTE FUNCTION $SCHEMANAME$.validate_geometry();
+
 
 -- Trigger: create_or_update_spatial_plan
 
