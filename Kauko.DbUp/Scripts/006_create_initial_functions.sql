@@ -432,7 +432,7 @@ BEGIN
     AND ze.lifecycle_status = '12'
   WHERE ps.local_id = ze_ps.planned_space_local_id
     AND ps.lifecycle_status IN ('10', '11');
-
+    
   UPDATE $SCHEMANAME$.planning_detail_line pdl
   SET lifecycle_status = '13'
   FROM $SCHEMANAME$.zoning_element ze
@@ -478,13 +478,66 @@ BEGIN
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
     AND pdl.lifecycle_status IN ('10', '11');
 
+-- Update lifecycle_status to '13' for planning_detail_point
+  UPDATE $SCHEMANAME$.planning_detail_point pdp
+  SET lifecycle_status = '13'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+    ON ze_pdp.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '13'
+  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
+    AND pdp.lifecycle_status IN ('06', '07', '08', '09');
+
+-- Update lifecycle_status to '14' for planning_detail_point
+  UPDATE $SCHEMANAME$.planning_detail_point pdp
+  SET lifecycle_status = '14'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+    ON ze_pdp.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '14'
+  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
+    AND pdp.lifecycle_status IN ('02', '03', '04', '05');
+
+-- Update planning_detail_point lifecycle_status to match zoning_element
+  UPDATE $SCHEMANAME$.planning_detail_point pdp
+  SET lifecycle_status = ze.lifecycle_status
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+    ON ze_pdp.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
+    AND pdp.lifecycle_status <> ze.lifecycle_status;
+
+-- Update lifecycle_status to '11' for planning_detail_point
+  UPDATE $SCHEMANAME$.planning_detail_point pdp
+  SET lifecycle_status = '11'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+    ON ze_pdp.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '11'
+  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
+    AND pdp.lifecycle_status IN ('06', '07', '08', '09');
+
+-- Update lifecycle_status to '12' for planning_detail_point
+  UPDATE $SCHEMANAME$.planning_detail_point pdp
+  SET lifecycle_status = '12'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+    ON ze_pdp.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '12'
+  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
+    AND pdp.lifecycle_status IN ('10', '11');
+
+
+-- ##########################
+
   UPDATE $SCHEMANAME$.describing_line dl
   SET lifecycle_status = '13'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '13'
-  WHERE dl.identifier = ze_dl.describing_line_id
+  WHERE dl.id = ze_dl.describing_line_id
     AND dl.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE $SCHEMANAME$.describing_line dl
@@ -493,7 +546,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
-  WHERE dl.identifier = ze_dl.describing_line_id
+  WHERE dl.id = ze_dl.describing_line_id
     AND dl.lifecycle_status IN ('02', '03', '04', '05');
 
   UPDATE $SCHEMANAME$.describing_line dl
@@ -502,7 +555,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
-  WHERE dl.identifier = ze_dl.describing_line_id
+  WHERE dl.id = ze_dl.describing_line_id
     AND ze.lifecycle_status <> dl.lifecycle_status;
 
   UPDATE $SCHEMANAME$.describing_line dl
@@ -511,7 +564,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '11'
-  WHERE dl.identifier = ze_dl.describing_line_id
+  WHERE dl.id = ze_dl.describing_line_id
     AND dl.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE $SCHEMANAME$.describing_line dl
@@ -520,7 +573,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '12'
-  WHERE dl.identifier = ze_dl.describing_line_id
+  WHERE dl.id = ze_dl.describing_line_id
     AND dl.lifecycle_status IN ('10', '11');
 
   UPDATE $SCHEMANAME$.describing_text dt
@@ -529,7 +582,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '11'
-  WHERE dt.identifier = ze_dt.describing_text_id
+  WHERE dt.id = ze_dt.describing_text_id
     AND dt.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE $SCHEMANAME$.describing_text dt
@@ -538,7 +591,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '13'
-  WHERE dt.identifier = ze_dt.describing_text_id
+  WHERE dt.id = ze_dt.describing_text_id
     AND dt.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE $SCHEMANAME$.describing_text dt
@@ -547,7 +600,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
-  WHERE dt.identifier = ze_dt.describing_text_id
+  WHERE dt.id = ze_dt.describing_text_id
     AND dt.lifecycle_status IN ('02', '03', '04', '05');
 
   UPDATE $SCHEMANAME$.describing_text dt
@@ -556,7 +609,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
-  WHERE dt.identifier = ze_dt.describing_text_id
+  WHERE dt.id = ze_dt.describing_text_id
     AND ze.lifecycle_status <> dt.lifecycle_status;
 
   UPDATE $SCHEMANAME$.describing_text dt
@@ -565,7 +618,7 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '12'
-  WHERE dt.identifier = ze_dt.describing_text_id
+  WHERE dt.id = ze_dt.describing_text_id
     AND dt.lifecycle_status IN ('10', '11');
 
   WITH RECURSIVE valid_spatial_plans(local_id) AS (
@@ -670,6 +723,8 @@ BEGIN
     WHERE ze.spatial_plan = p_old_active_plan_local_id
     AND ps.local_id = zeps.planned_space_local_id;
 
+-- ##########################
+
     UPDATE $SCHEMANAME$.planning_detail_line pdl
     SET is_active = FALSE
     FROM $SCHEMANAME$.zoning_element_plan_detail_line zepdl
@@ -678,13 +733,23 @@ BEGIN
     WHERE ze.spatial_plan = p_old_active_plan_local_id
     AND pdl.local_id = zepdl.planning_detail_line_local_id;
 
+    UPDATE $SCHEMANAME$.planning_detail_point pdp
+    SET is_active = FALSE
+    FROM $SCHEMANAME$.zoning_element_plan_detail_point zepdp
+    JOIN $SCHEMANAME$.zoning_element ze
+        ON ze.local_id = zepdp.zoning_element_local_id
+    WHERE ze.spatial_plan = p_old_active_plan_local_id
+    AND pdp.local_id = zepdp.planning_detail_point_local_id;
+
+-- ##########################
+
     UPDATE $SCHEMANAME$.describing_line dl
     SET is_active = FALSE
     FROM $SCHEMANAME$.zoning_element_describing_line zedl
     JOIN $SCHEMANAME$.zoning_element ze
         ON ze.local_id = zedl.zoning_element_local_id
     WHERE ze.spatial_plan = p_old_active_plan_local_id
-    AND dl.identifier = zedl.describing_line_id;
+    AND dl.id = zedl.describing_line_id;
 
     UPDATE $SCHEMANAME$.describing_text dt
     SET is_active = FALSE
@@ -692,7 +757,7 @@ BEGIN
     JOIN $SCHEMANAME$.zoning_element ze
         ON ze.local_id = zedt.zoning_element_local_id
     WHERE ze.spatial_plan = p_old_active_plan_local_id
-    AND dt.identifier = zedt.describing_text_id;
+    AND dt.id = zedt.describing_text_id;
 
     SELECT ARRAY(SELECT $SCHEMANAME$.get_plan_regulation_local_ids(p_old_active_plan_local_id))
     INTO v_old_plan_regulation_local_ids;
@@ -827,6 +892,8 @@ BEGIN
     WHERE ze.spatial_plan = p_new_active_plan_local_id
     AND ps.local_id = zeps.planned_space_local_id;
 
+-- ##########################
+
     UPDATE $SCHEMANAME$.planning_detail_line pdl
     SET is_active = TRUE
     FROM $SCHEMANAME$.zoning_element_plan_detail_line zepdl
@@ -841,7 +908,25 @@ BEGIN
     JOIN $SCHEMANAME$.zoning_element ze
         ON ze.local_id = zedl.zoning_element_local_id
     WHERE ze.spatial_plan = p_new_active_plan_local_id
-    AND dl.identifier = zedl.describing_line_id;
+    AND dl.id = zedl.describing_line_id;
+
+    UPDATE $SCHEMANAME$.planning_detail_point pdp
+    SET is_active = TRUE
+    FROM $SCHEMANAME$.zoning_element_plan_detail_point zepdp
+    JOIN $SCHEMANAME$.zoning_element ze
+        ON ze.local_id = zepdp.zoning_element_local_id
+    WHERE ze.spatial_plan = p_new_active_plan_local_id
+    AND pdp.local_id = zepdp.planning_detail_point_local_id;
+
+    UPDATE $SCHEMANAME$.describing_point dp
+    SET is_active = TRUE
+    FROM $SCHEMANAME$.zoning_element_describing_point zedp
+    JOIN $SCHEMANAME$.zoning_element ze
+        ON ze.local_id = zedp.zoning_element_local_id
+    WHERE ze.spatial_plan = p_new_active_plan_local_id
+    AND dp.id = zedp.describing_point_id;
+
+-- ##########################
 
     UPDATE $SCHEMANAME$.describing_text dt
     SET is_active = TRUE
@@ -849,7 +934,7 @@ BEGIN
     JOIN $SCHEMANAME$.zoning_element ze
         ON ze.local_id = zedt.zoning_element_local_id
     WHERE ze.spatial_plan = p_new_active_plan_local_id
-    AND dt.identifier = zedt.describing_text_id;
+    AND dt.id = zedt.describing_text_id;
 
     SELECT ARRAY(SELECT $SCHEMANAME$.get_plan_regulation_local_ids(p_old_active_plan_local_id))
     INTO v_new_plan_regulation_local_ids;
@@ -1134,12 +1219,16 @@ BEGIN
       SET spatial_plan = NULL
       WHERE spatial_plan = OLD.local_id;
       RETURN NEW;
+
     WHEN 'zoning_element' THEN
       DELETE
       FROM $SCHEMANAME$.zoning_element_planned_space
       WHERE zoning_element_local_id = OLD.local_id;
       DELETE
       FROM $SCHEMANAME$.zoning_element_plan_detail_line
+      WHERE zoning_element_local_id = OLD.local_id;
+      DELETE
+      FROM $SCHEMANAME$.zoning_element_plan_detail_point
       WHERE zoning_element_local_id = OLD.local_id;
       DELETE
       FROM $SCHEMANAME$.zoning_element_describing_line
@@ -1149,6 +1238,7 @@ BEGIN
       WHERE zoning_element_local_id = OLD.local_id;
       NEW.spatial_plan := NULL;
       RETURN NEW;
+
     WHEN 'planned_space' THEN
       DELETE
       FROM $SCHEMANAME$.zoning_element_planned_space
@@ -1157,6 +1247,7 @@ BEGIN
       FROM $SCHEMANAME$.planned_space_plan_detail_line
       WHERE planned_space_local_id = OLD.local_id;
       RETURN NEW;
+
     WHEN 'planning_detail_line' THEN
       DELETE
       FROM $SCHEMANAME$.zoning_element_plan_detail_line
@@ -1165,15 +1256,25 @@ BEGIN
       FROM $SCHEMANAME$.planned_space_plan_detail_line
       WHERE planning_detail_line_local_id = OLD.local_id;
       RETURN NEW;
+    
+    WHEN 'planning_detail_point' THEN
+      DELETE
+      FROM $SCHEMANAME$.zoning_element_plan_detail_point
+      WHERE planning_detail_point_local_id = OLD.local_id;    
+      DELETE
+      FROM $SCHEMANAME$.planned_space_plan_detail_point
+      WHERE planning_detail_point_local_id = OLD.local_id;
+      RETURN NEW;
+
     WHEN 'describing_line' THEN
       DELETE
       FROM $SCHEMANAME$.zoning_element_describing_line
-      WHERE describing_line_id = OLD.identifier;
+      WHERE describing_line_id = OLD.id;
       RETURN NEW;
     WHEN 'describing_text' THEN
       DELETE
       FROM $SCHEMANAME$.zoning_element_describing_text
-      WHERE describing_text_id = OLD.identifier;
+      WHERE describing_text_id = OLD.id;
       RETURN NEW;
     ELSE
       RETURN NEW;
@@ -1252,11 +1353,31 @@ BEGIN
       );
     END IF;
 
+  IF (tg_table_name IN ('zoning_element', 'planning_detail_point')) THEN
+    INSERT INTO $SCHEMANAME$.zoning_element_plan_detail_point (zoning_element_local_id, planning_detail_point_local_id)
+    SELECT DISTINCT
+      ze.local_id,
+      pdp.local_id
+    FROM $SCHEMANAME$.zoning_element ze
+      INNER JOIN $SCHEMANAME$.planning_detail_point pdp
+        ON st_intersects(ze.geom, pdp.geom)
+    WHERE ze.is_active
+        AND pdp.is_active
+        AND ze.lifecycle_status IN ('01', '02', '03', '04', '05')
+        AND pdp.lifecycle_status IN ('01', '02', '03', '04', '05')
+        AND NOT EXISTS (
+            SELECT 1
+            FROM $SCHEMANAME$.zoning_element_plan_detail_point zepdp
+            WHERE zepdp.planning_detail_point_local_id = pdp.local_id AND
+                  zepdp.zoning_element_local_id = ze.local_id
+      );
+    END IF;
+
     IF (tg_table_name IN ('zoning_element', 'describing_line')) THEN
       INSERT INTO $SCHEMANAME$.zoning_element_describing_line (zoning_element_local_id, describing_line_id)
       SELECT DISTINCT
         ze.local_id,
-        dl.identifier
+        dl.id
       FROM $SCHEMANAME$.zoning_element ze
         INNER JOIN $SCHEMANAME$.describing_line dl
           ON st_intersects(ze.geom, dl.geom)
@@ -1267,7 +1388,7 @@ BEGIN
         AND NOT EXISTS (
           SELECT 1
           FROM $SCHEMANAME$.zoning_element_describing_line zedl
-          WHERE zedl.describing_line_id = dl.identifier AND
+          WHERE zedl.describing_line_id = dl.id AND
                 zedl.zoning_element_local_id = ze.local_id
         );
     END IF;
@@ -1276,7 +1397,7 @@ BEGIN
         INSERT INTO $SCHEMANAME$.zoning_element_describing_text (zoning_element_local_id, describing_text_id)
         SELECT DISTINCT
           ze.local_id,
-          dt.identifier
+          dt.id
         FROM $SCHEMANAME$.zoning_element ze
           INNER JOIN $SCHEMANAME$.describing_text dt
             ON st_intersects(ze.geom, dt.geom)
@@ -1287,7 +1408,7 @@ BEGIN
             AND NOT EXISTS (
                 SELECT 1
                 FROM $SCHEMANAME$.zoning_element_describing_text zedt
-                WHERE zedt.describing_text_id = dt.identifier AND
+                WHERE zedt.describing_text_id = dt.id AND
                     zedt.zoning_element_local_id = ze.local_id
           );
       END IF;
@@ -1311,9 +1432,31 @@ BEGIN
                     ps_pdl.planned_space_local_id = ps.local_id
             );
       END IF;
+
+      IF (tg_table_name IN ('planned_space', 'planning_detail_point')) THEN
+        INSERT INTO $SCHEMANAME$.planned_space_plan_detail_point (planned_space_local_id, planning_detail_point_local_id)
+        SELECT DISTINCT
+          ps.local_id,
+          pdp.local_id
+        FROM $SCHEMANAME$.planned_space ps
+          INNER JOIN $SCHEMANAME$.planning_detail_point pdp
+            ON st_intersects(ps.geom, pdp.geom)
+        WHERE ps.is_active
+            AND pdp.is_active
+            AND ps.lifecycle_status IN ('01', '02', '03', '04', '05')
+            AND pdp.lifecycle_status IN ('01', '02', '03', '04', '05')
+            AND NOT EXISTS (
+                SELECT 1
+                FROM $SCHEMANAME$.planned_space_plan_detail_point ps_pdp
+                WHERE ps_pdp.planning_detail_point_local_id = pdp.local_id AND
+                      ps_pdp.planned_space_local_id = ps.local_id
+          );
+      END IF;
     RETURN NULL;
 END;
 $BODY$;
+
+-- ##########################
 
 -- FUNCTION: $SCHEMANAME$.inherit_validity()
 
@@ -1662,6 +1805,8 @@ BEGIN
         0.1))
       AND ps.lifecycle_status = '11';
 
+-- ##########################
+
     UPDATE $SCHEMANAME$.planning_detail_line pdl
     SET lifecycle_status = '12'
     WHERE ST_Within(
@@ -1709,6 +1854,56 @@ BEGIN
       0.1))
       AND pdl.lifecycle_status = '11';
 
+-- Update lifecycle_status to '12' for planning_detail_point
+UPDATE $SCHEMANAME$.planning_detail_point pdp
+SET lifecycle_status = '12'
+WHERE ST_Within(
+  pdp.geom,
+  ST_Buffer(
+    (WITH RECURSIVE zoning_elements(local_id) AS (
+      SELECT ze.local_id
+      FROM $SCHEMANAME$.zoning_element ze
+      WHERE ze.validity_time @> CURRENT_DATE
+        AND ze.lifecycle_status NOT IN ('10', '11')
+      EXCEPT
+      SELECT ze_pdp.zoning_element_local_id
+      FROM $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+      WHERE ze_pdp.planning_detail_point_local_id = pdp.local_id
+    )
+    SELECT ST_Union($SCHEMANAME$.get_valid_zoning_element_area(ze.local_id))
+    FROM $SCHEMANAME$.zoning_element ze,
+          zoning_elements zes
+    WHERE ze.local_id = zes.local_id),
+    0.1)
+  )
+  AND pdp.lifecycle_status IN ('10', '11');
+
+-- Update lifecycle_status to '10' for planning_detail_point
+UPDATE $SCHEMANAME$.planning_detail_point pdp
+SET lifecycle_status = '10'
+WHERE ST_Crosses(
+  pdp.geom,
+  ST_Buffer(
+    (WITH RECURSIVE zoning_elements(local_id) AS (
+      SELECT ze.local_id
+      FROM $SCHEMANAME$.zoning_element ze
+      WHERE ze.validity_time @> CURRENT_DATE
+        AND ze.lifecycle_status = '11'
+      EXCEPT
+      SELECT ze_pdp.zoning_element_local_id
+      FROM $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+      WHERE ze_pdp.planning_detail_point_local_id = pdp.local_id
+    )
+    SELECT ST_Union($SCHEMANAME$.get_valid_zoning_element_area(ze.local_id))
+    FROM $SCHEMANAME$.zoning_element ze,
+          zoning_elements zes
+    WHERE ze.local_id = zes.local_id),
+    0.1)
+  )
+  AND pdp.lifecycle_status = '11';
+
+-- ##########################
+
     UPDATE $SCHEMANAME$.describing_line dl
     SET lifecycle_status = '12'
     WHERE ST_Within(
@@ -1722,7 +1917,7 @@ BEGIN
             EXCEPT
         SELECT ze_dl.zoning_element_local_id
         FROM $SCHEMANAME$.zoning_element_describing_line ze_dl
-        WHERE ze_dl.describing_line_id = dl.identifier
+        WHERE ze_dl.describing_line_id = dl.id
       )
         SELECT ST_Union($SCHEMANAME$.get_valid_zoning_element_area(ze.local_id))
         FROM $SCHEMANAME$.zoning_element ze,
@@ -1745,7 +1940,7 @@ BEGIN
         EXCEPT
         SELECT ze_dl.zoning_element_local_id
         FROM $SCHEMANAME$.zoning_element_describing_line ze_dl
-        WHERE ze_dl.describing_line_id = dl.identifier
+        WHERE ze_dl.describing_line_id = dl.id
       )
         SELECT ST_Union($SCHEMANAME$.get_valid_zoning_element_area(ze.local_id))
         FROM $SCHEMANAME$.zoning_element ze,
@@ -1768,7 +1963,7 @@ BEGIN
         EXCEPT
         SELECT ze_dt.zoning_element_local_id
         FROM $SCHEMANAME$.zoning_element_describing_text ze_dt
-        WHERE ze_dt.describing_text_id = dt.identifier
+        WHERE ze_dt.describing_text_id = dt.id
       )
         SELECT ST_Union($SCHEMANAME$.get_valid_zoning_element_area(ze.local_id))
         FROM $SCHEMANAME$.zoning_element ze,
@@ -1881,13 +2076,13 @@ BEGIN
         IF NOT ST_IsValid(NEW."value") THEN
             valid_reason := ST_IsValidReason(NEW."value");
             NEW."value" = ST_MakeValid(NEW."value", 'method=structure');
-            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
+            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.id, valid_reason;
         END IF;
     ELSE
         IF NOT ST_IsValid(NEW.geom) THEN
             valid_reason := ST_IsValidReason(NEW.geom);
             NEW.geom = ST_MakeValid(NEW.geom, 'method=structure');
-            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.identifier, valid_reason;
+            RAISE WARNING 'New or updated geometry in % with identifier % is not valid. Reason: %. Geometry has been made valid. Please verify fixed geometry.', TG_TABLE_NAME, NEW.id, valid_reason;
         END IF;
     END IF;
   RETURN NEW;
@@ -2106,7 +2301,7 @@ BEGIN
         WHERE sp.is_active
             AND ST_Overlaps(sp.geom, ST_Buffer(NEW.geom, -0.1))
     ) THEN
-        RAISE EXCEPTION 'Planned space geometry with identifier % is not contained in spatial plan', NEW.identifier;
+        RAISE EXCEPTION 'Planned space geometry with identifier % is not contained in spatial plan', NEW.id;
     END IF;
     RETURN NEW;
 END;
@@ -2130,11 +2325,11 @@ BEGIN
         SELECT 1
         FROM $SCHEMANAME$.spatial_plan AS sp
         WHERE sp.is_active
-            AND sp.identifier <> new.identifier
+            AND sp.id <> new.id
             AND sp.geom && NEW.geom
             AND NOT ST_Relate(ST_Buffer(sp.geom, -0.1), ST_Buffer(NEW.geom, -0.1), 'FF*******')
     ) THEN
-    RAISE EXCEPTION 'New % geometry with id % overlaps with existing spatial plan geometry', TG_TABLE_NAME, NEW.identifier;
+    RAISE EXCEPTION 'New % geometry with id % overlaps with existing spatial plan geometry', TG_TABLE_NAME, NEW.id;
     END IF;
   RETURN NEW;
 END;
@@ -2158,11 +2353,11 @@ BEGIN
         SELECT 1
         FROM $SCHEMANAME$.zoning_element AS ze
         WHERE ze.is_active
-            AND ze.identifier <> new.identifier
+            AND ze.id <> new.id
             AND ze.geom && NEW.geom
             AND NOT ST_Relate(ST_Buffer(ze.geom, -0.1), ST_Buffer(NEW.geom, -0,1), 'FF*******')
     ) THEN
-        RAISE EXCEPTION 'New zoning_element geometry with id % overlaps with existing zoning element geometry', NEW.identifier;
+        RAISE EXCEPTION 'New zoning_element geometry with id % overlaps with existing zoning element geometry', NEW.id;
     END IF;
     -- Zoning element geometry must not overlap with spatial plan geometry
     IF EXISTS (
@@ -2170,7 +2365,7 @@ BEGIN
         WHERE sp.is_active
             AND ST_Overlaps(sp.geom, ST_Buffer(NEW.geom, -0.1))
     ) THEN
-        RAISE EXCEPTION 'Zoning element geometry with identifier % is not contained in spatial plan', NEW.identifier;
+        RAISE EXCEPTION 'Zoning element geometry with identifier % is not contained in spatial plan', NEW.id;
     END IF;
     RETURN NEW;
 END;

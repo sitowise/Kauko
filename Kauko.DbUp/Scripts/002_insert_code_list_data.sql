@@ -1087,6 +1087,17 @@ ALTER SEQUENCE code_lists.iso_639_language_id_seq OWNED BY code_lists.iso_639_la
 
 
 --
+-- Name: ryhti_language; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.ryhti_language (
+    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1),
+    code character varying(3) NOT NULL,
+    name character varying(100) NOT NULL
+);
+
+
+--
 -- Name: legal_effectiveness_kind; Type: TABLE; Schema: code_lists; Owner: -
 --
 
@@ -1354,6 +1365,16 @@ CREATE SEQUENCE code_lists.validity_type_identifier_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+
+--
+-- Name: data_type; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.data_type (
+    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1),
+    value integer NOT NULL,
+    description character varying NOT NULL
+);
 
 
 --
@@ -3676,6 +3697,18 @@ INSERT INTO code_lists.iso_639_language VALUES (486, 'zza', 'Zaza; Dimili; Dimli
 
 
 --
+-- Data for Name: ryhti_language; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.ryhti_language (code, name) VALUES ('fin', 'Finnish');
+INSERT INTO code_lists.ryhti_language (code, name) VALUES ('swe', 'Swedish');
+INSERT INTO code_lists.ryhti_language (code, name) VALUES ('smn', 'Inari Sami');
+INSERT INTO code_lists.ryhti_language (code, name) VALUES ('sms', 'Skolt Sami');
+INSERT INTO code_lists.ryhti_language (code, name) VALUES ('sme', 'Northern Sami');
+INSERT INTO code_lists.ryhti_language (code, name) VALUES ('eng', 'English');
+
+
+--
 -- Data for Name: legal_effectiveness_kind; Type: TABLE DATA; Schema: code_lists; Owner: -
 --
 
@@ -4019,6 +4052,23 @@ INSERT INTO code_lists.validity_type VALUES (2, 2, 'Osittain voimassa');
 INSERT INTO code_lists.validity_type VALUES (3, 3, 'Ei voimassa');
 INSERT INTO code_lists.validity_type VALUES (4, 4, 'Keskeneräinen');
 
+--
+-- Data for Name: data_type; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.data_type (value, description) VALUES (1, 'LocalizedText');
+INSERT INTO code_lists.data_type (value, description) VALUES (2, 'Text');
+INSERT INTO code_lists.data_type (value, description) VALUES (3, 'Numeric');
+INSERT INTO code_lists.data_type (value, description) VALUES (4, 'NumericRange');
+INSERT INTO code_lists.data_type (value, description) VALUES (5, 'PositiveNumeric');
+INSERT INTO code_lists.data_type (value, description) VALUES (6, 'PositiveNumericRange');
+INSERT INTO code_lists.data_type (value, description) VALUES (7, 'Decimal');
+INSERT INTO code_lists.data_type (value, description) VALUES (8, 'DecimalRange');
+INSERT INTO code_lists.data_type (value, description) VALUES (9, 'PositiveDecimal');
+INSERT INTO code_lists.data_type (value, description) VALUES (10, 'PositiveDecimalRange');
+INSERT INTO code_lists.data_type (value, description) VALUES (11, 'Code');
+INSERT INTO code_lists.data_type (value, description) VALUES (12, 'Identifier');
+INSERT INTO code_lists.data_type (value, description) VALUES (13, 'SpotElevation');
 
 --
 -- Name: bindingness_kind_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
@@ -4898,6 +4948,13 @@ ALTER TABLE ONLY code_lists.iso_639_language
 ALTER TABLE ONLY code_lists.iso_639_language
     ADD CONSTRAINT iso_639_language_pkey PRIMARY KEY (id);
 
+--
+-- Name: ryhti_language ryhti_language_code_key; Type: CONSTRAINT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.ryhti_language
+    ADD CONSTRAINT ryhti_language_code_key UNIQUE (code);
+
 
 --
 -- Name: legal_effectiveness_kind legal_effectiveness_kind_codevalue_key; Type: CONSTRAINT; Schema: code_lists; Owner: -
@@ -5081,3 +5138,11 @@ ALTER TABLE ONLY code_lists.validity_type
 
 ALTER TABLE ONLY code_lists.validity_type
     ADD CONSTRAINT validity_type_value_key UNIQUE (value);
+
+
+--
+-- Name: data_type data_type_value_key; Type: CONSTRAINT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.data_type
+    ADD CONSTRAINT data_type_value_key UNIQUE (value);

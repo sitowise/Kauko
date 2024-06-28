@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.code_value
     title jsonb,
     CONSTRAINT code_value_pkey PRIMARY KEY (id),
     CONSTRAINT code_value_code_value_uuid_key UNIQUE (code_value_uuid),
-    CONSTRAINT code_value_title_check CHECK (check_language_string(title))
+    CONSTRAINT code_value_title_check CHECK (check_ryhti_language(title))
 )
 ;
 
@@ -29,12 +29,12 @@ CREATE SEQUENCE $SCHEMANAME$.describing_line_identifier_seq
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.describing_line
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     geom geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     type integer NOT NULL,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
-    CONSTRAINT describing_line_pkey PRIMARY KEY (identifier),
+    CONSTRAINT describing_line_pkey PRIMARY KEY (id),
     CONSTRAINT describing_line_lifecycle_status_fkey FOREIGN KEY (lifecycle_status)
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -55,7 +55,7 @@ CREATE SEQUENCE $SCHEMANAME$.describing_text_identifier_seq
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.describing_text
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     created timestamp without time zone NOT NULL DEFAULT now(),
     geom geometry(Point,$PROJECTSRID$) NOT NULL,
     text TEXT NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.describing_text
     big_letters boolean,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
-    CONSTRAINT describing_text_pkey PRIMARY KEY (identifier),
+    CONSTRAINT describing_text_pkey PRIMARY KEY (id),
     CONSTRAINT describing_text_lifecycle_status_fkey FOREIGN KEY (lifecycle_status)
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document
     reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     storage_time timestamp without time zone,
-    document_identifier TEXT,
+    document_id TEXT,
     name jsonb,
     additional_information_link TEXT,
     metadata TEXT,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document
         REFERENCES code_lists.document_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
-    CONSTRAINT document_name_check CHECK (check_language_string(name))
+    CONSTRAINT document_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.document_document
@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_metadata
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
     modified_at timestamp without time zone NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
     version_name text NOT NULL,
-    CONSTRAINT spatial_plan_pkey PRIMARY KEY (identifier),
+    CONSTRAINT spatial_plan_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_local_id_key UNIQUE (local_id),
     CONSTRAINT spatial_plan_planning_object_identifier_key UNIQUE (producer_specific_id),
     CONSTRAINT fk_finnish_muncipality FOREIGN KEY (land_administration_authority)
@@ -343,10 +343,10 @@ END),
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.localized_objective
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     objective text NOT NULL,
     fk_spatial_plan uuid NOT NULL,
-    CONSTRAINT localized_objective_pkey PRIMARY KEY (identifier),
+    CONSTRAINT localized_objective_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_objective_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (producer_specific_id) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -392,7 +392,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     numeric_value_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     obligatory boolean NOT NULL,
     value double precision NOT NULL,
@@ -401,7 +401,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
     localized_name TEXT,
     description_fi TEXT,
     description_se TEXT,
-    CONSTRAINT numeric_value_pkey PRIMARY KEY (identifier),
+    CONSTRAINT numeric_value_pkey PRIMARY KEY (id),
     CONSTRAINT numeric_value_numeric_value_id_key UNIQUE (numeric_value_id)
 )	;
 
@@ -485,7 +485,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_guidance_name_check CHECK (check_language_string(name))
+    CONSTRAINT plan_guidance_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.plan_guidance_document
@@ -721,7 +721,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_theme
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
@@ -741,7 +741,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space
     modified_at timestamp without time zone NOT NULL,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
-    CONSTRAINT planned_space_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planned_space_pkey PRIMARY KEY (id),
     CONSTRAINT planned_space_local_id_key UNIQUE (local_id),
     CONSTRAINT planned_space_planning_object_identifier_key UNIQUE (producer_specific_id),
     CONSTRAINT planned_space_bindingness_of_location_fkey FOREIGN KEY (bindingness_of_location)
@@ -773,10 +773,10 @@ END)
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_numeric_value
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planned_space_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
-    CONSTRAINT planned_space_numeric_value_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planned_space_numeric_value_pkey PRIMARY KEY (id),
     CONSTRAINT planned_space_numeric_value_key UNIQUE (planned_space_id, numeric_id),
     CONSTRAINT numeric_value_planned_space_fk FOREIGN KEY (numeric_id)
         REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
@@ -796,7 +796,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     storage_time timestamp without time zone,
     geom geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
@@ -814,7 +814,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     name jsonb,
     is_active boolean DEFAULT true,
-    CONSTRAINT planning_detail_line_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planning_detail_line_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_line_local_id_key UNIQUE (local_id),
     CONSTRAINT planning_detail_line_planning_object_identifier_key UNIQUE (producer_specific_id),
     CONSTRAINT planning_detail_line_bindingness_of_location_fk FOREIGN KEY (bindingness_of_location)
@@ -839,10 +839,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_line
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     planned_space_local_id TEXT NOT NULL,
     planning_detail_line_local_id TEXT NOT NULL,
-    CONSTRAINT planned_space_detail_line_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planned_space_detail_line_pkey PRIMARY KEY (id),
     CONSTRAINT planned_space_plan_detail_line_fk_planned_space FOREIGN KEY (planned_space_local_id)
         REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -884,13 +884,13 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_regulation_group
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.regulative_text
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     regulative_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     type integer NOT NULL,
     description_fi TEXT,
     description_se TEXT,
     validity integer NOT NULL DEFAULT 1,
-    CONSTRAINT regulative_text_pkey PRIMARY KEY (identifier),
+    CONSTRAINT regulative_text_pkey PRIMARY KEY (id),
     CONSTRAINT regulative_text_regulative_id_key UNIQUE (regulative_id)
 );
 
@@ -900,10 +900,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.regulative_text
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planned_space_id uuid NOT NULL,
     regulative_id uuid NOT NULL,
-    CONSTRAINT planned_space_regulation_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planned_space_regulation_pkey PRIMARY KEY (id),
     CONSTRAINT planned_space_regulation_key UNIQUE (planned_space_id, regulative_id),
     CONSTRAINT planned_space_regulation_fkey FOREIGN KEY (planned_space_id)
         REFERENCES $SCHEMANAME$.planned_space (producer_specific_id) MATCH SIMPLE
@@ -923,7 +923,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     name TEXT NOT NULL,
     professional_title jsonb,
     role jsonb,
@@ -935,7 +935,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
     storage_time timestamp without time zone NOT NULL DEFAULT now(),
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     fk_spatial_plan text,
-    CONSTRAINT contact_pkey PRIMARY KEY (identifier),
+    CONSTRAINT contact_pkey PRIMARY KEY (id),
     CONSTRAINT planner_local_id_key UNIQUE (local_id),
     CONSTRAINT planner_fk_spatial_plan FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
@@ -955,10 +955,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planning_detail_line_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_line_numeric_value_key UNIQUE (planning_detail_line_id, numeric_id),
     CONSTRAINT numeric_value_planning_detail_line_fk FOREIGN KEY (numeric_id)
         REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
@@ -1001,10 +1001,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_gro
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planning_detail_point_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (identifier),
+    CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_point_numeric_value_key UNIQUE (planning_detail_point_id, numeric_id),
     CONSTRAINT numeric_value_planning_detail_point_fk FOREIGN KEY (numeric_id)
         REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
@@ -1019,7 +1019,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.referenced_document
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     reference TEXT NOT NULL,
     referenced_on date NOT NULL,
     name TEXT NOT NULL,
@@ -1027,7 +1027,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.referenced_document
     language integer NOT NULL,
     role integer NOT NULL,
     type integer NOT NULL,
-    CONSTRAINT referenced_document_pkey PRIMARY KEY (identifier),
+    CONSTRAINT referenced_document_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_document_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (producer_specific_id) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -1117,10 +1117,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_regulation
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     spatial_plan_id uuid NOT NULL,
     regulative_id uuid NOT NULL,
-    CONSTRAINT spatial_plan_regulation_pkey PRIMARY KEY (identifier),
+    CONSTRAINT spatial_plan_regulation_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_regulation_key UNIQUE (spatial_plan_id, regulative_id),
     CONSTRAINT regulative_id_spatial_plan_fkey FOREIGN KEY (regulative_id)
         REFERENCES $SCHEMANAME$.regulative_text (regulative_id) MATCH SIMPLE
@@ -1185,10 +1185,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.versions
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999 CACHE 1 ),
     scriptname TEXT NOT NULL,
     applied timestamp(6) without time zone NOT NULL DEFAULT now(),
-    CONSTRAINT versions_pkey PRIMARY KEY (identifier),
+    CONSTRAINT versions_pkey PRIMARY KEY (id),
     CONSTRAINT versions_scriptname_key UNIQUE (scriptname)
 );
 
@@ -1233,7 +1233,7 @@ $BODY$;
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
@@ -1261,7 +1261,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
     modified_at timestamp without time zone NOT NULL,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
     is_active boolean DEFAULT true,
-    CONSTRAINT zoning_element_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_local_id_key UNIQUE (local_id),
     CONSTRAINT zoning_element_planning_object_identifier_key UNIQUE (producer_specific_id),
     CONSTRAINT zoning_element_fk_bindingness_of_location FOREIGN KEY (bindingness_of_location)
@@ -1306,12 +1306,12 @@ END),
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_line
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     describing_line_id integer NOT NULL,
     zoning_element_local_id TEXT,
-    CONSTRAINT zoning_element_describing_line_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_describing_line_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_describing_line_fk_describing_line FOREIGN KEY (describing_line_id)
-        REFERENCES $SCHEMANAME$.describing_line (identifier) MATCH SIMPLE
+        REFERENCES $SCHEMANAME$.describing_line (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
@@ -1327,12 +1327,12 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_line
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_text
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     describing_text_id integer NOT NULL,
     zoning_element_local_id TEXT,
-    CONSTRAINT zoning_element_describing_text_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_describing_text_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_describing_text_fk_describing_text FOREIGN KEY (describing_text_id)
-        REFERENCES $SCHEMANAME$.describing_text (identifier) MATCH SIMPLE
+        REFERENCES $SCHEMANAME$.describing_text (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
@@ -1348,10 +1348,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_text
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_numeric_value
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     zoning_id uuid NOT NULL,
     numeric_id uuid NOT NULL,
-    CONSTRAINT zoning_element_numeric_value_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_numeric_value_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_numeric_value_key UNIQUE (zoning_id, numeric_id),
     CONSTRAINT numeric_value_zoning_element_fk FOREIGN KEY (numeric_id)
         REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
@@ -1371,10 +1371,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_numeric_value
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_detail_line
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     zoning_element_local_id TEXT NOT NULL,
     planning_detail_line_local_id TEXT NOT NULL,
-    CONSTRAINT zoning_element_plan_detail_line_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_plan_detail_line_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_plan_detail_line_fk_planning_detail_line FOREIGN KEY (planning_detail_line_local_id)
         REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -1416,10 +1416,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_regulation_group
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_planned_space
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     zoning_element_local_id TEXT NOT NULL,
     planned_space_local_id TEXT NOT NULL,
-    CONSTRAINT zoning_element_planned_space_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_planned_space_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_planned_space_fk_planned_space FOREIGN KEY (planned_space_local_id)
         REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -1438,10 +1438,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_planned_space
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_regulation
 (
-    identifier integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     zoning_element_id uuid NOT NULL,
     regulative_id uuid NOT NULL,
-    CONSTRAINT zoning_element_regulation_pkey PRIMARY KEY (identifier),
+    CONSTRAINT zoning_element_regulation_pkey PRIMARY KEY (id),
     CONSTRAINT zoning_element_regulation_key UNIQUE (zoning_element_id, regulative_id),
     CONSTRAINT regulative_id_zoning_fkey FOREIGN KEY (regulative_id)
         REFERENCES $SCHEMANAME$.regulative_text (regulative_id) MATCH SIMPLE
