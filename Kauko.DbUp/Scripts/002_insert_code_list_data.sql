@@ -1091,7 +1091,7 @@ ALTER SEQUENCE code_lists.iso_639_language_id_seq OWNED BY code_lists.iso_639_la
 --
 
 CREATE TABLE code_lists.ryhti_language (
-    id integer NOT NULL,
+    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     code character varying(3) NOT NULL,
     name character varying(100) NOT NULL
 );
@@ -1390,7 +1390,7 @@ CREATE SEQUENCE code_lists.validity_type_identifier_seq
 --
 
 CREATE TABLE code_lists.data_type (
-    id integer NOT NULL,
+    id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     value integer NOT NULL,
     description character varying NOT NULL
 );
