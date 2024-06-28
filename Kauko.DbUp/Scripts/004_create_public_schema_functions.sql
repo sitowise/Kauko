@@ -93,10 +93,10 @@ BEGIN
     FROM jsonb_each_text(languageString)
   LOOP
     IF NOT EXISTS (SELECT 1 FROM code_lists.iso_639_language WHERE code = languageCode.key) THEN
-      RAISE EXCEPTION 'Language code % does not exist', languageCode.key;
+      RAISE EXCEPTION 'Language code % does not exist or is not valid', languageCode.key;
       RETURN FALSE;
     END IF;
-    IF (languageCode.value <> '') IS NOT TRUE THEN
+    IF (languageCode.value IS NULL OR languageCode.value = '') THEN
       RAISE EXCEPTION 'Text for % is either NULL or empty', languageCode.key;
       RETURN FALSE;
     END IF;
@@ -129,7 +129,7 @@ BEGIN
       RAISE EXCEPTION 'Language code % does not exist or is not valid', languageCode.key;
       RETURN FALSE;
     END IF;
-    IF (languageCode.value <> '') IS NOT TRUE THEN
+    IF (languageCode.value IS NULL OR languageCode.value = '') THEN
       RAISE EXCEPTION 'Text for % is either NULL or empty', languageCode.key;
       RETURN FALSE;
     END IF;

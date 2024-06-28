@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.code_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    code_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    code_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value TEXT NOT NULL,
     code_list TEXT,
     title jsonb,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document
         REFERENCES code_lists.document_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
-    CONSTRAINT document_name_check CHECK (check_language_string(name))
+    CONSTRAINT document_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.document_document
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_document
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    elevation_position_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    elevation_position_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value double precision NOT NULL,
     unit_of_measure TEXT,
     reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    elevation_range_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    elevation_range_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     minimum_value double precision,
     maximum_value double precision,
     unit_of_measure TEXT,
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    geometry_area_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    geometry_area_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
     is_active boolean DEFAULT true,
@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    geometry_line_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    geometry_line_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
     is_active boolean DEFAULT true,
@@ -212,7 +212,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    geometry_point_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    geometry_point_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value geometry(Point,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
     point_rotation double precision,
@@ -362,7 +362,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.localized_objective
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_double_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    numeric_double_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    numeric_double_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value double precision NOT NULL,
     unit_of_measure TEXT,
     obligatory boolean NOT NULL,
@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_double_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    numeric_range_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    numeric_range_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     minimum_value double precision,
     maximum_value double precision,
     unit_of_measure TEXT,
@@ -1143,7 +1143,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_regulation
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    text_value_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    text_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value jsonb NOT NULL,
     syntax TEXT,
     CONSTRAINT text_value_pkey PRIMARY KEY (id),
@@ -1158,7 +1158,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    time_instant_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    time_instant_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value timestamp without time zone NOT NULL,
     CONSTRAINT time_instant_value_pkey PRIMARY KEY (id),
     CONSTRAINT time_instant_value_time_instant_uuid_key UNIQUE (time_instant_uuid)
@@ -1171,7 +1171,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    time_period_uuid TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    time_period_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value tsrange NOT NULL,
     time_period_from timestamp without time zone,
     time_period_to timestamp without time zone,
