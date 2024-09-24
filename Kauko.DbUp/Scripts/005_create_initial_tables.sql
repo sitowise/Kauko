@@ -624,7 +624,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group_regulation
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    producer_specific_id uuid DEFAULT uuid_generate_v4(),
+    producer_specific_id uuid DEFAULT uuid_generate_v4(),  -- TODO: Muutetaanko local_id:ksi, vaikka taulu sisältää viittauksen toisen taulun local_id-kenttään?
     type TEXT NOT NULL,
     name jsonb,
     fk_plan_regulation TEXT NOT NULL,
@@ -659,7 +659,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_supplementary_informatio
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT fk_supplementary_information FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (producer_specific_id) MATCH SIMPLE
+        REFERENCES $SCHEMANAME$.supplementary_information (producer_specific_id) MATCH SIMPLE -- TODO: Ks. edellisen taulun TODO
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
