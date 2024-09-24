@@ -1164,13 +1164,13 @@ BEGIN
         IF (NEW."name" <> OLD."name") THEN
             UPDATE $SCHEMANAME$.spatial_plan
             SET "name" = NEW."name"
-            WHERE plan_id = NEW.plan_id;
+            WHERE ryhti_plan_id = NEW.ryhti_plan_id;
         END IF;
 
-        IF (NEW."plan_id" <> OLD."plan_id") THEN
+        IF (NEW."ryhti_plan_id" <> OLD."ryhti_plan_id") THEN
             UPDATE $SCHEMANAME$.spatial_plan
-            SET plan_id = NEW."plan_id"
-            WHERE plan_id = OLD."plan_id";
+            SET ryhti_plan_id = NEW."ryhti_plan_id"
+            WHERE ryhti_plan_id = OLD."ryhti_plan_id";
         END IF;
         RETURN NEW;
     END IF;
@@ -1178,18 +1178,18 @@ BEGIN
         IF NOT EXISTS (
             SELECT 1
             FROM $SCHEMANAME$.spatial_plan_metadata
-            WHERE plan_id = NEW.plan_id
+            WHERE ryhti_plan_id = NEW.ryhti_plan_id
         ) THEN
-            INSERT INTO $SCHEMANAME$.spatial_plan_metadata (plan_id, "name", created)
-            VALUES (NEW.plan_id, NEW."name", NOW());
+            INSERT INTO $SCHEMANAME$.spatial_plan_metadata (ryhti_plan_id, "name", created)
+            VALUES (NEW.ryhti_plan_id, NEW."name", NOW());
         ELSE
             UPDATE $SCHEMANAME$.spatial_plan_metadata
             SET "name" = NEW."name"
-            WHERE plan_id = NEW.plan_id;
+            WHERE ryhti_plan_id = NEW.ryhti_plan_id;
 
             UPDATE $SCHEMANAME$.spatial_plan
             SET "name" = NEW."name"
-            WHERE plan_id = NEW.plan_id
+            WHERE ryhti_plan_id = NEW.ryhti_plan_id
             AND "name" <> NEW."name";
         END IF;
         RETURN NEW;

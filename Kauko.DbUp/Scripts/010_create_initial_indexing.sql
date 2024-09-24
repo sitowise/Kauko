@@ -87,7 +87,7 @@ CREATE INDEX IF NOT EXISTS sidx_planning_detail_line_geom
 
 CREATE UNIQUE INDEX IF NOT EXISTS active_version_idx
     ON $SCHEMANAME$.spatial_plan USING btree
-    (identity_id ASC NULLS LAST)
+    (local_id ASC NULLS LAST)
     WHERE is_active;
 -- Index: sidx_spatial_plan_geom
 

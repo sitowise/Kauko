@@ -43,7 +43,7 @@ AS $BODY$
 
   BEGIN
     IF NEW.local_id IS NULL THEN
-      NEW.local_id := NEW.identity_id || '.' || uuid_generate_v4();
+      NEW.local_id := uuid_generate_v4();
     END IF;
     RETURN NEW;
   END;
