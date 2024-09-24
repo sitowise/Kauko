@@ -776,11 +776,11 @@ CREATE OR REPLACE TRIGGER spatial_plan_commentary_modified_trigger
 
 -- Trigger: create_or_update_spatial_plan
 
--- DROP TRIGGER IF EXISTS create_or_update_spatial_plan ON $SCHEMANAME$.spatial_plan_metadata;
+-- DROP TRIGGER IF EXISTS create_or_update_spatial_plan ON $SCHEMANAME$.spatial_plan_main;
 
 CREATE OR REPLACE TRIGGER create_or_update_spatial_plan
     BEFORE UPDATE 
-    ON $SCHEMANAME$.spatial_plan_metadata
+    ON $SCHEMANAME$.spatial_plan_main
     FOR EACH ROW
     WHEN (pg_trigger_depth() < 1)
     EXECUTE FUNCTION $SCHEMANAME$.create_or_update_spatial_plan();
