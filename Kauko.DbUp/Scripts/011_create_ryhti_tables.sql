@@ -292,13 +292,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_plan_regulation_group (
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    producer_specific_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     storage_time timestamp without time zone,
     geom geometry(Point,$PROJECTSRID$) NOT NULL,
-    identity_id uuid NOT NULL DEFAULT uuid_generate_v4(),
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
-    namespace TEXT,
-    reference_id TEXT,
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     created timestamp without time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
@@ -311,7 +307,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
     is_active boolean DEFAULT true,
     CONSTRAINT planning_detail_point_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_point_local_id_key UNIQUE (local_id),
-    CONSTRAINT planning_detail_point_planning_object_identifier_key UNIQUE (producer_specific_id),
     CONSTRAINT planning_detail_point_bindingness_of_location_fk FOREIGN KEY (bindingness_of_location)
         REFERENCES code_lists.bindingness_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
