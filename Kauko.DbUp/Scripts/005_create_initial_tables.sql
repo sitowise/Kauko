@@ -604,7 +604,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group_regulation
     plan_regulation_group_local_id TEXT NOT NULL,
     plan_regulation_local_id TEXT NOT NULL,
     CONSTRAINT plan_regulation_group_regulation_pkey PRIMARY KEY (id),
-    CONSTRAINT plan_regulation_group_regulat_plan_regulation_group_local_i_key UNIQUE (plan_regulation_group_local_id, plan_regulation_local_id),
+    CONSTRAINT plan_regulation_group_regulat_plan_regulation_group_local_id_key UNIQUE (plan_regulation_group_local_id, plan_regulation_local_id),
     CONSTRAINT plan_regulation_group_regulation_fk_plan_regulation FOREIGN KEY (plan_regulation_local_id)
         REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -624,12 +624,12 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group_regulation
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    producer_specific_id uuid DEFAULT uuid_generate_v4(),  -- TODO: Muutetaanko local_id:ksi, vaikka taulu sisältää viittauksen toisen taulun local_id-kenttään?
+    local_id text NOT NULL DEFAULT (uuid_generate_v4())::text,
     type TEXT NOT NULL,
     name jsonb,
     fk_plan_regulation TEXT NOT NULL,
     CONSTRAINT supplementary_information_pkey PRIMARY KEY (id),
-    CONSTRAINT supplementary_information_producer_specific_id_key UNIQUE (producer_specific_id),
+    CONSTRAINT supplementary_information_local_id_key UNIQUE (local_id),
     CONSTRAINT supplementary_information_fk_plan_regulation FOREIGN KEY (fk_plan_regulation)
         REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -650,7 +650,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_supplementary_informatio
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     fk_plan_regulation TEXT NOT NULL,
-    fk_supplementary_information uuid NOT NULL,
+    fk_supplementary_information text NOT NULL,
     CONSTRAINT plan_regulation_supplementary_information_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_supplementary_fk_plan_regulation_fk_supplem_key UNIQUE (fk_plan_regulation, fk_supplementary_information),
     CONSTRAINT fk_plan_regulation FOREIGN KEY (fk_plan_regulation)
@@ -659,7 +659,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_supplementary_informatio
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT fk_supplementary_information FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (producer_specific_id) MATCH SIMPLE -- TODO: Ks. edellisen taulun TODO
+        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
