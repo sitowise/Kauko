@@ -1160,7 +1160,7 @@ CREATE OR REPLACE FUNCTION $SCHEMANAME$.create_or_update_spatial_plan()
     VOLATILE NOT LEAKPROOF
 AS $BODY$
 BEGIN
-    IF (TG_TABLE_NAME = 'spatial_plan_metadata' AND TG_OP = 'UPDATE') THEN
+    IF (TG_TABLE_NAME = 'spatial_plan_main' AND TG_OP = 'UPDATE') THEN
         IF (NEW."name" <> OLD."name") THEN
             UPDATE $SCHEMANAME$.spatial_plan
             SET "name" = NEW."name"
@@ -1177,13 +1177,13 @@ BEGIN
     IF (TG_TABLE_NAME = 'spatial_plan') THEN
         IF NOT EXISTS (
             SELECT 1
-            FROM $SCHEMANAME$.spatial_plan_metadata
+            FROM $SCHEMANAME$.spatial_plan_main
             WHERE ryhti_plan_id = NEW.ryhti_plan_id
         ) THEN
-            INSERT INTO $SCHEMANAME$.spatial_plan_metadata (ryhti_plan_id, "name", created)
+            INSERT INTO $SCHEMANAME$.spatial_plan_main (ryhti_plan_id, "name", created)
             VALUES (NEW.ryhti_plan_id, NEW."name", NOW());
         ELSE
-            UPDATE $SCHEMANAME$.spatial_plan_metadata
+            UPDATE $SCHEMANAME$.spatial_plan_main
             SET "name" = NEW."name"
             WHERE ryhti_plan_id = NEW.ryhti_plan_id;
 

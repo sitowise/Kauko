@@ -217,19 +217,19 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
 );
 
 
--- Table: $SCHEMANAME$.spatial_plan_metadata
+-- Table: $SCHEMANAME$.spatial_plan_main
 
--- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_metadata;
+-- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_main;
 
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_metadata
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     ryhti_plan_id text NOT NULL,
     name jsonb NOT NULL,
     created timestamp without time zone NOT NULL DEFAULT now(),
-    CONSTRAINT spatial_plan_metadata_pkey PRIMARY KEY (id),
-    CONSTRAINT spatial_plan_metadata_ryhti_plan_id_key UNIQUE (ryhti_plan_id),
-    CONSTRAINT spatial_plan_metadata_name_check CHECK (check_language_string(name))
+    CONSTRAINT spatial_plan_main_pkey PRIMARY KEY (id),
+    CONSTRAINT spatial_plan_main_ryhti_plan_id_key UNIQUE (ryhti_plan_id),
+    CONSTRAINT spatial_plan_main_name_check CHECK (check_language_string(name))
 );
 
 -- Table: $SCHEMANAME$.spatial_plan
@@ -293,8 +293,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT spatial_plan_metadata_id_fk FOREIGN KEY (ryhti_plan_id)
-        REFERENCES $SCHEMANAME$.spatial_plan_metadata (ryhti_plan_id) MATCH SIMPLE
+    CONSTRAINT spatial_plan_main_id_fk FOREIGN KEY (ryhti_plan_id)
+        REFERENCES $SCHEMANAME$.spatial_plan_main (ryhti_plan_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,
