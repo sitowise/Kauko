@@ -30,29 +30,6 @@ CREATE OR REPLACE TRIGGER planning_detail_point_modified_trigger
     EXECUTE FUNCTION public.versioned_object_modified_trigger();
 
 
--- Trigger: planning_detail_point_refresh_point_view
-
--- DROP TRIGGER IF EXISTS planning_detail_point_refresh_point_view ON $SCHEMANAME$.planning_detail_point;
-
-CREATE OR REPLACE TRIGGER planning_detail_point_refresh_point_view
-    AFTER INSERT OR DELETE
-    ON $SCHEMANAME$.planning_detail_point
-    FOR EACH ROW
-    EXECUTE FUNCTION $SCHEMANAME$.refresh_plan_regulations_point_view();
-
-
--- Trigger: planning_detail_point_refresh_point_view_on_update
-
--- DROP TRIGGER IF EXISTS planning_detail_point_refresh_point_view_on_update ON $SCHEMANAME$.planning_detail_point;
-
-CREATE OR REPLACE TRIGGER planning_detail_point_refresh_point_view_on_update
-    AFTER UPDATE 
-    ON $SCHEMANAME$.planning_detail_point
-    FOR EACH ROW
-    WHEN (old.geom IS DISTINCT FROM new.geom)
-    EXECUTE FUNCTION $SCHEMANAME$.refresh_plan_regulations_point_view();
-
-
 -- Trigger: update_validity
 
 -- DROP TRIGGER IF EXISTS update_validity ON $SCHEMANAME$.planning_detail_point;
