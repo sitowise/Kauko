@@ -224,10 +224,12 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    ryhti_plan_id text NOT NULL,
+    local_plan_id text NOT NULL DEFAULT (uuid_generate_v4())::text,
+    ryhti_plan_id text,
     name jsonb NOT NULL,
     created timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT spatial_plan_main_pkey PRIMARY KEY (id),
+    CONSTRAINT spatial_plan_main_local_plan_id_key UNIQUE (local_plan_id),
     CONSTRAINT spatial_plan_main_ryhti_plan_id_key UNIQUE (ryhti_plan_id),
     CONSTRAINT spatial_plan_main_name_check CHECK (check_language_string(name))
 );
@@ -239,9 +241,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    local_plan_id text NOT NULL DEFAULT (uuid_generate_v4())::text,
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp without time zone,
-    ryhti_plan_id TEXT NOT NULL DEFAULT (uuid_generate_v4())::text,
     approval_time date,
     approved_by integer,
     epsg character(9) NOT NULL DEFAULT 'EPSG:$PROJECTSRID$'::bpchar,
@@ -293,8 +295,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT spatial_plan_main_id_fk FOREIGN KEY (ryhti_plan_id)
-        REFERENCES $SCHEMANAME$.spatial_plan_main (ryhti_plan_id) MATCH SIMPLE
+    CONSTRAINT spatial_plan_main_local_plan_id_fk FOREIGN KEY (local_plan_id)
+        REFERENCES $SCHEMANAME$.spatial_plan_main (local_plan_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,
