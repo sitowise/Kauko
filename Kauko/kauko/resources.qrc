@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/Kauko">
+        <file>icons/mActionFileOpen.svg</file>
+        <file>icons/mActionSharingExport.svg</file>
+        <file>icons/mActionSharingImport.svg</file>
+        <file>icons/mActionDuplicateLayer.svg</file>
+        <file>icons/mActionFindReplace.svg</file>
+    </qresource>
+</RCC>
