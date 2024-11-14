@@ -141,8 +141,8 @@ class Plugin:
     def unload(self) -> None:
         """teardown_logger(Plugin.name)"""
         self.menu.clear()
-        iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
-        self.menu.deleteLater()
+        """iface.mainWindow().menuBar().removeAction(self.menu.menuAction())"""
+        """self.menu.deleteLater()"""
 
     def _start(self, require_db: bool = False):
         """
