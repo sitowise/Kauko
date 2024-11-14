@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING, Callable, List
 
 from psycopg2 import sql
-from qgis.core import Qgis, QgsPointXY
+from qgis.core import Qgis, QgsApplication, QgsPointXY
 from qgis.gui import QgsMapToolEmitPoint
 from qgis.PyQt.QtCore import QCoreApplication, QEventLoop, Qt, QTranslator
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMessageBox, QWidget
+from qgis.PyQt.QtWidgets import QAction, QMenu, QMessageBox, QWidget
 from qgis.utils import iface
 
+from kauko.database.db_initializer import DatabaseInitializer
+from kauko.database.db_tools import get_active_connection_and_schema
 from kauko.plan_version_control.version_control import VersionControl
 from kauko.qgis_plugin_tools.tools.custom_logging import setup_logger, teardown_logger
 from kauko.qgis_plugin_tools.tools.i18n import setup_translation
@@ -19,6 +21,9 @@ from kauko.resources.ui.ui.version_control_dialog import VersionControlDialog
 
 from .database.database import Database
 
+if TYPE_CHECKING:
+    from psycopg2.extras import DictRow
+
 
 class Plugin:
     """QGIS Plugin Implementation."""
@@ -26,7 +31,7 @@ class Plugin:
     name = plugin_name()
 
     def __init__(self) -> None:
-        setup_logger(Plugin.name)
+        """setup_logger(Plugin.name)"""
 
         # initialize locale
         locale, file_path = setup_translation()
@@ -39,7 +44,19 @@ class Plugin:
             pass
 
         self.actions: list[QAction] = []
-        self.menu = Plugin.name
+
+        self.menu = iface.mainWindow().findChild(QMenu, "&Kauko")
+
+        if not self.menu:
+            self.menu = QMenu("&Kauko", iface.mainWindow().menuBar())
+            self.menu.setObjectName("&Kauko")
+            actions = iface.mainWindow().menuBar().actions()
+            last_action = actions[-1]
+            iface.mainWindow().menuBar().insertMenu(last_action, self.menu)
+
+        self.database_initializer = None
+        self.connection = None
+        self.schema = None
 
     def add_action(
         self,
@@ -102,7 +119,7 @@ class Plugin:
             iface.addToolBarIcon(action)
 
         if add_to_menu:
-            iface.addPluginToMenu(self.menu, action)
+            self.menu.addAction(action)
 
         self.actions.append(action)
 
@@ -122,13 +139,33 @@ class Plugin:
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
     def unload(self) -> None:
-        """Removes the plugin menu item and icon from QGIS GUI."""
-        for action in self.actions:
-            iface.removePluginMenu(Plugin.name, action)
-            iface.removeToolBarIcon(action)
-        teardown_logger(Plugin.name)
+        """teardown_logger(Plugin.name)"""
+        self.menu.clear()
+        iface.mainWindow().menuBar().removeAction(self.menu.menuAction())
+        self.menu.deleteLater()
+
+    def _start(self, require_db: bool = False):
+        """
+        Sets the current database initializer, database and schema.
+
+        :param require_db: Determines if the command requires an open project.
+        """
+        if require_db:
+            self.connection, self.schema = get_active_connection_and_schema()
+            if not self.connection or not self.schema:
+                iface.messageBar().pushMessage(
+                    "Virhe!",
+                    "Yksikään projekti ei ole avoinna.",
+                    level=Qgis.Warning,
+                    duration=5,
+                )
+        else:
+            self.connection = None
+            self.schema = None
+        self.database_initializer = DatabaseInitializer(iface, QgsApplication.instance(), self.connection, self.schema)
 
     def version_control(self):
+        self._start(True)
         dlg = VersionControlDialog(iface)
         dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
         dlg.new_version_clicked.connect(self.create_new_version)
@@ -209,6 +246,20 @@ class Plugin:
         if dlg.exec_():
             self._create_version(db, dlg)
 
+    def _get_current_plan_name(self, point: QgsPointXY, db: Database) -> DictRow[str, str]:
+        query = sql.SQL(
+            """
+            SELECT
+            spm."name" ->> 'fin' as name_fi,
+            spm."name" ->> 'swe' as name_sv
+            FROM {schema}.spatial_plan_metadata spm
+            JOIN {schema}.spatial_plan sp ON sp.plan_id = spm.plan_id
+            WHERE ST_Intersects(sp.geom, ST_SetSRID(ST_MakePoint({x}, {y}), ST_SRID(sp.geom)))
+            AND is_active = TRUE
+            """
+        ).format(schema=sql.Identifier(self.schema), x=sql.Literal(point.x()), y=sql.Literal(point.y()))
+        return db.select(query)[0]
+
     def _create_version(self, db, dlg):
         version_control = VersionControl(db, self.schema)
         version_name = dlg.get_version_name()
@@ -216,3 +267,40 @@ class Plugin:
         new_local_id = version_control.create_new_version(old_local_id, version_name)
         self.change_active_plan(db, old_local_id, new_local_id)
         iface.messageBar().pushMessage("Uusi versio luotu.", level=Qgis.Success, duration=5)
+
+    def _get_plans(self, db: Database) -> List[DictRow]:
+        plansQuery = sql.SQL(
+            """with version_names_agg as (
+            select
+                sp.plan_id,
+                array_agg(ARRAY[sp.local_id, sp.version_name]) as version_names
+            from {schema}.spatial_plan sp
+            group by
+                sp.plan_id
+        ),
+        active_plan as (
+            select
+                sp.plan_id,
+                sp.version_name as active_version,
+                sp.local_id as active_local_id,
+                spls.preflabel_fi as active_lifecycle_status
+            from {schema}.spatial_plan sp
+            join code_lists.spatial_plan_lifecycle_status spls
+                on spls.codevalue = sp.lifecycle_status
+            where sp.is_active
+        )
+        select
+            spm.name,
+            spm."name" ->> 'fin' as name_fi,
+            spm."name" ->> 'swe' as name_sv,
+            vna.version_names,
+            ap.active_version,
+            ap.active_lifecycle_status,
+            ap.active_local_id
+        from {schema}.spatial_plan_metadata spm
+        join version_names_agg vna on spm.plan_id = vna.plan_id
+        join active_plan ap on spm.plan_id = ap.plan_id;
+        """
+        ).format(schema=sql.Identifier(self.schema))
+
+        return db.select(plansQuery)

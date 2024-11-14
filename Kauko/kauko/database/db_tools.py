@@ -1,11 +1,12 @@
 from typing import Any, Dict, List, Set, Tuple
 from urllib.parse import parse_qs, urlparse
 
-from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsAuthMethodConfig, QgsProject
+from qgis.PyQt.QtCore import QCoreApplication, QSettings
+
+from kauko.constants import *
 
 from .database import Database
-from ..constants import *
 
 
 def get_database_connections() -> Dict[str, str]:
@@ -33,12 +34,12 @@ def get_new_schema_name(municipality: str, projection: str, is_master_plan: bool
     :param is_combination: bool
     :return: str
     """
-    schema_name = f'{municipality.lower()}_{projection[5:].lower()}'
-    return f'{schema_name}_y'.lower() if is_master_plan else schema_name.lower()
+    schema_name = f"{municipality.lower()}_{projection[5:].lower()}"
+    return f"{schema_name}_y".lower() if is_master_plan else schema_name.lower()
 
 
 def set_connection(connection_name: str) -> None:
-    """ Sets connection based on used connection name
+    """Sets connection based on used connection name
 
     :param connection_name: str
     :return: None
@@ -51,7 +52,7 @@ def get_connection_name() -> str:
 
     :return: str
     """
-    return QSettings().value('connection', "", str)
+    return QSettings().value("connection", "", str)
 
 
 def get_connection_params(qgs_app: QCoreApplication) -> Dict[str, Any]:
@@ -63,7 +64,7 @@ def get_connection_params(qgs_app: QCoreApplication) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: A dictionary of connection parameters.
     """
-    from ..data.tools import parse_value
+    from kauko.data.tools import parse_value
 
     # Read connection parameters from QGIS settings
     s = QSettings()
@@ -103,7 +104,7 @@ def get_active_connection_and_schema() -> Tuple[str, str]:
     :return: connection name, schema name
     """
     path = QgsProject().instance().fileName()
-    
+
     parsed_path = urlparse(path)
     params = parse_qs(parsed_path.query)
     dbname = params.get("dbname", [""])[0]
@@ -117,8 +118,7 @@ def get_all_project_schemas(db: Database) -> list:
     :param db: A Database object to connect to the database.
     :return: A list of schema names.
     """
-    query = "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE '%\_gk%' OR schema_name LIKE '%\_kkj%' ORDER BY schema_name"
+    query = r"SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE '%\_gk%' OR schema_name LIKE '%\_kkj%' ORDER BY schema_name"
     result_set = db.select(query)
     schemas = [schema[0] for schema in result_set]
     return schemas
-

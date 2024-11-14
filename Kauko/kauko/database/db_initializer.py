@@ -3,10 +3,10 @@ from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtWidgets import QMessageBox
 
-from ..ui.db_login_form import DbLoginForm
+from kauko.resources.ui.ui.db_login_form import DbLoginForm
+
 from .database import Database
-from .db_tools import (get_active_connection_and_schema, get_connection_params,
-                       set_connection)
+from .db_tools import get_active_connection_and_schema, get_connection_params, set_connection
 
 
 def save_alert_msg():
@@ -21,7 +21,7 @@ def save_alert_msg():
 class DatabaseInitializer:
     """Used to initialize PostGis database and interact with it."""
 
-    def __init__(self, iface: QgisInterface, qgs_app: QCoreApplication, connection: str = None, schema:str = None):
+    def __init__(self, iface: QgisInterface, qgs_app: QCoreApplication, connection: str = None, schema: str = None):
         """Initialize the plugin.
 
         Args:
@@ -39,7 +39,6 @@ class DatabaseInitializer:
         if connection:
             self.initialize_database(connection)
 
-
     @property
     def database(self) -> Database:
         return self._database
@@ -54,7 +53,8 @@ class DatabaseInitializer:
                 "Yhdistäminen tietokantaan epäonnistui",
                 "Tietokannan nimeä ei ole annettu tai PostgreSQL tietokantaa ei ole määritetty",
                 level=Qgis.Critical,
-                duration=10)
+                duration=10,
+            )
             return False
 
         set_connection(connection_name)
@@ -71,7 +71,8 @@ class DatabaseInitializer:
                     f"Yhdistäminen tietokantaan {connection_name} epäonnistui",
                     "Käyttäjätunnus tai salasana puuttuu.",
                     level=Qgis.Critical,
-                    duration=10)
+                    duration=10,
+                )
                 return False
 
         # TODO: Remove the "authcfg" parameter (temporary solution)
@@ -79,9 +80,8 @@ class DatabaseInitializer:
 
         self._database = Database(params)
         if not self._database.is_valid:
-            self.msgBar("Virhe!",
-                        f"Yhdistäminen tietokantaan {connection_name} epäonnistui",
-                        level=Qgis.Critical,
-                        duration=10)
+            self.msgBar(
+                "Virhe!", f"Yhdistäminen tietokantaan {connection_name} epäonnistui", level=Qgis.Critical, duration=10
+            )
             return False
         return True
