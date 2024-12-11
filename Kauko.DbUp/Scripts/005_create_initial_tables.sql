@@ -216,6 +216,25 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
     CONSTRAINT geometry_point_value_geometry_point_value_uuid_key UNIQUE (geometry_point_value_uuid)
 );
 
+-- Table: $SCHEMANAME$.planner
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.planner;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    name TEXT NOT NULL,
+    professional_title jsonb,
+    role jsonb,
+    local_id TEXT NOT NULL,
+    latest_change timestamp without time zone NOT NULL DEFAULT now(),
+    storage_time timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT contact_pkey PRIMARY KEY (id),
+    CONSTRAINT planner_local_id_key UNIQUE (local_id),
+    CONSTRAINT contact_name_check CHECK (name::text <> ''::text),
+    CONSTRAINT planner_professional_title_check CHECK (check_language_string(professional_title)),
+    CONSTRAINT planner_role_check CHECK (check_language_string(role))
+);
 
 -- Table: $SCHEMANAME$.spatial_plan_main
 
@@ -227,11 +246,16 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main
     local_plan_id text NOT NULL DEFAULT (uuid_generate_v4())::text,
     ryhti_plan_id text,
     name jsonb NOT NULL,
+    fk_responsible text,
     created timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT spatial_plan_main_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_main_local_plan_id_key UNIQUE (local_plan_id),
     CONSTRAINT spatial_plan_main_ryhti_plan_id_key UNIQUE (ryhti_plan_id),
-    CONSTRAINT spatial_plan_main_name_check CHECK (check_language_string(name))
+    CONSTRAINT spatial_plan_main_name_check CHECK (check_language_string(name)),
+    CONSTRAINT plan_operator_spatial_plan_main_fkey FOREIGN KEY (fk_responsible)
+        REFERENCES $SCHEMANAME$.planner (local_id) MATCH SIMPLE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED
 );
 
 -- Table: $SCHEMANAME$.spatial_plan
@@ -324,10 +348,28 @@ END),
     CONSTRAINT spatial_plan_name_check CHECK (check_language_string(name))
 );
 
+-- Table: $SCHEMANAME$.spatial_plan_planner
 
+-- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_planner;
 
-
-
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_planner
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_spatial_plan text NOT NULL,
+    fk_plan_operator text NOT NULL,
+    CONSTRAINT spatial_plan_planner_pkey PRIMARY KEY (id),
+    CONSTRAINT spatial_plan_planner_unique UNIQUE (fk_spatial_plan, fk_plan_operator),
+    CONSTRAINT spatial_plan_plan_planner_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_operator_plan_planner_fkey FOREIGN KEY (fk_plan_operator)
+        REFERENCES $SCHEMANAME$.planner (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
 
 -- Table: $SCHEMANAME$.localized_objective
 
@@ -881,34 +923,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
-
--- Table: $SCHEMANAME$.planner
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planner;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    name TEXT NOT NULL,
-    professional_title jsonb,
-    role jsonb,
-    local_id TEXT NOT NULL,
-    latest_change timestamp without time zone NOT NULL DEFAULT now(),
-    storage_time timestamp without time zone NOT NULL DEFAULT now(),
-    fk_spatial_plan text,
-    CONSTRAINT contact_pkey PRIMARY KEY (id),
-    CONSTRAINT planner_local_id_key UNIQUE (local_id),
-    CONSTRAINT planner_fk_spatial_plan FOREIGN KEY (fk_spatial_plan)
-        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT contact_name_check CHECK (name::text <> ''::text),
-    CONSTRAINT planner_professional_title_check CHECK (check_language_string(professional_title)),
-    CONSTRAINT planner_role_check CHECK (check_language_string(role))
-);
-
-
 
 -- Table: $SCHEMANAME$.planning_detail_line_numeric_value
 
