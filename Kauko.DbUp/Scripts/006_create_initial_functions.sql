@@ -4,7 +4,7 @@
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_document_local_ids(
 	p_spatial_plan_local_id text)
-    RETURNS TABLE(local_id character varying) 
+    RETURNS TABLE(local_id text) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -38,7 +38,7 @@ $BODY$;
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_plan_guidance_local_ids(
 	p_spatial_plan_local_id text)
-    RETURNS TABLE(local_id character varying) 
+    RETURNS TABLE(local_id text) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -85,7 +85,7 @@ $BODY$;
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_plan_regulation_local_ids(
 	p_spatial_plan_local_id text)
-    RETURNS TABLE(local_id character varying) 
+    RETURNS TABLE(local_id text) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -150,7 +150,7 @@ $BODY$;
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_regulation_group_local_ids(
 	p_spatial_plan_local_id text)
-    RETURNS TABLE(local_id character varying) 
+    RETURNS TABLE(local_id text) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -181,12 +181,12 @@ BEGIN
 END;
 $BODY$;
 
--- FUNCTION: $SCHEMANAME$.get_valid_spatial_plan_area(character varying)
+-- FUNCTION: $SCHEMANAME$.get_valid_spatial_plan_area(text)
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.get_valid_spatial_plan_area(character varying);
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.get_valid_spatial_plan_area(text);
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_valid_spatial_plan_area(
-	spatial_local_id character varying)
+	spatial_local_id text)
     RETURNS geometry
     LANGUAGE 'plpgsql'
     COST 100
@@ -240,23 +240,23 @@ BEGIN
 END;
 $BODY$;
 
--- FUNCTION: $SCHEMANAME$.get_valid_zoning_element_area(character varying)
+-- FUNCTION: $SCHEMANAME$.get_valid_zoning_element_area(text)
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.get_valid_zoning_element_area(character varying);
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.get_valid_zoning_element_area(text);
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_valid_zoning_element_area(
-	zoning_local_id character varying)
+	zoning_local_id text)
     RETURNS geometry
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE STRICT PARALLEL UNSAFE
 AS $BODY$
 DECLARE
-  _local_id varchar;
+  _local_id text;
   _geom geometry;
   _validity_time daterange;
   _lifecycle_status varchar;
-  _spatial_plan varchar;
+  _spatial_plan text;
   zoning_element_geometry geometry;
 BEGIN
   SELECT local_id, geom, validity_time, lifecycle_status, spatial_plan
@@ -676,23 +676,23 @@ BEGIN
 END;
 $BODY$;
 
--- FUNCTION: $SCHEMANAME$.update_active_plan(character varying, character varying)
+-- FUNCTION: $SCHEMANAME$.update_active_plan(text, text)
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.update_active_plan(character varying, character varying);
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.update_active_plan(text, text);
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.update_active_plan(
-	p_old_active_plan_local_id character varying,
-	p_new_active_plan_local_id character varying)
+	p_old_active_plan_local_id text,
+	p_new_active_plan_local_id text)
     RETURNS void
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
 AS $BODY$
 DECLARE
-    v_old_plan_regulation_local_ids varchar[];
-    v_old_plan_guidance_local_ids varchar[];
-    v_new_plan_regulation_local_ids varchar[];
-    v_new_plan_guidance_local_ids varchar[];
+    v_old_plan_regulation_local_ids text[];
+    v_old_plan_guidance_local_ids text[];
+    v_new_plan_regulation_local_ids text[];
+    v_new_plan_guidance_local_ids text[];
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM $SCHEMANAME$.spatial_plan WHERE local_id = p_old_active_plan_local_id LIMIT 1) THEN
         RAISE EXCEPTION 'Old active plan does not exist';
@@ -1054,12 +1054,12 @@ BEGIN
 END;
 $BODY$;
 
--- FUNCTION: $SCHEMANAME$.validate_finished_plan(character varying)
+-- FUNCTION: $SCHEMANAME$.validate_finished_plan(text)
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_finished_plan(character varying);
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_finished_plan(text);
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.validate_finished_plan(
-	spatial_plan_local_id character varying)
+	spatial_plan_local_id text)
     RETURNS boolean
     LANGUAGE 'plpgsql'
     COST 100
@@ -1084,14 +1084,14 @@ BEGIN
 END;
 $BODY$;
 
--- FUNCTION: $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, character varying)
+-- FUNCTION: $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, text)
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, character varying);
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, text);
 
 CREATE OR REPLACE FUNCTION $SCHEMANAME$.validate_zoning_element_validity_dates(
 	valid_from date,
 	valid_to date,
-	spatial_plan character varying)
+	spatial_plan text)
     RETURNS boolean
     LANGUAGE 'plpgsql'
     COST 100
