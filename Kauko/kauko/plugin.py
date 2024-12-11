@@ -252,8 +252,8 @@ class Plugin:
             SELECT
             spm."name" ->> 'fin' as name_fi,
             spm."name" ->> 'swe' as name_sv
-            FROM {schema}.spatial_plan_metadata spm
-            JOIN {schema}.spatial_plan sp ON sp.plan_id = spm.plan_id
+            FROM {schema}.spatial_plan_main spm
+            JOIN {schema}.spatial_plan sp ON sp.local_plan_id = spm.local_plan_id
             WHERE ST_Intersects(sp.geom, ST_SetSRID(ST_MakePoint({x}, {y}), ST_SRID(sp.geom)))
             AND is_active = TRUE
             """
@@ -272,15 +272,15 @@ class Plugin:
         plansQuery = sql.SQL(
             """with version_names_agg as (
             select
-                sp.plan_id,
+                sp.local_plan_id,
                 array_agg(ARRAY[sp.local_id, sp.version_name]) as version_names
             from {schema}.spatial_plan sp
             group by
-                sp.plan_id
+                sp.local_plan_id
         ),
         active_plan as (
             select
-                sp.plan_id,
+                sp.local_plan_id,
                 sp.version_name as active_version,
                 sp.local_id as active_local_id,
                 spls.preflabel_fi as active_lifecycle_status
@@ -297,9 +297,9 @@ class Plugin:
             ap.active_version,
             ap.active_lifecycle_status,
             ap.active_local_id
-        from {schema}.spatial_plan_metadata spm
-        join version_names_agg vna on spm.plan_id = vna.plan_id
-        join active_plan ap on spm.plan_id = ap.plan_id;
+        from {schema}.spatial_plan_main spm
+        join version_names_agg vna on spm.local_plan_id = vna.local_plan_id
+        join active_plan ap on spm.local_plan_id = ap.local_plan_id;
         """
         ).format(schema=sql.Identifier(self.schema))
 

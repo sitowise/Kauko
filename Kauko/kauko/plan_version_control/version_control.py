@@ -57,9 +57,8 @@ class VersionControl:
     def create_new_spatial_plan(self, old_splan_local_id: str, new_version_name) -> DictRow:
         return self.db.insert_with_return(sql.SQL('''
             INSERT INTO {schema}.spatial_plan (
-                identity_id,
                 geom,
-                plan_id,
+                local_plan_id,
                 approval_time,
                 approved_by,
                 epsg,
@@ -75,15 +74,13 @@ class VersionControl:
                 legal_effectiveness,
                 validity_time,
                 lifecycle_status,
-                "name",
                 initiation_time,
                 version_name,
                 is_active
             )
             SELECT
-                identity_id,
                 geom,
-                plan_id,
+                local_plan_id,
                 approval_time,
                 approved_by,
                 epsg,
@@ -99,7 +96,6 @@ class VersionControl:
                 legal_effectiveness,
                 validity_time,
                 lifecycle_status,
-                "name",
                 initiation_time,
                 {new_version_name},
                 false
@@ -115,22 +111,14 @@ class VersionControl:
     def create_planners(self, old_splan_local_id:str, new_splan_local_id: str) -> List[DictRow]:
         return self.db.insert_with_return(sql.SQL(
             '''
-            INSERT INTO {schema}.planner (
-                name,
-                professional_title,
-                role,
-                identity_id,
-                namespace,
-                fk_spatial_plan
+            INSERT INTO {schema}.spatial_plan_planner (
+                fk_spatial_plan,
+                fk_plan_operator
             )
             SELECT
-                name,
-                professional_title,
-                role,
-                identity_id,
-                namespace,
-                {new_fk_spatial_plan}
-            FROM {schema}.planner
+                {new_fk_spatial_plan},
+                fk_plan_operator
+            FROM {schema}.spatial_plan_planner
             WHERE fk_spatial_plan = {old_fk_spatial_plan}
             RETURNING *;
             ''').format(
@@ -157,20 +145,16 @@ class VersionControl:
             new_doc = self.db.insert_with_return(sql.SQL(
                 '''
                 INSERT INTO {schema}.document (
-                    identity_id,
                     local_id,
-                    namespace,
-                    document_identifier,
+                    document_id,
                     name,
                     additional_information_link,
                     metadata,
                     type
                 )
                 SELECT
-                    identity_id,
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    namespace,
-                    document_identifier,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
+                    document_id,
                     name,
                     additional_information_link,
                     metadata,
@@ -240,14 +224,10 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.participation_and_evalution_plan (
                     local_id,
-                    identity_id,
-                    namespace,
                     spatial_plan
                 )
                 SELECT
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    identity_id,
-                    namespace,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
                     {new_spatial_plan_local_id}
                 FROM {schema}.participation_and_evalution_plan
                 WHERE local_id = {old_participation_and_evalution_plan_local_id}
@@ -282,14 +262,10 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.spatial_plan_commentary (
                     local_id,
-                    identity_id,
-                    namespace,
                     spatial_plan
                 )
                 SELECT
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    identity_id,
-                    namespace,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
                     {new_spatial_plan_local_id}
                 FROM {schema}.spatial_plan_commentary
                 WHERE local_id = {old_commentary_local_id}
@@ -323,14 +299,10 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.plan_regulation_group (
                     local_id,
-                    identity_id,
-                    namespace,
                     name
                 )
                 SELECT
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    identity_id,
-                    namespace,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
                     name
                 FROM {schema}.plan_regulation_group
                 WHERE local_id = {old_regulation_group_local_id}
@@ -362,21 +334,19 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.plan_regulation (
                     local_id,
-                    identity_id,
-                    namespace,
                     name,
                     type,
                     life_cycle_status,
+                    validity_time,
                     valid_from,
                     valid_to
                 )
                 SELECT
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    identity_id,
-                    namespace,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
                     name,
                     type,
                     life_cycle_status,
+                    validity_time,
                     valid_from,
                     valid_to
                 FROM {schema}.plan_regulation
@@ -846,19 +816,17 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.plan_guidance (
                     local_id,
-                    identity_id,
-                    namespace,
                     name,
                     life_cycle_status,
+                    validity_time,
                     valid_from,
                     valid_to
                 )
                 SELECT
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    identity_id,
-                    namespace,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
                     name,
                     life_cycle_status,
+                    validity_time,
                     valid_from,
                     valid_to
                 FROM {schema}.plan_guidance
@@ -913,7 +881,6 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.zoning_element (
                 local_id,
-                identity_id,
                 geom,
                 localized_name,
                 "name",
@@ -932,8 +899,7 @@ class VersionControl:
                 is_active
                 )
                 SELECT
-                    CONCAT(identity_id, '.', uuid_generate_v4()::text),
-                    identity_id,
+                    CONCAT(id, '.', uuid_generate_v4()::text),
                     geom,
                     localized_name,
                     "name",
@@ -988,8 +954,7 @@ class VersionControl:
                     valid_to,
                     bindingness_of_location,
                     ground_relative_position,
-                    identity_id,
-                    namespace,
+                    validity_time,
                     lifecycle_status,
                     is_active
                 )
@@ -999,8 +964,7 @@ class VersionControl:
                     valid_to,
                     bindingness_of_location,
                     ground_relative_position,
-                    identity_id,
-                    namespace,
+                    validity_time,
                     lifecycle_status,
                     false
                 FROM {schema}.planned_space
@@ -1069,8 +1033,6 @@ class VersionControl:
                 '''
                 INSERT INTO {schema}.planning_detail_line (
                     geom,
-                    identity_id,
-                    namespace,
                     bindingness_of_location,
                     ground_relative_position,
                     lifecycle_status,
@@ -1079,8 +1041,6 @@ class VersionControl:
                 )
                 SELECT
                     geom,
-                    identity_id,
-                    namespace,
                     bindingness_of_location,
                     ground_relative_position,
                     lifecycle_status,
