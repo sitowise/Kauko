@@ -1135,19 +1135,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
     CONSTRAINT time_period_value_time_period_uuid_key UNIQUE (time_period_uuid)
 );
 
--- Table: $SCHEMANAME$.versions
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.versions;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.versions
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9999 CACHE 1 ),
-    scriptname TEXT NOT NULL,
-    applied timestamp(6) without time zone NOT NULL DEFAULT now(),
-    CONSTRAINT versions_pkey PRIMARY KEY (id),
-    CONSTRAINT versions_scriptname_key UNIQUE (scriptname)
-);
-
 -- FUNCTION: $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, TEXT)
 
 -- DROP FUNCTION IF EXISTS $SCHEMANAME$.validate_zoning_element_validity_dates(date, date, TEXT);
