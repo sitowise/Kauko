@@ -1161,12 +1161,6 @@ CREATE OR REPLACE FUNCTION $SCHEMANAME$.create_or_update_spatial_plan()
 AS $BODY$
 BEGIN
     IF (TG_TABLE_NAME = 'spatial_plan_main' AND TG_OP = 'UPDATE') THEN
-        IF (NEW."name" <> OLD."name") THEN
-            UPDATE $SCHEMANAME$.spatial_plan
-            SET "name" = NEW."name"
-            WHERE local_plan_id = NEW.local_plan_id;
-        END IF;
-
         IF (NEW."local_plan_id" <> OLD."local_plan_id") THEN
             UPDATE $SCHEMANAME$.spatial_plan
             SET local_plan_id = NEW."local_plan_id"
@@ -1180,17 +1174,8 @@ BEGIN
             FROM $SCHEMANAME$.spatial_plan_main
             WHERE local_plan_id = NEW.local_plan_id
         ) THEN
-            INSERT INTO $SCHEMANAME$.spatial_plan_main (local_plan_id, "name", created)
-            VALUES (NEW.local_plan_id, NEW."name", NOW());
-        ELSE
-            UPDATE $SCHEMANAME$.spatial_plan_main
-            SET "name" = NEW."name"
-            WHERE local_plan_id = NEW.local_plan_id;
-
-            UPDATE $SCHEMANAME$.spatial_plan
-            SET "name" = NEW."name"
-            WHERE local_plan_id = NEW.local_plan_id
-            AND "name" <> NEW."name";
+            INSERT INTO $SCHEMANAME$.spatial_plan_main (local_plan_id, created)
+            VALUES (NEW.local_plan_id, NOW());
         END IF;
         RETURN NEW;
     END IF;
