@@ -213,7 +213,6 @@ _Pvt_Extensions/
 ModelManifest.xml
 
 __pycache__/
-*.code-workspace
 launch.json
 settings.json
 *.env
