@@ -292,14 +292,14 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_plan_regulation_group (
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    storage_time timestamp without time zone,
+    storage_time timestamp with time zone,
     geom geometry(Point,$PROJECTSRID$) NOT NULL,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
-    latest_change timestamp without time zone NOT NULL DEFAULT now(),
-    created timestamp without time zone NOT NULL DEFAULT now(),
+    latest_change timestamp with time zone NOT NULL DEFAULT now(),
+    created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
-    modified_at timestamp without time zone NOT NULL,
+    modified_at timestamp with time zone NOT NULL,
     bindingness_of_location character varying(2) NOT NULL,
     ground_relative_position character varying(2) NOT NULL,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
