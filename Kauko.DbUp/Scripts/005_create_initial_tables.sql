@@ -226,7 +226,9 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     local_plan_id text NOT NULL DEFAULT (uuid_generate_v4())::text,
     ryhti_plan_id text,
+    plan_identifier text,
     name jsonb NOT NULL,
+    description text,
     created timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT spatial_plan_main_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_main_local_plan_id_key UNIQUE (local_plan_id),
@@ -259,7 +261,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
     legal_effectiveness character varying(2) NOT NULL DEFAULT '01'::TEXT,
     validity_time daterange,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
-    name jsonb NOT NULL,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp without time zone NOT NULL DEFAULT now(),
     initiation_time date,
@@ -320,8 +321,7 @@ CASE
     WHEN approval_time IS NULL AND approved_by IS NOT NULL THEN false
     WHEN approval_time IS NOT NULL AND approved_by IS NULL THEN false
     ELSE true
-END),
-    CONSTRAINT spatial_plan_name_check CHECK (check_language_string(name))
+END)
 );
 
 
