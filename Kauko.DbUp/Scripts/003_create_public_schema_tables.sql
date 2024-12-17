@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS public.schema_information
     created date NOT NULL DEFAULT now(),
     schema_version character(4),
     project_version character(4),
-    schema_updated timestamp(6) without time zone,
-    project_updated timestamp(6) without time zone,
+    schema_updated timestamp(6) with time zone,
+    project_updated timestamp(6) with time zone,
     CONSTRAINT schema_information_pkey PRIMARY KEY (identifier),
     CONSTRAINT name_unique UNIQUE (name),
     CONSTRAINT check_is_master_plan CHECK (
