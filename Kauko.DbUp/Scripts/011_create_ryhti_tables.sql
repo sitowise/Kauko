@@ -42,10 +42,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.identifier_value (
 );
 
 
--- Table: $SCHEMANAME$.interaction_event
+-- Table: $SCHEMANAME$.plan_interaction_event
 
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.interaction_event (
-    id UUID PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     interaction_event_type VARCHAR(255) NOT NULL,
     event_time JSONB,
     name JSONB,
@@ -54,8 +55,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.interaction_event (
     additional_information_link TEXT,
     cancelled BOOLEAN,
     related_documents JSONB,
-    CONSTRAINT interaction_event_name_check CHECK (check_ryhti_language(name)),
-    CONSTRAINT interaction_event_description_check CHECK (check_ryhti_language(description))
+    CONSTRAINT plan_interaction_event_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
 );
 
 
