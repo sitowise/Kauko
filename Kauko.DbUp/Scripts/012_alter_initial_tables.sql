@@ -373,4 +373,11 @@ ADD COLUMN letter_identifier VARCHAR(255);
 ALTER TABLE $SCHEMANAME$.plan_regulation_group
 ADD COLUMN color_number VARCHAR(255);
 
+-- Table: $SCHEMANAME$.spatial_plan
 
+ALTER TABLE $SCHEMANAME$.spatial_plan
+ADD COLUMN fk_decision_maker TEXT,
+ADD CONSTRAINT decision_maker_local_id_fkey FOREIGN KEY (fk_decision_maker)
+        REFERENCES $SCHEMANAME$.plan_decision (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT;
