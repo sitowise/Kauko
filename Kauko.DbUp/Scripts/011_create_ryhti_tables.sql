@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
     decision_article JSONB,
     decision_documents JSONB,
     statutes JSONB,
-    fk_spatial_plan,
+    fk_spatial_plan TEXT NOT NULL,
     plans JSONB,
     decision_makers JSONB,
     date_of_validity DATE,
