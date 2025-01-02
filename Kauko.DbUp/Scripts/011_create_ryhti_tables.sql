@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.identifier_value (
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
-    interaction_event_type VARCHAR(255) NOT NULL,
+    interaction_event_type VARCHAR(3) NOT NULL,
     event_time_begin timestamp with time zone NOT NULL,
     event_time_end timestamp with time zone,
     name JSONB,
@@ -58,6 +58,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     cancelled BOOLEAN,
     related_documents JSONB, -- TODO: linkitys document-tauluun
     CONSTRAINT plan_interaction_event_local_id_key UNIQUE (local_id),
+    CONSTRAINT plan_interaction_event_interaction_event_type_fkey FOREIGN KEY (interaction_event_type)
+        REFERENCES code_lists.plan_interaction_event_type (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
     CONSTRAINT plan_interaction_event_name_check CHECK (check_ryhti_language(name)),
     CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
 );
