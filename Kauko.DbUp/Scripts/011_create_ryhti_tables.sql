@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     additional_information_link TEXT,
     cancelled BOOLEAN,
     related_documents JSONB, -- TODO: linkitys document-tauluun
+    CONSTRAINT plan_interaction_event_local_id_key UNIQUE (local_id),
     CONSTRAINT plan_interaction_event_name_check CHECK (check_ryhti_language(name)),
     CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
 );
