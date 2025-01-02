@@ -61,6 +61,22 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
 );
 
+-- Table: $SCHEMANAME$.spatial_plan_interaction_event
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_interaction_event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    fk_plan_interaction_event TEXT NOT NULL,
+    fk_spatial_plan TEXT NOT NULL,
+    CONSTRAINT spatial_plan_interaction_event_fk_plan_interaction_event_fkey FOREIGN KEY (fk_plan_interaction_event)
+        REFERENCES $SCHEMANAME$.plan_interaction_event (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT spatial_plan_interaction_event_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
 
 -- Table: $SCHEMANAME$.localized_text_values
 
