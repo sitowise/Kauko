@@ -48,13 +48,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     interaction_event_type VARCHAR(255) NOT NULL,
-    event_time JSONB,
+    event_time_begin timestamp with time zone NOT NULL,
+    event_time_end timestamp with time zone,
     name JSONB,
     description JSONB,
-    location JSONB,
+    epsg character(9) NOT NULL DEFAULT 'EPSG:$PROJECTSRID$'::bpchar,
+    geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     additional_information_link TEXT,
     cancelled BOOLEAN,
-    related_documents JSONB,
+    related_documents JSONB, -- TODO: linkitys document-tauluun
     CONSTRAINT plan_interaction_event_name_check CHECK (check_ryhti_language(name)),
     CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
 );
