@@ -1056,37 +1056,6 @@ ALTER SEQUENCE code_lists.ground_relativeness_kind_id_seq OWNED BY code_lists.gr
 
 
 --
--- Name: iso_639_language; Type: TABLE; Schema: code_lists; Owner: -
---
-
-CREATE TABLE code_lists.iso_639_language (
-    id integer NOT NULL,
-    code character varying(3) NOT NULL,
-    name character varying(100) NOT NULL
-);
-
-
---
--- Name: iso_639_language_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
---
-
-CREATE SEQUENCE code_lists.iso_639_language_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: iso_639_language_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
---
-
-ALTER SEQUENCE code_lists.iso_639_language_id_seq OWNED BY code_lists.iso_639_language.id;
-
-
---
 -- Name: ryhti_language; Type: TABLE; Schema: code_lists; Owner: -
 --
 
@@ -1606,13 +1575,6 @@ ALTER TABLE ONLY code_lists.finnish_zoning_element_type ALTER COLUMN identifier 
 --
 
 ALTER TABLE ONLY code_lists.ground_relativeness_kind ALTER COLUMN id SET DEFAULT nextval('code_lists.ground_relativeness_kind_id_seq'::regclass);
-
-
---
--- Name: iso_639_language id; Type: DEFAULT; Schema: code_lists; Owner: -
---
-
-ALTER TABLE ONLY code_lists.iso_639_language ALTER COLUMN id SET DEFAULT nextval('code_lists.iso_639_language_id_seq'::regclass);
 
 
 --
@@ -3205,18 +3167,6 @@ INSERT INTO code_lists.ground_relativeness_kind VALUES (2, '02', 'http://uri.suo
 
 
 --
--- Data for Name: iso_639_language; Type: TABLE DATA; Schema: code_lists; Owner: -
---
-
-INSERT INTO code_lists.iso_639_language VALUES (124, 'eng', 'English');
-INSERT INTO code_lists.iso_639_language VALUES (135, 'fin', 'Finnish');
-INSERT INTO code_lists.iso_639_language VALUES (388, 'sme', 'Northern Sami');
-INSERT INTO code_lists.iso_639_language VALUES (391, 'smn', 'Inari Sami');
-INSERT INTO code_lists.iso_639_language VALUES (393, 'sms', 'Skolt Sami');
-INSERT INTO code_lists.iso_639_language VALUES (413, 'swe', 'Swedish');
-
-
---
 -- Data for Name: ryhti_language; Type: TABLE DATA; Schema: code_lists; Owner: -
 --
 
@@ -3812,13 +3762,6 @@ SELECT pg_catalog.setval('code_lists.finnish_zoning_element_type_identifier_seq'
 --
 
 SELECT pg_catalog.setval('code_lists.ground_relativeness_kind_id_seq', 2, true);
-
-
---
--- Name: iso_639_language_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
---
-
-SELECT pg_catalog.setval('code_lists.iso_639_language_id_seq', 486, true);
 
 
 --
@@ -4452,21 +4395,6 @@ ALTER TABLE ONLY code_lists.ground_relativeness_kind
 ALTER TABLE ONLY code_lists.ground_relativeness_kind
     ADD CONSTRAINT ground_relativeness_kind_uri_key UNIQUE (uri);
 
-
---
--- Name: iso_639_language iso_639_language_code_key; Type: CONSTRAINT; Schema: code_lists; Owner: -
---
-
-ALTER TABLE ONLY code_lists.iso_639_language
-    ADD CONSTRAINT iso_639_language_code_key UNIQUE (code);
-
-
---
--- Name: iso_639_language iso_639_language_pkey; Type: CONSTRAINT; Schema: code_lists; Owner: -
---
-
-ALTER TABLE ONLY code_lists.iso_639_language
-    ADD CONSTRAINT iso_639_language_pkey PRIMARY KEY (id);
 
 --
 -- Name: ryhti_language ryhti_language_code_key; Type: CONSTRAINT; Schema: code_lists; Owner: -

@@ -71,41 +71,6 @@ AS $BODY$
   END;
 $BODY$;
 
-
-
--- FUNCTION: public.check_language_string(jsonb)
-
--- DROP FUNCTION IF EXISTS public.check_language_string(jsonb);
-
-CREATE OR REPLACE FUNCTION public.check_language_string(
-	languagestring jsonb)
-    RETURNS boolean
-    LANGUAGE 'plpgsql'
-    COST 100
-    VOLATILE PARALLEL UNSAFE
-AS $BODY$
-
-DECLARE
-  languageCode RECORD;
-BEGIN
-  FOR languageCode IN
-    SELECT *
-    FROM jsonb_each_text(languageString)
-  LOOP
-    IF NOT EXISTS (SELECT 1 FROM code_lists.iso_639_language WHERE code = languageCode.key) THEN
-      RAISE EXCEPTION 'Language code % does not exist or is not valid', languageCode.key;
-      RETURN FALSE;
-    END IF;
-    IF (languageCode.value IS NULL OR languageCode.value = '') THEN
-      RAISE EXCEPTION 'Text for % is either NULL or empty', languageCode.key;
-      RETURN FALSE;
-    END IF;
-  END LOOP;
-  RETURN TRUE;
-END;
-$BODY$;
-
-
 -- FUNCTION: public.check_ryhti_language(jsonb)
 
 -- DROP FUNCTION IF EXISTS public.check_ryhti_language(jsonb);
