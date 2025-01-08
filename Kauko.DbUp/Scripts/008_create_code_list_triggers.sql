@@ -121,3 +121,10 @@ CREATE TRIGGER upsert_url_spatial_plan_kind BEFORE INSERT OR UPDATE ON code_list
 --
 
 CREATE TRIGGER upsert_url_spatial_plan_lifecycle_status BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_lifecycle_status FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/');
+
+
+--
+-- Name: plan_interaction_event_type upsert_plan_interaction_event_type; Type: TRIGGER; Schema: code_lists; Owner: -
+--
+
+CREATE TRIGGER upsert_plan_interaction_event_type BEFORE INSERT OR UPDATE ON code_lists.plan_interaction_event_type FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/');

@@ -1366,6 +1366,14 @@ CREATE SEQUENCE code_lists.validity_type_identifier_seq
     NO MAXVALUE
     CACHE 1;
 
+
+--
+-- Name: validity_type_identifier_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.validity_type_identifier_seq OWNED BY code_lists.validity_type.identifier;
+
+
 --
 -- Name: data_type; Type: TABLE; Schema: code_lists; Owner: -
 --
@@ -1378,10 +1386,46 @@ CREATE TABLE code_lists.data_type (
 
 
 --
--- Name: validity_type_identifier_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+-- Name: plan_interaction_event_type; Type: TABLE; Schema: code_lists; Owner: -
 --
 
-ALTER SEQUENCE code_lists.validity_type_identifier_seq OWNED BY code_lists.validity_type.identifier;
+CREATE TABLE code_lists.plan_interaction_event_type (
+    id integer PRIMARY KEY,
+    codevalue character varying(3) NOT NULL,
+    uri character varying(255) NOT NULL,
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
+    preflabel_en character varying,
+    CONSTRAINT plan_interaction_event_type_codevalue_key UNIQUE (codevalue),
+    CONSTRAINT plan_interaction_event_type_uri UNIQUE (uri)
+);
+
+
+--
+-- Name: plan_interaction_event_type_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
+--
+
+CREATE SEQUENCE code_lists.plan_interaction_event_type_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: plan_interaction_event_type_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.plan_interaction_event_type_id_seq OWNED BY code_lists.plan_interaction_event_type.id;
+
+
+--
+-- Name: plan_interaction_event_type id; Type: DEFAULT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.plan_interaction_event_type ALTER COLUMN id SET DEFAULT nextval('code_lists.plan_interaction_event_type_id_seq'::regclass);
 
 
 --
@@ -4070,6 +4114,21 @@ INSERT INTO code_lists.data_type (value, description) VALUES (11, 'Code');
 INSERT INTO code_lists.data_type (value, description) VALUES (12, 'Identifier');
 INSERT INTO code_lists.data_type (value, description) VALUES (13, 'SpotElevation');
 
+
+--
+-- Data for Name: plan_interaction_event_type; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.plan_interaction_event_type VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/01', 'Nähtävilläolo', 'Tillgänglighet', 'Presentation to the public');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/02', 'Lausuntopyyntö', 'Begäran om utlåtande', 'Request for opinions');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (3, '03', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/03', 'Vuorovaikutustilaisuus', 'Interaktiv tillställning', 'Interaction event');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (4, '04', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/04', 'Tiedonkeruu', 'Informationsinsamling', 'Data collection');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (5, '05', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/05', 'Neuvottelu', 'Förhandling', 'Negotiation');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (6, '06', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/06', 'Sähköinen osallistuminen', 'Deltagande elektroniskt', 'Electronic participation');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (7, '07', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/07', 'Muutoksenhaku', 'Ändringsansökan', 'Appeal');
+INSERT INTO code_lists.plan_interaction_event_type VALUES (8, '08', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanVuorovaikutustapahtumanLaji/code/08', 'Muu vuorovaikutustapahtuma', 'Annan interaktiv händelse', 'Other interaction event');
+
+
 --
 -- Name: bindingness_kind_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
@@ -4355,6 +4414,13 @@ SELECT pg_catalog.setval('code_lists.spatial_plan_lifecycle_status_id_seq', 15, 
 --
 
 SELECT pg_catalog.setval('code_lists.validity_type_identifier_seq', 1, false);
+
+
+--
+-- Name: plan_interaction_event_type_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
+--
+
+SELECT pg_catalog.setval('code_lists.plan_interaction_event_type_id_seq', 8, true);
 
 
 --
