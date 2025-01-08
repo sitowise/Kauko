@@ -52,8 +52,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     event_time_end timestamp with time zone,
     name JSONB,
     description JSONB,
-    epsg character(9) NOT NULL DEFAULT 'EPSG:$PROJECTSRID$'::bpchar,
-    geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
+    geom geometry(MultiPolygon,$PROJECTSRID$),
     additional_information_link TEXT,
     cancelled BOOLEAN,
     related_documents JSONB, -- TODO: linkitys document-tauluun
@@ -75,11 +74,13 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_interaction_event (
     CONSTRAINT spatial_plan_interaction_event_fk_plan_interaction_event_fkey FOREIGN KEY (fk_plan_interaction_event)
         REFERENCES $SCHEMANAME$.plan_interaction_event (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT spatial_plan_interaction_event_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED
 );
 
 
