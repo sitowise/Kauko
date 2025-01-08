@@ -124,17 +124,21 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
     decision_adoption_date DATE NOT NULL,
     decision_id VARCHAR(255),
     decisionmaker_type VARCHAR(255) NOT NULL,
+    fk_decision_maker TEXT,
     decision_text JSONB,
     decision_article JSONB,
     decision_documents JSONB,
     statutes JSONB,
     fk_spatial_plan TEXT NOT NULL,
     plans JSONB,
-    decision_makers JSONB,
     date_of_validity DATE,
     CONSTRAINT plan_decision_local_id_key UNIQUE (local_id),
     CONSTRAINT plan_decision_decision_text_check CHECK (check_ryhti_language(decision_text)),
     CONSTRAINT plan_decision_decision_article_check CHECK (check_ryhti_language(decision_article)),
+    CONSTRAINT plan_decision_fk_decision_maker_fkey FOREIGN KEY (fk_decision_maker)
+        REFERENCES $SCHEMANAME$.planner (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
     CONSTRAINT plan_decision_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
