@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
     decision_article JSONB,
     decision_documents JSONB,
     statutes JSONB,
+    fk_spatial_plan TEXT NOT NULL,
     plans JSONB,
     date_of_validity DATE,
     CONSTRAINT plan_decision_local_id_key UNIQUE (local_id),
@@ -137,7 +138,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
     CONSTRAINT plan_decision_fk_decision_maker_fkey FOREIGN KEY (fk_decision_maker)
         REFERENCES $SCHEMANAME$.planner (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT,
+    CONSTRAINT plan_decision_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 );
 
 

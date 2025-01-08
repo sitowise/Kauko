@@ -372,5 +372,3 @@ ALTER TABLE $SCHEMANAME$.plan_regulation_group
 ADD COLUMN letter_identifier VARCHAR(255);
 ALTER TABLE $SCHEMANAME$.plan_regulation_group
 ADD COLUMN color_number VARCHAR(255);
-
-
