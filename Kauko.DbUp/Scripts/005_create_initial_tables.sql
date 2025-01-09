@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_document
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT document_document_role_check CHECK (check_language_string(role)),
+    CONSTRAINT document_document_role_check CHECK (check_ryhti_language(role)),
     CONSTRAINT local_id_check CHECK (referencing_document_local_id::text <> referenced_document_local_id::text)
 );
 
@@ -232,8 +232,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planner
     CONSTRAINT contact_pkey PRIMARY KEY (id),
     CONSTRAINT planner_local_id_key UNIQUE (local_id),
     CONSTRAINT contact_name_check CHECK (name::text <> ''::text),
-    CONSTRAINT planner_professional_title_check CHECK (check_language_string(professional_title)),
-    CONSTRAINT planner_role_check CHECK (check_language_string(role))
+    CONSTRAINT planner_professional_title_check CHECK (check_ryhti_language(professional_title)),
+    CONSTRAINT planner_role_check CHECK (check_ryhti_language(role))
 );
 
 -- Table: $SCHEMANAME$.spatial_plan_main
@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main
     CONSTRAINT spatial_plan_main_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_main_local_plan_id_key UNIQUE (local_plan_id),
     CONSTRAINT spatial_plan_main_ryhti_plan_id_key UNIQUE (ryhti_plan_id),
-    CONSTRAINT spatial_plan_main_name_check CHECK (check_language_string(name)),
+    CONSTRAINT spatial_plan_main_name_check CHECK (check_ryhti_language(name)),
     CONSTRAINT plan_operator_spatial_plan_main_fkey FOREIGN KEY (fk_responsible)
         REFERENCES $SCHEMANAME$.planner (local_id) MATCH SIMPLE
         ON DELETE RESTRICT
@@ -481,7 +481,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.patricipation_evalution_plan_document
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT patricipation_evalution_plan_document_role_check CHECK (check_language_string(role))
+    CONSTRAINT patricipation_evalution_plan_document_role_check CHECK (check_ryhti_language(role))
 );
 
 -- Table: $SCHEMANAME$.plan_guidance
@@ -535,7 +535,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance_document
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_guidance_document_role_check CHECK (check_language_string(role))
+    CONSTRAINT plan_guidance_document_role_check CHECK (check_ryhti_language(role))
 );
 
 -- Table: $SCHEMANAME$.plan_guidance_theme
@@ -593,7 +593,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
         ON UPDATE CASCADE
         ON DELETE NO ACTION
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_regulation_name_check CHECK (check_language_string(name))
+    CONSTRAINT plan_regulation_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.plan_regulation_document
@@ -618,7 +618,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_document
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_regulation_document_role_check CHECK (check_language_string(role))
+    CONSTRAINT plan_regulation_document_role_check CHECK (check_ryhti_language(role))
 );
 
 -- Table: $SCHEMANAME$.plan_regulation_group
@@ -635,7 +635,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group
     group_number integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
     CONSTRAINT plan_regulation_group_pkey PRIMARY KEY (id),
     CONSTRAINT plan_regulation_group_local_id_key UNIQUE (local_id),
-    CONSTRAINT plan_regulation_group_name_check CHECK (check_language_string(name))
+    CONSTRAINT plan_regulation_group_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.plan_regulation_group_regulation
@@ -683,7 +683,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
         REFERENCES code_lists.detail_plan_addition_information_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE NO ACTION,
-    CONSTRAINT supplementary_information_name_check CHECK (check_language_string(name))
+    CONSTRAINT supplementary_information_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.plan_regulation_supplementary_information
@@ -836,7 +836,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT planning_detail_line_name_check CHECK (check_language_string(name))
+    CONSTRAINT planning_detail_line_name_check CHECK (check_ryhti_language(name))
 );
 
 
@@ -1053,7 +1053,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_commentary_document
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT spatial_plan_commentary_document_role_check CHECK (check_language_string(role))
+    CONSTRAINT spatial_plan_commentary_document_role_check CHECK (check_ryhti_language(role))
 );
 
 -- Table: $SCHEMANAME$.spatial_plan_document
@@ -1077,7 +1077,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_document
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT spatial_plan_document_role_check CHECK (check_language_string(role))
+    CONSTRAINT spatial_plan_document_role_check CHECK (check_ryhti_language(role))
 );
 
 
@@ -1118,7 +1118,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
     syntax TEXT,
     CONSTRAINT text_value_pkey PRIMARY KEY (id),
     CONSTRAINT text_value_text_value_uuid_key UNIQUE (text_value_uuid),
-    CONSTRAINT text_value_value_check CHECK (check_language_string(value))
+    CONSTRAINT text_value_value_check CHECK (check_ryhti_language(value))
 );
 
 -- Table: $SCHEMANAME$.time_instant_value
@@ -1240,7 +1240,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT check_language_string CHECK (check_language_string(name)),
+    CONSTRAINT check_language_string CHECK (check_ryhti_language(name)),
     CONSTRAINT validate_validity_dates CHECK ($SCHEMANAME$.validate_zoning_element_validity_dates(valid_from, valid_to, spatial_plan)),
     CONSTRAINT zoning_date_check CHECK (
 CASE

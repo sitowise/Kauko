@@ -353,7 +353,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT planning_detail_point_name_check CHECK (check_language_string(name))
+    CONSTRAINT planning_detail_point_name_check CHECK (check_ryhti_language(name))
 );
 
 -- Table: $SCHEMANAME$.planning_detail_point_plan_regulation_group
