@@ -1429,6 +1429,49 @@ ALTER TABLE ONLY code_lists.plan_interaction_event_type ALTER COLUMN id SET DEFA
 
 
 --
+-- Name: plan_handling_event_type; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.plan_handling_event_type (
+    id integer PRIMARY KEY,
+    codevalue character varying(3) NOT NULL,
+    uri character varying(255) NOT NULL,
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
+    preflabel_en character varying,
+    CONSTRAINT plan_handling_event_type_codevalue_key UNIQUE (codevalue),
+    CONSTRAINT plan_handling_event_type_uri UNIQUE (uri)
+);
+
+
+--
+-- Name: plan_handling_event_type_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
+--
+
+CREATE SEQUENCE code_lists.plan_handling_event_type_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: plan_handling_event_type_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.plan_handling_event_type_id_seq OWNED BY code_lists.plan_handling_event_type.id;
+
+
+--
+-- Name: plan_handling_event_type id; Type: DEFAULT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.plan_handling_event_type ALTER COLUMN id SET DEFAULT nextval('code_lists.plan_handling_event_type_id_seq'::regclass);
+
+
+--
 -- Name: bindingness_kind id; Type: DEFAULT; Schema: code_lists; Owner: -
 --
 
@@ -4130,6 +4173,30 @@ INSERT INTO code_lists.plan_interaction_event_type VALUES (8, '08', 'http://uri.
 
 
 --
+-- Data for Name: plan_handling_event_type; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.plan_handling_event_type VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/01', 'Kaavan ajanmukaisuuden arviointi', 'Bedömning av planens tidsenlighet', 'Assessment of plan timeliness');
+INSERT INTO code_lists.plan_handling_event_type VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/02', 'Kaavoitusaloitteen hyväksyminen', 'Godkännande av planläggningsinitiativ', 'Approval of planning initiative');
+INSERT INTO code_lists.plan_handling_event_type VALUES (3, '03', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/03', 'Kaavoituksen käynnistäminen', 'Inledande av planläggning', 'Initiation of planning');
+INSERT INTO code_lists.plan_handling_event_type VALUES (4, '04', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/04', 'Kaavan vireilletulo', 'Planen blir anhängig', 'Announcement of pending plan');
+INSERT INTO code_lists.plan_handling_event_type VALUES (5, '05', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/05', 'Osallistumis- ja arviointisuunnitelman nähtäville asettaminen', 'Planen för deltagande och bedömning läggs fram offentligt', 'Presenting the participation and assessment scheme to the public');
+INSERT INTO code_lists.plan_handling_event_type VALUES (6, '06', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/06', 'Kaavan valmisteluaineiston nähtäville asettaminen', 'Offentligt framläggande av beredningsmaterialet som rör planen', 'Presenting the plan preparation material to the public');
+INSERT INTO code_lists.plan_handling_event_type VALUES (7, '07', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/07', 'Kaavaehdotuksen nähtäville asettaminen', 'Offentligt framläggande av planförslaget', 'Presenting the draft proposal to the public');
+INSERT INTO code_lists.plan_handling_event_type VALUES (8, '08', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/08', 'Viranomaislausuntokierros', 'Remissbehandling i myndigheter', 'Request for opinions from authorities');
+INSERT INTO code_lists.plan_handling_event_type VALUES (9, '09', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/09', 'Muutetun kaavaehdotuksen nähtäville asettaminen', 'Offentligt framläggande av det ändrade planförslaget', 'Presenting the amended plan proposal to the public');
+INSERT INTO code_lists.plan_handling_event_type VALUES (10, '10', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/10', 'Kaavaprosessin keskeyttäminen', 'Avbrytande av planprocessen', 'Interruption of plan process');
+INSERT INTO code_lists.plan_handling_event_type VALUES (11, '11', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/11', 'Kaavan hyväksyminen', 'Godkännande av planen', 'Plan approval');
+INSERT INTO code_lists.plan_handling_event_type VALUES (12, '12', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/12', 'Kaavan hyväksyminen oikaisukehotuksen johdosta', 'Godkännande av planen med anledning av rättelseuppmaning', 'Plan approval due to rectification reminder');
+INSERT INTO code_lists.plan_handling_event_type VALUES (13, '13', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/13', 'Kaavan tai sen osan kuuluttaminen voimaan ennen kaavan lainvoimaisuutta', 'Kungörelse av planen eller en del av den innan planen vunnit laga kraft', 'Announcement of a plan or part thereof as valid before legal validity');
+INSERT INTO code_lists.plan_handling_event_type VALUES (14, '14', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/14', 'Kaavan kumoaminen', 'Upphävande av planen', 'Plan repeal');
+INSERT INTO code_lists.plan_handling_event_type VALUES (15, '15', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/15', 'Valituksen vastineiden hyväksyminen', 'Godkännande av besvärsgenmälen', 'Approval of the rejoinders to the appeal');
+INSERT INTO code_lists.plan_handling_event_type VALUES (16, '16', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/16', 'Kaava kuulutetaan voimaan', 'Planen kungörs', 'Plan notified as valid');
+INSERT INTO code_lists.plan_handling_event_type VALUES (17, '17', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/17', 'Kaavan palauttaminen valmisteluun', 'Returnering av planen för beredning', 'Returning plan to preparation');
+INSERT INTO code_lists.plan_handling_event_type VALUES (18, '18', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/18', 'Toimeenpano keskeytetty', 'Verkställigheten är avbruten', 'Implementation suspended');
+INSERT INTO code_lists.plan_handling_event_type VALUES (19, '19', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/19', 'Muutoksenhaun yhteydessä viranomaisen tekemät muutokset', 'Ändringar som myndigheten gjort i samband med ändringsansökan', 'Changes made by authority in connection with appeal');
+
+--
 -- Name: bindingness_kind_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
 
@@ -4421,6 +4488,13 @@ SELECT pg_catalog.setval('code_lists.validity_type_identifier_seq', 1, false);
 --
 
 SELECT pg_catalog.setval('code_lists.plan_interaction_event_type_id_seq', 8, true);
+
+
+--
+-- Name: plan_handling_event_type_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
+--
+
+SELECT pg_catalog.setval('code_lists.plan_handling_event_type_id_seq', 19, true);
 
 
 --

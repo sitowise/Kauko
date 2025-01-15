@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
     CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
 );
 
+
 -- Table: $SCHEMANAME$.spatial_plan_interaction_event
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_interaction_event (
@@ -77,6 +78,35 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_interaction_event (
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT spatial_plan_interaction_event_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.plan_handling_event
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    handling_event_type VARCHAR(3) NOT NULL,
+    event_time timestamp with time zone,
+    name JSONB,
+    description JSONB,
+    geom geometry(MultiPolygon,$PROJECTSRID$),
+    additional_information_link TEXT,
+    cancelled BOOLEAN,
+    related_documents JSONB, -- TODO: linkitys document-tauluun
+    fk_spatial_plan TEXT NOT NULL,
+    CONSTRAINT plan_handling_event_local_id_key UNIQUE (local_id),
+    CONSTRAINT plan_handling_event_handling_event_type_fkey FOREIGN KEY (handling_event_type)
+        REFERENCES code_lists.plan_handling_event_type (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT plan_handling_event_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT plan_handling_event_description_check CHECK (check_ryhti_language(description)),
+    CONSTRAINT plan_handling_event_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
@@ -168,23 +198,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
-);
-
-
--- Table: $SCHEMANAME$.plan_handling_event
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
-    handling_event_key UUID PRIMARY KEY,
-    handling_event_type VARCHAR(255) NOT NULL,
-    event_time DATE NOT NULL,
-    name JSONB,
-    description JSONB,
-    location GEOMETRY,
-    additional_information_link TEXT,
-    cancelled BOOLEAN,
-    related_documents JSONB,
-    CONSTRAINT plan_handling_event_name_check CHECK (check_ryhti_language(name)),
-    CONSTRAINT plan_handling_event_description_check CHECK (check_ryhti_language(description))
 );
 
 
