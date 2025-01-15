@@ -305,23 +305,23 @@ CREATE CONSTRAINT TRIGGER validate_planned_space_topology
     FOR EACH ROW
     EXECUTE FUNCTION $SCHEMANAME$.validate_planned_space_geom();
 
--- Trigger: create_planner_local_id_trigger
+-- Trigger: create_plan_operator_local_id_trigger
 
--- DROP TRIGGER IF EXISTS create_planner_local_id_trigger ON $SCHEMANAME$.planner;
+-- DROP TRIGGER IF EXISTS create_plan_operator_local_id_trigger ON $SCHEMANAME$.plan_operator;
 
-CREATE OR REPLACE TRIGGER create_planner_local_id_trigger
+CREATE OR REPLACE TRIGGER create_plan_operator_local_id_trigger
     BEFORE INSERT
-    ON $SCHEMANAME$.planner
+    ON $SCHEMANAME$.plan_operator
     FOR EACH ROW
     EXECUTE FUNCTION public.create_local_id_trigger();
 
--- Trigger: planner_modified_trigger
+-- Trigger: plan_operator_modified_trigger
 
--- DROP TRIGGER IF EXISTS planner_modified_trigger ON $SCHEMANAME$.planner;
+-- DROP TRIGGER IF EXISTS plan_operator_modified_trigger ON $SCHEMANAME$.plan_operator;
 
-CREATE OR REPLACE TRIGGER planner_modified_trigger
+CREATE OR REPLACE TRIGGER plan_operator_modified_trigger
     BEFORE INSERT OR UPDATE 
-    ON $SCHEMANAME$.planner
+    ON $SCHEMANAME$.plan_operator
     FOR EACH ROW
     EXECUTE FUNCTION public.versioned_object_modified_trigger();
 
