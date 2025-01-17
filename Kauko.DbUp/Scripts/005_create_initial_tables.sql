@@ -296,6 +296,40 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
 );
 
 
+-- Table: $SCHEMANAME$.plan_decision
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
+    id UUID PRIMARY KEY,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    name VARCHAR(3) NOT NULL,
+    decision_date DATE NOT NULL,
+    decision_adoption_date DATE NOT NULL,
+    decision_article JSONB,
+    decision_text JSONB,
+    decision_maker_type VARCHAR(3) NOT NULL,
+    decision_identifier VARCHAR(255),
+    date_of_validity DATE,
+    fk_decision_maker TEXT,
+    decision_documents JSONB, -- TODO: linkitys document-tauluun
+    CONSTRAINT plan_decision_local_id_key UNIQUE (local_id),
+    CONSTRAINT plan_decision_name_fkey FOREIGN KEY (name)
+        REFERENCES code_lists.plan_decision_name (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT plan_decision_decision_article_check CHECK (check_ryhti_language(decision_article)),
+    CONSTRAINT plan_decision_decision_text_check CHECK (check_ryhti_language(decision_text)),
+    CONSTRAINT plan_decision_decision_maker_type_fkey FOREIGN KEY (decision_maker_type)
+        REFERENCES code_lists.plan_decision_maker_type (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT plan_decision_fk_decision_maker_fkey FOREIGN KEY (fk_decision_maker)
+        REFERENCES $SCHEMANAME$.plan_operator (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
 -- Table: $SCHEMANAME$.spatial_plan_main
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_main;
@@ -351,6 +385,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
     is_active boolean NOT NULL DEFAULT true,
     version_name text NOT NULL,
     fk_plan_handling_event TEXT,
+    fk_plan_decision TEXT,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
@@ -393,6 +428,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT spatial_plan_fk_plan_handling_event_fkey FOREIGN KEY (fk_plan_handling_event)
         REFERENCES $SCHEMANAME$.plan_handling_event (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT spatial_plan_fk_plan_decision_fkey FOREIGN KEY (fk_plan_decision)
+        REFERENCES $SCHEMANAME$.plan_decision (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,

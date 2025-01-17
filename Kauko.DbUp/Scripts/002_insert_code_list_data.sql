@@ -1441,6 +1441,99 @@ ALTER TABLE ONLY code_lists.plan_handling_event_type ALTER COLUMN id SET DEFAULT
 
 
 --
+-- Name: plan_decision_name; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.plan_decision_name (
+    id integer PRIMARY KEY,
+    codevalue character varying(3) NOT NULL,
+    uri character varying(255) NOT NULL,
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
+    preflabel_en character varying,
+    description_fi character varying,
+    description_sv character varying,
+    description_en character varying,
+    CONSTRAINT plan_decision_name_codevalue_key UNIQUE (codevalue),
+    CONSTRAINT plan_decision_name_uri UNIQUE (uri)
+);
+
+
+--
+-- Name: plan_decision_name_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
+--
+
+CREATE SEQUENCE code_lists.plan_decision_name_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: plan_decision_name_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.plan_decision_name_id_seq OWNED BY code_lists.plan_decision_name.id;
+
+
+--
+-- Name: plan_decision_name id; Type: DEFAULT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.plan_decision_name ALTER COLUMN id SET DEFAULT nextval('code_lists.plan_decision_name_id_seq'::regclass);
+
+
+
+--
+-- Name: plan_decision_maker_type; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.plan_decision_maker_type (
+    id integer PRIMARY KEY,
+    codevalue character varying(3) NOT NULL,
+    uri character varying(255) NOT NULL,
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
+    preflabel_en character varying,
+    description_fi character varying,
+    description_sv character varying,
+    description_en character varying,
+    CONSTRAINT plan_decision_maker_type_codevalue_key UNIQUE (codevalue),
+    CONSTRAINT plan_decision_maker_type_uri UNIQUE (uri)
+);
+
+
+--
+-- Name: plan_decision_maker_type_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
+--
+
+CREATE SEQUENCE code_lists.plan_decision_maker_type_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: plan_decision_maker_type_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.plan_decision_maker_type_id_seq OWNED BY code_lists.plan_decision_maker_type.id;
+
+
+--
+-- Name: plan_decision_maker_type id; Type: DEFAULT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.plan_decision_maker_type ALTER COLUMN id SET DEFAULT nextval('code_lists.plan_decision_maker_type_id_seq'::regclass);
+
+
+--
 -- Name: bindingness_kind id; Type: DEFAULT; Schema: code_lists; Owner: -
 --
 
@@ -3666,6 +3759,60 @@ INSERT INTO code_lists.plan_handling_event_type VALUES (17, '17', 'http://uri.su
 INSERT INTO code_lists.plan_handling_event_type VALUES (18, '18', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/18', 'Toimeenpano keskeytetty', 'Verkställigheten är avbruten', 'Implementation suspended');
 INSERT INTO code_lists.plan_handling_event_type VALUES (19, '19', 'http://uri.suomi.fi/codelist/rytj/kaavakastap/code/19', 'Muutoksenhaun yhteydessä viranomaisen tekemät muutokset', 'Ändringar som myndigheten gjort i samband med ändringsansökan', 'Changes made by authority in connection with appeal');
 
+
+--
+-- Data for Name: plan_decision_name; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.plan_decision_name (
+    id, 
+    codevalue, 
+    uri, 
+    preflabel_en, 
+    preflabel_fi, 
+    preflabel_sv, 
+    description_en, 
+    description_fi, 
+    description_sv
+) VALUES 
+(1, '01', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/01', 'Assessment of plan timeliness', 'Kaavan ajanmukaisuuden arviointi', 'Bedömning av planens tidsenlighet', 'The timeliness of the plan is assessed.', 'Kaavan ajanmukaisuus arvioidaan.', 'Planens tidsenlighet bedöms.'),
+(2, '02', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/02', 'Approval of planning initiative', 'Kaavoitusaloitteen hyväksyminen', 'Godkännande av planläggningsinitiativ', 'Decision on the approval of a planning initiative.', 'Päätös kaavoitusaloitteen hyväksymisestä.', 'Beslut om godkännande av planläggningsinitiativ.'),
+(3, '03', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/03', 'Initiation of planning', 'Kaavoituksen käynnistäminen', 'Inledande av planläggning', 'A decision on the initiation of planning and the allocation of resources to prepare a specific plan.', 'Päätös kaavoituksen käynnistämisestä ja varataan resurssit tietyn kaavan laatimiseen.', 'Beslut om inledande av planläggning och resurser reserveras för att utarbeta en viss plan.'),
+(4, '04', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/04', 'Presenting the participation and assessment scheme to the public', 'Osallistumis- ja arviointisuunnitelman nähtäville asettaminen', 'Planen för deltagande och bedömning läggs fram offentligt', 'Decision to present the plan’s participation and assessment scheme to the public.', 'Päätös kaavan osallistumis- ja arviointisuunnitelman nähtäville asettamisesta.', 'Beslut om offentligt framläggande av planen för deltagande och bedömning.'),
+(5, '05', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/05', 'Presenting the plan preparation material to the public', 'Kaavan valmisteluaineiston nähtäville asettaminen', 'Offentligt framläggande av beredningsmaterialet som rör planen', 'Decision on presenting the plan to the public.', 'Päätös kaavan valmisteluaineiston nähtäville asettamisesta.', 'Beslut om offentligt framläggande av beredningsmaterialet som rör planen.'),
+(6, '06', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/06', 'Presenting the draft plan to the public', 'Kaavaluonnoksen nähtäville asettaminen', 'Offentligt framläggande av utkastet till plan', 'Decision to present the draft plan to the public.', 'Päätös kaavaluonnoksen nähtäville asettamisesta.', 'Beslut om offentligt framläggande av utkastet till plan.'),
+(7, '07', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/07', 'Sending a plan proposal out for opinions', 'Kaavaehdotuksen asettaminen lausunnoille', 'Utsändning av planförslaget på remiss', 'Opinions on the regional plan proposal are requested before its presentation to the public (section 13 of the Land Use and Building Decree).', 'Maakuntakaavaehdotuksesta pyydetään lausunnot ennen nähtäville asettamista (MRA 13 §).', 'Utlåtande om förslaget till landskapsplan ska begäras före framläggandet (13 § i markanvändnings- och byggförordningen).'),
+(8, '08', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/08', 'Presenting the draft proposal to the public', 'Kaavaehdotuksen nähtäville asettaminen', 'Offentligt framläggande av planförslaget', 'Decision to present the plan proposal to the public.', 'Päätös kaavaehdotuksen asettamisesta julkisesti nähtäville.', 'Beslut om offentligt framläggande av planförslaget.'),
+(9, '09', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/09', 'Presenting the amended plan proposal to the public', 'Muutetun kaavaehdotuksen nähtäville asettaminen', 'Offentligt framläggande av det ändrade planförslaget', 'Decision to present the plan proposal to the public again due to essential changes made to it.', 'Päätös kaavaehdotuksen asettamisesta uudelleen julkisesti nähtäville siihen tehtyjen olennaisten muutosten johdosta.', 'Beslut om att på nytt lägga fram planförslaget offentligt med anledning av de väsentliga ändringar som gjorts i det.'),
+(10, '10', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/10', 'Interruption of plan process', 'Kaavaprosessin keskeyttäminen', 'Avbrytande av planprocessen', 'Decision to suspend the preparation of the plan before submitting it to the approval process.', 'Päätös kaavan valmistelun keskeyttämisestä ennen kaavan viemistä hyväksymiskäsittelyyn.', 'Beslut om att avbryta beredningen av planen innan planen behandlas vidare för godkännande.'),
+(11, '11A', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/11A', 'Plan approval', 'Kaavan hyväksyminen', 'Godkännande av planen', 'The council or committee makes the decision to approve the plan.', 'Valtuusto tai lautakunta tekee päätöksen kaavan hyväksymisestä.', 'Fullmäktige eller nämnden beslutar om godkännande av planen.'),
+(12, '11B', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/11B', 'Approval of plan and binding plot division', 'Kaavan ja sitovan tonttijaon hyväksyminen', 'Godkännande av planen och den bindande tomtindelningen', 'When a binding plot division is approved as part of a local detailed plan.', 'Kun sitova tonttijako hyväksytään osana asemakaavaa.', 'Då den bindande tomtindelningen godkänns som en del av detaljplanen.'),
+(13, '12', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/12', 'Plan approval due to rectification reminder', 'Kaavan hyväksyminen oikaisukehotuksen johdosta', 'Godkännande av planen med anledning av rättelseuppmaning', 'The decision to approve the plan is reconsidered due to a rectification reminder.', 'Kaavan hyväksymispäätös käsitellään uudelleen oikaisukehotuksen johdosta.', 'Beslutet om godkännande av planen behandlas på nytt med anledning av en rättelseuppmaning.'),
+(14, '13', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/13', 'Announcement of a plan or part thereof as valid before legal validity', 'Kaavan tai sen osan kuuluttaminen voimaan ennen kaavan lainvoimaisuutta', 'Kungörelse av planen eller en del av den innan planen vunnit laga kraft', 'The decision to announce a plan or part thereof as valid before its legal validity.', 'Päätös kuuluttaa kaava tai sen osa voimaan ennen kaavan lainvoimaisuutta.', 'Beslut att kungöra planen eller en del av den innan planen vunnit laga kraft.'),
+(15, '14', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/14', 'Plan repeal', 'Kaavan kumoaminen', 'Upphävande av planen', 'The council or committee makes the decision to repeal the plan.', 'Valtuusto tai lautakunta tekee päätöksen kaavan kumoamisesta.', 'Fullmäktige eller nämnden beslutar om upphävande av planen.'),
+(16, '15', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/15', 'Approval of the rejoinders to the appeal', 'Valituksen vastineiden hyväksyminen', 'Godkännande av besvärsgenmälen', 'The municipality or the regional council approves the rejoinders to be submitted to the administrative court or the Supreme Administrative Court.', 'Kunta tai maakunnan liitto hyväksyy hallinto-oikeudelle tai korkeimmalle hallinto-oikeudelle annettavat vastineet.', 'Kommunen eller landskapsförbundet godkänner de genmälen som ges till förvaltningsdomstolen eller högsta förvaltningsdomstolen.'),
+(17, '16', 'http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/16', 'Returning plan to preparation', 'Kaavan palauttaminen valmisteluun', 'Returnering av planen för beredning', 'The decision to return to a plan that has already been presented to the public and approved to the preparation stage after a plan proposal or an appeal.', 'Päätös nähtävillä olleen kaavaehdotuksen tai muutoksenhaun myötä jo hyväksytyn kaavan palauttamisesta valmisteluvaiheeseen.', 'Beslut om att ett planförslag som varit framlagt eller en plan som redan godkänts genom ändringsansökan returneras till beredningsskedet.');
+
+
+--
+-- Data for Name: plan_decision_maker_type; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.plan_decision_maker_type (
+    id, 
+    codevalue, 
+    uri, 
+    preflabel_fi, 
+    preflabel_sv, 
+    preflabel_en, 
+    description_fi, 
+    description_sv, 
+    description_en
+) VALUES 
+(1, '01', 'http://uri.suomi.fi/codelist/rytj/PaatoksenTekija/code/01', 'Viranhaltija', 'Tjänsteinnehavare', 'Office-holder', 'Viranhaltija, jolle kunnan päätöksenteko-oikeus on delegoitu.', 'Tjänsteinnehavare som kommunens beslutsrätt har delegerats till.', 'The office-holder to whom the municipality’s decision-making rights have been delegated.'),
+(2, '02', 'http://uri.suomi.fi/codelist/rytj/PaatoksenTekija/code/02', 'Monijäseninen päätöksentekoelin', 'Beslutsorgan med flera medlemmar', 'Multi-member decision-making body', 'Monijäseninen päätöksentekoelin, esimerkiksi lautakunta tai jaosto.', 'Beslutsorgan med flera medlemmar, till exempel nämnd eller sektion.', 'A multi-member decision-making body, such as a committee or division.');
+
+
 --
 -- Name: bindingness_kind_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
@@ -3958,6 +4105,20 @@ SELECT pg_catalog.setval('code_lists.plan_interaction_event_type_id_seq', 8, tru
 --
 
 SELECT pg_catalog.setval('code_lists.plan_handling_event_type_id_seq', 19, true);
+
+
+--
+-- Name: plan_decision_name_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
+--
+
+SELECT pg_catalog.setval('code_lists.plan_decision_name_id_seq', 17, true);
+
+
+--
+-- Name: plan_decision_maker_type_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
+--
+
+SELECT pg_catalog.setval('code_lists.plan_decision_maker_type_id_seq', 2, true);
 
 
 --
