@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
     CONSTRAINT geometry_point_value_geometry_point_value_uuid_key UNIQUE (geometry_point_value_uuid)
 );
 
+
 -- Table: $SCHEMANAME$.plan_operator
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.plan_operator;
@@ -247,6 +248,54 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_operator
     CONSTRAINT plan_operator_professional_title_check CHECK (check_ryhti_language(professional_title)),
     CONSTRAINT plan_operator_role_check CHECK (check_ryhti_language(role))
 );
+
+
+-- Table: $SCHEMANAME$.plan_interaction_event
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    interaction_event_type VARCHAR(3) NOT NULL,
+    event_time_begin timestamp with time zone NOT NULL,
+    event_time_end timestamp with time zone,
+    name JSONB,
+    description JSONB,
+    geom geometry(MultiPolygon,$PROJECTSRID$),
+    additional_information_link TEXT,
+    cancelled BOOLEAN,
+    related_documents JSONB, -- TODO: linkitys document-tauluun
+    CONSTRAINT plan_interaction_event_local_id_key UNIQUE (local_id),
+    CONSTRAINT plan_interaction_event_interaction_event_type_fkey FOREIGN KEY (interaction_event_type)
+        REFERENCES code_lists.plan_interaction_event_type (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT plan_interaction_event_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT plan_interaction_event_description_check CHECK (check_ryhti_language(description))
+);
+
+
+-- Table: $SCHEMANAME$.plan_handling_event
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    handling_event_type VARCHAR(3) NOT NULL,
+    event_time timestamp with time zone,
+    name JSONB,
+    description JSONB,
+    geom geometry(MultiPolygon,$PROJECTSRID$),
+    additional_information_link TEXT,
+    cancelled BOOLEAN,
+    related_documents JSONB, -- TODO: linkitys document-tauluun
+    CONSTRAINT plan_handling_event_local_id_key UNIQUE (local_id),
+    CONSTRAINT plan_handling_event_handling_event_type_fkey FOREIGN KEY (handling_event_type)
+        REFERENCES code_lists.plan_handling_event_type (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT plan_handling_event_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT plan_handling_event_description_check CHECK (check_ryhti_language(description))
+);
+
 
 -- Table: $SCHEMANAME$.spatial_plan_main
 
@@ -300,12 +349,13 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
     initiation_time date,
+    is_active boolean NOT NULL DEFAULT true,
+    version_name text NOT NULL,
+    fk_plan_handling_event TEXT,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
     modified_at timestamp with time zone NOT NULL,
-    is_active boolean NOT NULL DEFAULT true,
-    version_name text NOT NULL,
     CONSTRAINT spatial_plan_pkey PRIMARY KEY (id),
     CONSTRAINT spatial_plan_local_id_key UNIQUE (local_id),
     CONSTRAINT fk_finnish_muncipality FOREIGN KEY (land_administration_authority)
@@ -342,23 +392,29 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT spatial_plan_fk_plan_handling_event_fkey FOREIGN KEY (fk_plan_handling_event)
+        REFERENCES $SCHEMANAME$.plan_handling_event (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT date_check CHECK (
-CASE
-    WHEN approval_time IS NULL AND valid_from IS NULL AND valid_to IS NULL THEN true
-    WHEN approval_time IS NOT NULL AND valid_from IS NULL AND valid_to IS NULL THEN true
-    WHEN approval_time <= valid_from AND valid_to IS NULL THEN true
-    WHEN approval_time <= valid_from AND valid_from < valid_to THEN true
-    ELSE false
-END),
-    CONSTRAINT epsg_check CHECK (epsg ~ '^EPSG:$PROJECTSRID$$'::text),
-    CONSTRAINT land_administration_authority_check CHECK (land_administration_authority ~ '^[0-9]{3}$'::text),
-    CONSTRAINT spatial_plan_approval_check CHECK (
-CASE
-    WHEN approval_time IS NULL AND approved_by IS NOT NULL THEN false
-    WHEN approval_time IS NOT NULL AND approved_by IS NULL THEN false
-    ELSE true
-END)
+        CASE
+            WHEN approval_time IS NULL AND valid_from IS NULL AND valid_to IS NULL THEN true
+            WHEN approval_time IS NOT NULL AND valid_from IS NULL AND valid_to IS NULL THEN true
+            WHEN approval_time <= valid_from AND valid_to IS NULL THEN true
+            WHEN approval_time <= valid_from AND valid_from < valid_to THEN true
+            ELSE false
+        END),
+            CONSTRAINT epsg_check CHECK (epsg ~ '^EPSG:$PROJECTSRID$$'::text),
+            CONSTRAINT land_administration_authority_check CHECK (land_administration_authority ~ '^[0-9]{3}$'::text),
+            CONSTRAINT spatial_plan_approval_check CHECK (
+        CASE
+            WHEN approval_time IS NULL AND approved_by IS NOT NULL THEN false
+            WHEN approval_time IS NOT NULL AND approved_by IS NULL THEN false
+            ELSE true
+        END)
 );
+
 
 -- Table: $SCHEMANAME$.spatial_plan_planner
 
@@ -382,6 +438,26 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_planner
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+
+-- Table: $SCHEMANAME$.spatial_plan_interaction_event
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_interaction_event (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    fk_plan_interaction_event TEXT NOT NULL,
+    fk_spatial_plan TEXT NOT NULL,
+    CONSTRAINT spatial_plan_interaction_event_fk_plan_interaction_event_fkey FOREIGN KEY (fk_plan_interaction_event)
+        REFERENCES $SCHEMANAME$.plan_interaction_event (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT spatial_plan_interaction_event_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED
+);
+
 
 -- Table: $SCHEMANAME$.localized_objective
 
