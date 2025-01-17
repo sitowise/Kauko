@@ -283,7 +283,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
     event_time timestamp with time zone,
     name JSONB,
     description JSONB,
-    geom geometry(MultiPolygon,$PROJECTSRID$),
     additional_information_link TEXT,
     cancelled BOOLEAN,
     related_documents JSONB, -- TODO: linkitys document-tauluun
