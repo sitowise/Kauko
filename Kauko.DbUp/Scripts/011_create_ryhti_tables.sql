@@ -184,24 +184,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.positive_numeric_value (
 );
 
 
--- Table: $SCHEMANAME$.statute
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.statute (
-    statute_id SERIAL PRIMARY KEY,
-    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
-    name_of_statute JSONB,
-    number_of_statute_collection INT,
-    year_of_statute_collection INT,
-    chapter INT,
-    section INT,
-    subsections INT[],
-    paragraphs INT[],
-    subparagraphs TEXT[],
-    CONSTRAINT statute_local_id_key UNIQUE (local_id),
-    CONSTRAINT statute_name_of_statute_check CHECK (check_ryhti_language(name_of_statute))
-);
-
-
 -- Table: $SCHEMANAME$.time_period_date_only
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_date_only (
@@ -325,26 +307,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_plan_regulation_gr
 );
 
 
--- Table: $SCHEMANAME$.plan_decision_statutes
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision_statutes (
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    statute_local_id TEXT NOT NULL,
-    decision_local_id TEXT NOT NULL,
-    CONSTRAINT plan_decision_statutes_pkey PRIMARY KEY (id),
-    CONSTRAINT plan_decision_statutes_fk_statute FOREIGN KEY (statute_local_id)
-        REFERENCES $SCHEMANAME$.statute (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_decision_statutes_fk_decision FOREIGN KEY (decision_local_id)
-        REFERENCES $SCHEMANAME$.plan_decision (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
-
 -- Table: $SCHEMANAME$.decision_document
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.decision_document (
@@ -364,3 +326,4 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.decision_document (
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+8
