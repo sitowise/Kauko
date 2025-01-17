@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
     CONSTRAINT plan_decision_decision_text_check CHECK (check_ryhti_language(decision_text)),
     CONSTRAINT plan_decision_decision_article_check CHECK (check_ryhti_language(decision_article)),
     CONSTRAINT plan_decision_fk_decision_maker_fkey FOREIGN KEY (fk_decision_maker)
-        REFERENCES $SCHEMANAME$.planner (local_id) MATCH SIMPLE
+        REFERENCES $SCHEMANAME$.plan_operator (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
     CONSTRAINT plan_decision_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
