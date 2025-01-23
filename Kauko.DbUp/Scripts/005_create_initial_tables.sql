@@ -299,7 +299,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
 -- Table: $SCHEMANAME$.plan_decision
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
-    id UUID PRIMARY KEY,
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     name VARCHAR(3) NOT NULL,
     decision_date DATE NOT NULL,
@@ -311,6 +311,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
     date_of_validity DATE,
     fk_decision_maker TEXT,
     decision_documents JSONB, -- TODO: linkitys document-tauluun
+    CONSTRAINT plan_decision_pkey PRIMARY KEY (id),
     CONSTRAINT plan_decision_local_id_key UNIQUE (local_id),
     CONSTRAINT plan_decision_name_fkey FOREIGN KEY (name)
         REFERENCES code_lists.plan_decision_name (codevalue) MATCH SIMPLE
