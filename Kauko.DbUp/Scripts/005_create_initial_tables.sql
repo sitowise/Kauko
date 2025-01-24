@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     handling_event_type VARCHAR(3) NOT NULL,
-    event_time timestamp with time zone,
+    event_time DATE,
     name JSONB,
     description JSONB,
     additional_information_link TEXT,
