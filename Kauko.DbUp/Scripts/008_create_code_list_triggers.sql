@@ -135,3 +135,17 @@ CREATE TRIGGER upsert_plan_interaction_event_type BEFORE INSERT OR UPDATE ON cod
 --
 
 CREATE TRIGGER upsert_plan_handling_event_type BEFORE INSERT OR UPDATE ON code_lists.plan_handling_event_type FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/kaavakastap/code/');
+
+
+--
+-- Name: decision_name upsert_plan_decision_name; Type: TRIGGER; Schema: code_lists; Owner: -
+--
+
+CREATE TRIGGER upsert_plan_decision_name BEFORE INSERT OR UPDATE ON code_lists.plan_decision_name FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/kaavpaatnimi/code/');
+
+
+--
+-- Name: decision_name upsert_plan_decision_maker_type; Type: TRIGGER; Schema: code_lists; Owner: -
+--
+
+CREATE TRIGGER upsert_plan_decision_maker_type BEFORE INSERT OR UPDATE ON code_lists.plan_decision_maker_type FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/PaatoksenTekija/code/');

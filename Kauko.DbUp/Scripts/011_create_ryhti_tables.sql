@@ -97,38 +97,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_cancellation_info (
 );
 
 
--- Table: $SCHEMANAME$.plan_decision
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision (
-    id UUID PRIMARY KEY,
-    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    decision_date DATE NOT NULL,
-    decision_adoption_date DATE NOT NULL,
-    decision_id VARCHAR(255),
-    decisionmaker_type VARCHAR(255) NOT NULL,
-    fk_decision_maker TEXT,
-    decision_text JSONB,
-    decision_article JSONB,
-    decision_documents JSONB,
-    statutes JSONB,
-    fk_spatial_plan TEXT NOT NULL,
-    plans JSONB,
-    date_of_validity DATE,
-    CONSTRAINT plan_decision_local_id_key UNIQUE (local_id),
-    CONSTRAINT plan_decision_decision_text_check CHECK (check_ryhti_language(decision_text)),
-    CONSTRAINT plan_decision_decision_article_check CHECK (check_ryhti_language(decision_article)),
-    CONSTRAINT plan_decision_fk_decision_maker_fkey FOREIGN KEY (fk_decision_maker)
-        REFERENCES $SCHEMANAME$.plan_operator (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    CONSTRAINT plan_decision_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
-        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-);
-
-
 -- Table: $SCHEMANAME$.plan_map
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_map (
@@ -213,24 +181,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.positive_numeric_value (
     number INT CHECK (number >= 0),
     unit_of_measure VARCHAR(255),
     data_type VARCHAR(100) NOT NULL CHECK (data_type = 'PositiveNumeric')
-);
-
-
--- Table: $SCHEMANAME$.statute
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.statute (
-    statute_id SERIAL PRIMARY KEY,
-    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
-    name_of_statute JSONB,
-    number_of_statute_collection INT,
-    year_of_statute_collection INT,
-    chapter INT,
-    section INT,
-    subsections INT[],
-    paragraphs INT[],
-    subparagraphs TEXT[],
-    CONSTRAINT statute_local_id_key UNIQUE (local_id),
-    CONSTRAINT statute_name_of_statute_check CHECK (check_ryhti_language(name_of_statute))
 );
 
 
@@ -351,26 +301,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_plan_regulation_gr
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT planning_detail_point_plan_regulation_group_fk_planning_detail_l FOREIGN KEY (planning_detail_point_local_id)
         REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
-
--- Table: $SCHEMANAME$.plan_decision_statutes
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision_statutes (
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    statute_local_id TEXT NOT NULL,
-    decision_local_id TEXT NOT NULL,
-    CONSTRAINT plan_decision_statutes_pkey PRIMARY KEY (id),
-    CONSTRAINT plan_decision_statutes_fk_statute FOREIGN KEY (statute_local_id)
-        REFERENCES $SCHEMANAME$.statute (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_decision_statutes_fk_decision FOREIGN KEY (decision_local_id)
-        REFERENCES $SCHEMANAME$.plan_decision (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
