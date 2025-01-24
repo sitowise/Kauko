@@ -1343,44 +1343,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_regulation_group
         DEFERRABLE INITIALLY DEFERRED
 );
 
--- Table: $SCHEMANAME$.regulative_text
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.regulative_text;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.regulative_text
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    regulative_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    type integer NOT NULL,
-    description_fi TEXT,
-    description_se TEXT,
-    validity integer NOT NULL DEFAULT 1,
-    CONSTRAINT regulative_text_pkey PRIMARY KEY (id),
-    CONSTRAINT regulative_text_regulative_id_key UNIQUE (regulative_id)
-);
-
--- Table: $SCHEMANAME$.planned_space_regulation
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planned_space_regulation;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planned_space_id text NOT NULL,
-    regulative_id uuid NOT NULL,
-    CONSTRAINT planned_space_regulation_pkey PRIMARY KEY (id),
-    CONSTRAINT planned_space_regulation_key UNIQUE (planned_space_id, regulative_id),
-    CONSTRAINT planned_space_regulation_fkey FOREIGN KEY (planned_space_id)
-        REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT regulative_id_planned_space_fkey FOREIGN KEY (regulative_id)
-        REFERENCES $SCHEMANAME$.regulative_text (regulative_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
 
 -- Table: $SCHEMANAME$.planning_detail_line_numeric_value
 
@@ -1404,6 +1366,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
 
 -- Table: $SCHEMANAME$.planning_detail_line_plan_regulation_group
 
@@ -1536,30 +1499,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_document
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT spatial_plan_document_role_check CHECK (check_ryhti_language(role))
-);
-
-
--- Table: $SCHEMANAME$.spatial_plan_regulation
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_regulation;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_regulation
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    spatial_plan_id text NOT NULL,
-    regulative_id uuid NOT NULL,
-    CONSTRAINT spatial_plan_regulation_pkey PRIMARY KEY (id),
-    CONSTRAINT spatial_plan_regulation_key UNIQUE (spatial_plan_id, regulative_id),
-    CONSTRAINT regulative_id_spatial_plan_fkey FOREIGN KEY (regulative_id)
-        REFERENCES $SCHEMANAME$.regulative_text (regulative_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT spatial_plan_regulation_fkey FOREIGN KEY (spatial_plan_id)
-        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
 );
 
 
@@ -1798,28 +1737,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_planned_space
         DEFERRABLE INITIALLY DEFERRED
 );
 
--- Table: $SCHEMANAME$.zoning_element_regulation
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.zoning_element_regulation;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_regulation
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    zoning_element_id text NOT NULL,
-    regulative_id uuid NOT NULL,
-    CONSTRAINT zoning_element_regulation_pkey PRIMARY KEY (id),
-    CONSTRAINT zoning_element_regulation_key UNIQUE (zoning_element_id, regulative_id),
-    CONSTRAINT regulative_id_zoning_fkey FOREIGN KEY (regulative_id)
-        REFERENCES $SCHEMANAME$.regulative_text (regulative_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT zoning_element_regulation_fkey FOREIGN KEY (zoning_element_id)
-        REFERENCES $SCHEMANAME$.zoning_element (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
 
 -- END OF LOCAL PLAN TABLES
 -- $SCHEMANAME$, $PROJECTSRID$, $MUNICIPALITYCODE$
