@@ -54,27 +54,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.localized_text (
 );
 
 
--- Table: $SCHEMANAME$.numeric_range
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range (
-    numeric_range_id SERIAL PRIMARY KEY,
-    minimum_value INT,
-    maximum_value INT,
-    unit_of_measure TEXT,
-    data_type VARCHAR(100) NOT NULL CHECK (data_type = 'NumericRange')
-);
-
-
--- Table: $SCHEMANAME$.numeric_value
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value (
-    numeric_value_id SERIAL PRIMARY KEY,
-    number INT,
-    unit_of_measure TEXT,
-    data_type VARCHAR(100) NOT NULL CHECK (data_type = 'Numeric')
-);
-
-
 -- Table: $SCHEMANAME$.partially_cancelled_plan_object_info
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.partially_cancelled_plan_object_info (

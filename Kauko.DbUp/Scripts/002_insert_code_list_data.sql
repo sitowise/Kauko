@@ -3241,7 +3241,7 @@ INSERT INTO code_lists.finnish_regulative_text_type VALUES (11, 10, 'Liikennetun
 INSERT INTO code_lists.finnish_regulative_text_type VALUES (24, 23, 'Varattu joukkoliikenteelle', '020319', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020319');
 INSERT INTO code_lists.finnish_regulative_text_type VALUES (25, 24, 'Ajoyhteys', '020302', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020302');
 INSERT INTO code_lists.finnish_regulative_text_type VALUES (26, 25, 'Varattu alueen sisäiselle huoltoajolle', '020314', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020314');
-INSERT INTO code_lists.finnish_regulative_text_type VALUES (27, 26, 'Yleisen tien suoja-alue', '020322', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020322');
+INSERT INTO code_lists. VALUES (27, 26, 'Yleisen tien suoja-alue', '020322', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020322');
 INSERT INTO code_lists.finnish_regulative_text_type VALUES (28, 27, 'Yleisen tien näkemäalue', '020321', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020321');
 INSERT INTO code_lists.finnish_regulative_text_type VALUES (36, 37, 'Maan alaista tai maan päällistä johtoa, putkea tai linjaa varten varattu alue.', '020101', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/020101');
 INSERT INTO code_lists.finnish_regulative_text_type VALUES (6, 5, 'Rakennukseen jätettävä kulkuaukko', '0504', 'http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/0504');

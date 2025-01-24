@@ -584,26 +584,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
     CONSTRAINT numeric_range_pkey PRIMARY KEY (id),
     CONSTRAINT numeric_range_numeric_range_uuid_key UNIQUE (numeric_range_uuid),
     CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value)
-)	;
+);
 
--- Table: $SCHEMANAME$.numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    numeric_value_id uuid NOT NULL DEFAULT uuid_generate_v4(),
-    obligatory boolean NOT NULL,
-    value double precision NOT NULL,
-    value_type integer NOT NULL,
-    target_type integer NOT NULL,
-    localized_name TEXT,
-    description_fi TEXT,
-    description_se TEXT,
-    CONSTRAINT numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT numeric_value_numeric_value_id_key UNIQUE (numeric_value_id)
-)	;
 
 -- Table: $SCHEMANAME$.text_value
 
@@ -1237,28 +1219,6 @@ CASE
 END)
 );
 
--- Table: $SCHEMANAME$.planned_space_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planned_space_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planned_space_id text NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planned_space_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planned_space_numeric_value_key UNIQUE (planned_space_id, numeric_id),
-    CONSTRAINT numeric_value_planned_space_fk FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planned_space_numeric_value_fk FOREIGN KEY (planned_space_id)
-        REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
 
 -- Table: $SCHEMANAME$.planning_detail_line
 
@@ -1344,30 +1304,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_regulation_group
 );
 
 
--- Table: $SCHEMANAME$.planning_detail_line_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_line_id text NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_line_numeric_value_key UNIQUE (planning_detail_line_id, numeric_id),
-    CONSTRAINT numeric_value_planning_detail_line_fk FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planning_detail_line_value_fk FOREIGN KEY (planning_detail_line_id)
-        REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
-
 -- Table: $SCHEMANAME$.planning_detail_line_plan_regulation_group
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group;
@@ -1391,23 +1327,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_gro
         DEFERRABLE INITIALLY DEFERRED
 );
 
--- Table: $SCHEMANAME$.planning_detail_point_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_point_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_point_id uuid NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_point_numeric_value_key UNIQUE (planning_detail_point_id, numeric_id),
-    CONSTRAINT numeric_value_planning_detail_point_fk FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
 
 -- Table: $SCHEMANAME$.referenced_document
 
@@ -1647,28 +1566,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_describing_text
         ON DELETE CASCADE
 );
 
--- Table: $SCHEMANAME$.zoning_element_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.zoning_element_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    zoning_id text NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT zoning_element_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT zoning_element_numeric_value_key UNIQUE (zoning_id, numeric_id),
-    CONSTRAINT numeric_value_zoning_element_fk FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT zoning_element_numeric_value_fk FOREIGN KEY (zoning_id)
-        REFERENCES $SCHEMANAME$.zoning_element (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
 
 -- Table: $SCHEMANAME$.zoning_element_plan_detail_line
 
