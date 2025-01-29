@@ -996,6 +996,31 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group
     CONSTRAINT plan_regulation_group_name_check CHECK (check_ryhti_language(name))
 );
 
+
+-- Table: $SCHEMANAME$.spatial_plan_plan_regulation_group
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_plan_regulation_group;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_plan_regulation_group
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_spatial_plan TEXT NOT NULL,
+    fk_plan_regulation_group TEXT NOT NULL,
+    CONSTRAINT spatial_plan_plan_regulation_group_pkey PRIMARY KEY (id),
+    CONSTRAINT spatial_plan_plan_regulation_group_key UNIQUE (fk_spatial_plan, fk_plan_regulation_group),
+    CONSTRAINT spatial_plan_plan_regulation_group_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT spatial_plan_plan_reg_group_fk_plan_regulation_group_fkey FOREIGN KEY (fk_plan_regulation_group)
+        REFERENCES $SCHEMANAME$.plan_regulation_group (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
 -- Table: $SCHEMANAME$.plan_regulation_group_regulation
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.plan_regulation_group_regulation;
@@ -1018,6 +1043,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_group_regulation
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
 
 -- Table: $SCHEMANAME$.supplementary_information
 
@@ -1126,6 +1152,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
     )
 );
 
+
 -- Table: $SCHEMANAME$.plan_regulation_supplementary_information
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.plan_regulation_supplementary_information;
@@ -1149,6 +1176,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_supplementary_informatio
         DEFERRABLE INITIALLY DEFERRED
 );
 
+
 -- Table: $SCHEMANAME$.plan_regulation_theme
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.plan_regulation_theme;
@@ -1171,6 +1199,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation_theme
         ON DELETE NO ACTION
         DEFERRABLE INITIALLY DEFERRED
 );
+
 
 -- Table: $SCHEMANAME$.planned_space
 
