@@ -555,19 +555,19 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.localized_objective
     CONSTRAINT localized_objective_objective_check CHECK (objective <> ''::text)
 );
 
--- Table: $SCHEMANAME$.numeric_double_value
+-- Table: $SCHEMANAME$.numeric_value
 
--- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_double_value;
+-- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_value;
 
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_double_value
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    numeric_double_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    numeric_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value double precision NOT NULL,
     unit_of_measure TEXT,
     obligatory boolean NOT NULL,
-    CONSTRAINT numeric_double_value_pkey PRIMARY KEY (id),
-    CONSTRAINT numeric_double_value_numeric_double_value_uuid_key UNIQUE (numeric_double_value_uuid)
+    CONSTRAINT numeric_value_pkey PRIMARY KEY (id),
+    CONSTRAINT numeric_value_numeric_value_uuid_key UNIQUE (numeric_value_uuid)
 );
 
 -- Table: $SCHEMANAME$.numeric_range
@@ -696,7 +696,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
     fk_geometry_area_value uuid,
     fk_geometry_line_value uuid,
     fk_geometry_point_value uuid,
-    fk_numeric_double_value uuid,
+    fk_numeric_value uuid,
     fk_numeric_range uuid,
     fk_text_value uuid,
     fk_time_instant_value uuid,
@@ -743,8 +743,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_guidance_fk_numeric_double_value FOREIGN KEY (fk_numeric_double_value)
-        REFERENCES $SCHEMANAME$.numeric_double_value (numeric_double_value_uuid) MATCH SIMPLE
+    CONSTRAINT plan_guidance_fk_numeric_value FOREIGN KEY (fk_numeric_value)
+        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_uuid) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
@@ -777,7 +777,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
                 fk_geometry_area_value,
                 fk_geometry_line_value,
                 fk_geometry_point_value,
-                fk_numeric_double_value,
+                fk_numeric_value,
                 fk_numeric_range,
                 fk_text_value,
                 fk_time_instant_value,
@@ -857,7 +857,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
     fk_geometry_area_value uuid,
     fk_geometry_line_value uuid,
     fk_geometry_point_value uuid,
-    fk_numeric_double_value uuid,
+    fk_numeric_value uuid,
     fk_numeric_range uuid,
     fk_text_value uuid,
     fk_time_instant_value uuid,
@@ -909,8 +909,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_regulation_fk_numeric_double_value FOREIGN KEY (fk_numeric_double_value)
-        REFERENCES $SCHEMANAME$.numeric_double_value (numeric_double_value_uuid) MATCH SIMPLE
+    CONSTRAINT plan_regulation_fk_numeric_value FOREIGN KEY (fk_numeric_value)
+        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_uuid) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
@@ -943,7 +943,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
                 fk_geometry_area_value,
                 fk_geometry_line_value,
                 fk_geometry_point_value,
-                fk_numeric_double_value,
+                fk_numeric_value,
                 fk_numeric_range,
                 fk_text_value,
                 fk_time_instant_value,
@@ -1036,7 +1036,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
     fk_geometry_area_value uuid,
     fk_geometry_line_value uuid,
     fk_geometry_point_value uuid,
-    fk_numeric_double_value uuid,
+    fk_numeric_value uuid,
     fk_numeric_range uuid,
     fk_text_value uuid,
     fk_time_instant_value uuid,
@@ -1083,8 +1083,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT supplementary_information_fk_numeric_double_value FOREIGN KEY (fk_numeric_double_value)
-        REFERENCES $SCHEMANAME$.numeric_double_value (numeric_double_value_uuid) MATCH SIMPLE
+    CONSTRAINT supplementary_information_fk_numeric_value FOREIGN KEY (fk_numeric_value)
+        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_uuid) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
@@ -1117,7 +1117,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
             fk_geometry_area_value,
             fk_geometry_line_value,
             fk_geometry_point_value,
-            fk_numeric_double_value,
+            fk_numeric_value,
             fk_numeric_range,
             fk_text_value,
             fk_time_instant_value,
