@@ -64,7 +64,7 @@ CREATE TRIGGER upsert_url_detail_plan_addition_information_kind BEFORE INSERT OR
 -- Name: detail_plan_regulation_kind upsert_url_detail_plan_regulation_kind; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_detail_plan_regulation_kind BEFORE INSERT OR UPDATE ON code_lists.detail_plan_regulation_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/');
+CREATE TRIGGER upsert_url_detail_plan_regulation_kind BEFORE INSERT OR UPDATE ON code_lists.detail_plan_regulation_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji/code/');
 
 
 --

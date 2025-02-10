@@ -1617,7 +1617,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
     parcel_number TEXT,
     bindingness_of_location character varying(3) NOT NULL DEFAULT '01'::TEXT,
     ground_relative_position character varying(3) NOT NULL,
-    land_use_kind character varying(6) NOT NULL,
+    land_use_kind character varying NOT NULL,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
     spatial_plan TEXT,
