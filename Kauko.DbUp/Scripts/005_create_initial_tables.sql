@@ -1662,8 +1662,7 @@ CASE
     WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
     WHEN valid_from IS NULL AND valid_to IS NULL THEN true
     ELSE false
-END),
-    CONSTRAINT zoning_element_land_use_kind_check CHECK (land_use_kind::text ~~ '01%'::text)
+END)
 );
 
 -- Table: $SCHEMANAME$.zoning_element_describing_line
