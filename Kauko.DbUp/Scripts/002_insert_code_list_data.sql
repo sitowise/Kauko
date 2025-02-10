@@ -3404,21 +3404,23 @@ INSERT INTO code_lists.spatial_plan_kind VALUES (11, 'Asemakaava', '35', 'http:/
 -- Data for Name: spatial_plan_lifecycle_status; Type: TABLE DATA; Schema: code_lists; Owner: -
 --
 
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/01', 'Kaavoitusaloite', NULL, 'Kuntaan saapunut kaavoitusaloite', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/02', 'Vireilletullut', NULL, 'Viranomainen on ottanut kaava-asian käsiteltäväksi', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (3, '03', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/03', 'Valmistelu', 'beredningsmaterial', NULL, NULL, 'Kaavaprosessin vaihe, jossa laaditaan kaavan valmisteluaineisto. Valmisteluaineisto koostuu kaavaehdotuksen tai muun päätösehdotuksen laatimista varten laadituista ja kerätyistä aineistoista.', NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (4, '04', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/04', 'Kaavaehdotus', 'planförslag', 'Julkisesti nähtäville asetettava ehdotus kaavaksi', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (5, '05', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/05', 'Tarkistettu kaavaehdotus', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (6, '06', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/06', 'Hyväksytty kaava', NULL, 'Toimivaltainen viranomainen on hyväksynyt kaavaehdotuksen', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (7, '07', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/07', 'Oikaisukehotuksen alainen', NULL, 'Kaavasta on jätetty oikaisukehotus', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (8, '08', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/08', 'Valituksen alainen', NULL, 'Kaavasta on tehty valitus', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (9, '09', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/09', 'Oikaisukehotuksen alainen ja valituksen alainen', NULL, 'Kaavasta on jätetty oikaisukehotus ja siitä on tehty valitus', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (10, '10', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/10', 'Osittain voimassa', NULL, 'Kaava on kuulutettu osittain voimaan', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (11, '11', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/11', 'Voimassa', NULL, 'Kaava on saanut lainvoiman', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (12, '12', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/12', 'Kumottu', NULL, 'Kaava on kumottu', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (13, '13', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/13', 'Kumoutunut', NULL, 'Kaava on kumoutunut kaavamuutoksen myötä', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (14, '14', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/14', 'Rauennut', NULL, 'Kaava on rauennut kaavoitusprosessin keskeyttämisen myötä', NULL, NULL, NULL);
-INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (15, '15', 'http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/15', 'Hylätty', NULL, NULL, NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/01', 'Kaavoitusaloite', 'Planläggningsinitiativ', 'Kuntaan saapunut kaavoitusaloite', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/02', 'Vireilletullut', 'Blivit anhängigt', 'Kaava on kuulutettu vireille tai vireille tulosta on ilmoitettu kaavoituskatsauksen yhteydessä.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (3, '03', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/03', 'Valmistelu', 'Beredning', 'Kaavan laatimisen vaihe, jossa laaditaan osallistumis- ja arviointisuunnitelma ja osallisille annetaan mahdollisuus esittää mielipiteensä kaavan valmisteluaineistosta.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (4, '04', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/04', 'Kaavaehdotus', 'Planförslag', 'Kaavan laatimisen vaihe, jonka aikana kaavaehdotus asetetaan julkisesti nähtäville ja siitä voi tehdä kirjallisen muistutuksen ja siitä pyydetään lausuntoja.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (5, '05', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/05', 'Muutettu kaavaehdotus', 'Ändrat planförslag', 'Jos kaavaehdotusta on muutettu olennaisesti, kaavaehdotus asetetaan julkisesti uudelleen nähtäville.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (6, '06', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/06', 'Hyväksytty kaava', 'Godkänd plan', 'Toimivaltainen viranomainen on hyväksynyt kaavaehdotuksen.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (7, '07', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/07', 'Oikaisukehotuksen alainen', 'Belagd med en rättelseuppmaning', 'ELY-keskus on jättänyt kaavasta oikaisukehotuksen.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (8, '08', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/08', 'Valituksen alainen', 'Överklagad', 'Kaavasta on tehty valitus.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (9, '09', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/09', 'Oikaisukehotuksen alainen ja valituksen alainen', 'Omfattas av rättelseuppmaning och överklagad', 'Kaavasta on jätetty oikaisukehotus ja siitä on tehty valitus.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (10, '10', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/10', 'Osittain voimassa', 'Delvis i kraft', 'Kaava, kaavakohde tai kaavamääräys on osittain voimassa.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (11, '11', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/11', 'Voimassa ennen kaavan lainvoimaisuutta', 'Gäller innan planen vunnit laga kraft', 'Kaava on kuulutettu kokonaan voimaan ennen kuin kaavan valitukset on käsitelty (Huom! Koskee vain maakuntakaavaa).', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (12, '12', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/12', 'Lainvoimainen', 'Lagakraftvunnen', 'Kaava on saanut lainvoiman.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (13, '13', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/13', 'Voimassa', 'Giltig', 'Kaava on kuulutettu voimaan.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (14, '14', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/14', 'Kumoutunut', 'Upphävd', 'Kaava on kumoutunut kaavamuutoksen tai kumoamispäätöksen myötä.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (15, '15', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/15', 'Rauennut', 'Förfallit', 'Kaava on rauennut, kun kunta ei ole tehnyt oikaisukehotuksen johdosta uutta hyväksymispäätöstä.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (16, '16', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/16', 'Hylätty', 'Förkastad', 'Kaava on hylätty, kun kaava viety hyväksymiseen ja valtuusto päättänyt olla hyväksymättä ja keskeyttää kaavoituksen.', NULL, NULL, NULL);
+INSERT INTO code_lists.spatial_plan_lifecycle_status VALUES (17, '17', 'http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/17', 'Keskeytetty', 'Avbruten', 'Kaavan valmistelu on päätetty keskeyttää ennen kaavan viemistä hyväksymiskäsittelyyn.', NULL, NULL, NULL);
 
 
 --
@@ -3811,7 +3813,7 @@ SELECT pg_catalog.setval('code_lists.spatial_plan_kind_id_seq', 11, true);
 -- Name: spatial_plan_lifecycle_status_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
 
-SELECT pg_catalog.setval('code_lists.spatial_plan_lifecycle_status_id_seq', 15, true);
+SELECT pg_catalog.setval('code_lists.spatial_plan_lifecycle_status_id_seq', 17, true);
 
 
 --

@@ -120,7 +120,7 @@ CREATE TRIGGER upsert_url_spatial_plan_kind BEFORE INSERT OR UPDATE ON code_list
 -- Name: spatial_plan_lifecycle_status upsert_url_spatial_plan_lifecycle_status; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_spatial_plan_lifecycle_status BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_lifecycle_status FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/');
+CREATE TRIGGER upsert_url_spatial_plan_lifecycle_status BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_lifecycle_status FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/');
 
 
 --
