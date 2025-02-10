@@ -205,9 +205,10 @@ ALTER SEQUENCE code_lists.detail_plan_theme_id_seq OWNED BY code_lists.detail_pl
 
 CREATE TABLE code_lists.digital_origin_kind (
     id integer NOT NULL,
-    codevalue character varying(3) NOT NULL,
+    codevalue character varying(4) NOT NULL,
     uri character varying(255) NOT NULL,
-    preflabel_fi character varying NOT NULL
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying
 );
 
 
@@ -1882,10 +1883,11 @@ INSERT INTO code_lists.detail_plan_theme VALUES (11, '11', 'http://uri.suomi.fi/
 -- Data for Name: digital_origin_kind; Type: TABLE DATA; Schema: code_lists; Owner: -
 --
 
-INSERT INTO code_lists.digital_origin_kind VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/01', 'Tietomallin mukaan laadittu');
-INSERT INTO code_lists.digital_origin_kind VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/02', 'Kokonaan digitoitu');
-INSERT INTO code_lists.digital_origin_kind VALUES (3, '03', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/03', 'Osittain digitoitu');
-INSERT INTO code_lists.digital_origin_kind VALUES (4, '04', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/04', 'Rajaus digitoitu');
+INSERT INTO code_lists.digital_origin_kind VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/01', 'Tietomallin mukaan laadittu', 'Utarbetad enligt en datamodell');
+INSERT INTO code_lists.digital_origin_kind VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/02', 'Kokonaan digitoitu', 'Helt digitaliserad');
+INSERT INTO code_lists.digital_origin_kind VALUES (3, '03', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/03', 'Osittain digitoitu', 'Delvis digitaliserad');
+INSERT INTO code_lists.digital_origin_kind VALUES (4, '04', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/04', 'Rajaus digitoitu', 'Avgränsningen är digitaliserad');
+INSERT INTO code_lists.digital_origin_kind VALUES (5, '0401', 'http://uri.suomi.fi/codelist/rytj/RY_DigitaalinenAlkupera/code/0401', 'Rajaus useamman kunnan alueella', 'Avgränsning inom områden av flera kommuner');
 
 
 --
@@ -3578,7 +3580,7 @@ SELECT pg_catalog.setval('code_lists.detail_plan_theme_id_seq', 11, true);
 -- Name: digital_origin_kind_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
 
-SELECT pg_catalog.setval('code_lists.digital_origin_kind_id_seq', 4, true);
+SELECT pg_catalog.setval('code_lists.digital_origin_kind_id_seq', 5, true);
 
 
 --

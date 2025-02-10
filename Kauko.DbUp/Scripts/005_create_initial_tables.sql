@@ -375,7 +375,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
     valid_to date,
     is_released boolean NOT NULL DEFAULT false,
     type character varying(3) NOT NULL,
-    digital_origin character varying(3) NOT NULL,
+    digital_origin character varying(4) NOT NULL,
     ground_relative_position character varying(3) NOT NULL,
     legal_effectiveness character varying(2) NOT NULL DEFAULT '01'::TEXT,
     validity_time daterange,
