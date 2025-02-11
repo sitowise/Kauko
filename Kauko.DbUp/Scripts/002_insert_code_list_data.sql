@@ -1079,6 +1079,7 @@ CREATE TABLE code_lists.legal_effectiveness_kind (
     codevalue character varying(3) NOT NULL,
     uri character varying(255) NOT NULL,
     preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
     definition_fi character varying
 );
 
@@ -3401,8 +3402,11 @@ INSERT INTO code_lists.ryhti_language (code, name) VALUES ('eng', 'English');
 -- Data for Name: legal_effectiveness_kind; Type: TABLE DATA; Schema: code_lists; Owner: -
 --
 
-INSERT INTO code_lists.legal_effectiveness_kind VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_OikeusvaikutteisuudenLaji/code/01', 'Oikeusvaikutteinen', 'Päätetyllä maankäyttöasialla vaikutus, joka luo, muuttaa tai kumoaa oikeuden tai velvollisuuden');
-INSERT INTO code_lists.legal_effectiveness_kind VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_OikeusvaikutteisuudenLaji/code/02', 'Oikeusvaikutukseton', 'Päätetyllä maankäyttöasialla ei ole vaikutusta, joka luo, muuttaa tai kumoaa oikeuden tai velvollisuuden');
+INSERT INTO code_lists.legal_effectiveness_kind (id, codevalue, uri, preflabel_fi, preflabel_sv, definition_fi) VALUES (1, '1', 'http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/1', 'Oikeusvaikutteinen yleiskaava', 'Generalplan med rättsverkan', 'Ilmaisee, että kyseessä on maankäyttö- ja rakennuslain 42 §:ssä tarkoitettu oikeusvaikutteinen yleiskaava tai yleiskaavan osa, jolla on maankäyttö- ja rakennuslain 42 §:ssä tarkoitettuja oikeusvaikutuksia.');
+INSERT INTO code_lists.legal_effectiveness_kind (id, codevalue, uri, preflabel_fi, preflabel_sv, definition_fi) VALUES (2, '11', 'http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/11', 'Yleiskaavan käyttö rakennusluvan perusteena, MRL 44 §', 'Användning av generalplanen som grund för bygglov, MBL 44 §', 'Ilmaisee, että kyseessä on maankäyttö- ja rakennuslain 44 §:ssä tarkoitettu oikeusvaikutteinen yleiskaava tai yleiskaavan osa, jolla on maankäyttö- ja rakennuslain 44 §:ssä tarkoitettuja oikeusvaikutuksia.');
+INSERT INTO code_lists.legal_effectiveness_kind (id, codevalue, uri, preflabel_fi, preflabel_sv, definition_fi) VALUES (3, '12', 'http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/12', 'Yleiskaavan käyttö rakennusluvan myöntämisen perusteena rantavyöhykkeellä, MRL 72 §', 'Användning av generalplanen som grund för beviljande av bygglov på strandzonen, MBL 72 §', 'Ilmaisee, että kyseessä on maankäyttö- ja rakennuslain 72 §:ssä tarkoitettu oikeusvaikutteinen yleiskaava tai yleiskaavan osa, jolla on maankäyttö- ja rakennuslain 72 §:ssä tarkoitettuja oikeusvaikutuksia.');
+INSERT INTO code_lists.legal_effectiveness_kind (id, codevalue, uri, preflabel_fi, preflabel_sv, definition_fi) VALUES (4, '13', 'http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/13', 'Yleiskaavan käyttö tuulivoimalan rakennusluvan perusteena, MRL 77 a §', 'Användning av generalplanen som grund för bygglov för vindkraftverk, MBL 77 a §', 'Ilmaisee, että kyseessä on maankäyttö- ja rakennuslain 77 a §:ssä tarkoitettu oikeusvaikutteinen yleiskaava tai yleiskaavan osa, jolla on maankäyttö- ja rakennuslain 77 a §:ssä tarkoitettuja oikeusvaikutuksia.');
+INSERT INTO code_lists.legal_effectiveness_kind (id, codevalue, uri, preflabel_fi, preflabel_sv, definition_fi) VALUES (5, '2', 'http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/2', 'Oikeusvaikutukseton yleiskaava', 'Generalplan utan rättsverkningar', 'Ilmaisee, että kyseessä on maankäyttö- ja rakennuslain 45 §:ssä tarkoitettu oikeusvaikutukseton yleiskaava tai yleiskaavan osa, joka on laadittu maankäyttö- ja rakennuslain 45 §:n mukaisesti oikeusvaikutuksettomana.');
 
 
 --
@@ -4082,7 +4086,7 @@ SELECT pg_catalog.setval('code_lists.ground_relativeness_kind_id_seq', 2, true);
 -- Name: legal_effectiveness_kind_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
 
-SELECT pg_catalog.setval('code_lists.legal_effectiveness_kind_id_seq', 2, true);
+SELECT pg_catalog.setval('code_lists.legal_effectiveness_kind_id_seq', 5, true);
 
 
 --

@@ -106,7 +106,7 @@ CREATE TRIGGER upsert_url_ground_relativeness_kind BEFORE INSERT OR UPDATE ON co
 -- Name: legal_effectiveness_kind upsert_url_legal_effectiveness_kind; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_legal_effectiveness_kind BEFORE INSERT OR UPDATE ON code_lists.legal_effectiveness_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_OikeusvaikutteisuudenLaji/code/');
+CREATE TRIGGER upsert_url_legal_effectiveness_kind BEFORE INSERT OR UPDATE ON code_lists.legal_effectiveness_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/');
 
 
 --
