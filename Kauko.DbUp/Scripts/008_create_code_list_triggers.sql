@@ -71,7 +71,7 @@ CREATE TRIGGER upsert_url_detail_plan_regulation_kind BEFORE INSERT OR UPDATE ON
 -- Name: detail_plan_theme upsert_url_detail_plan_theme; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_detail_plan_theme BEFORE INSERT OR UPDATE ON code_lists.detail_plan_theme FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavoitusteema_AK/code/');
+CREATE TRIGGER upsert_url_detail_plan_theme BEFORE INSERT OR UPDATE ON code_lists.detail_plan_theme FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/kaavoitusteema/code/');
 
 
 --
