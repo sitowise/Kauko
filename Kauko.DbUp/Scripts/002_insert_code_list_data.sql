@@ -1034,7 +1034,8 @@ CREATE TABLE code_lists.ground_relativeness_kind (
     id integer NOT NULL,
     codevalue character varying(3) NOT NULL,
     uri character varying(255) NOT NULL,
-    preflabel_fi character varying NOT NULL
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying
 );
 
 
@@ -3325,8 +3326,8 @@ INSERT INTO code_lists.finnish_zoning_element_type VALUES (3, 3, 'Ohjeellinen to
 -- Data for Name: ground_relativeness_kind; Type: TABLE DATA; Schema: code_lists; Owner: -
 --
 
-INSERT INTO code_lists.ground_relativeness_kind VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_MaanalaisuudenLaji/code/01', 'Maanalainen');
-INSERT INTO code_lists.ground_relativeness_kind VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_MaanalaisuudenLaji/code/02', 'Maanpäällinen');
+INSERT INTO code_lists.ground_relativeness_kind VALUES (1, '01', 'http://uri.suomi.fi/codelist/rytj/RY_MaanalaisuudenLaji/code/01', 'Maanalainen', 'Underjordisk');
+INSERT INTO code_lists.ground_relativeness_kind VALUES (2, '02', 'http://uri.suomi.fi/codelist/rytj/RY_MaanalaisuudenLaji/code/02', 'Maanpäällinen', 'Ovan jord');
 
 
 --
