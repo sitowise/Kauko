@@ -20,6 +20,7 @@
 	  <EmbeddedResource Include="Scripts\010_create_initial_indexing.sql" />
 	  <EmbeddedResource Include="Scripts\011_create_ryhti_tables.sql" />
 	  <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
+	  <EmbeddedResource Include="Scripts\013_create_views.sql" />
   </ItemGroup>
 
   <ItemGroup>
