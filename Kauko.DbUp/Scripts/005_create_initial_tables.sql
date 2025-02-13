@@ -280,7 +280,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     handling_event_type VARCHAR(3) NOT NULL,
-    event_time timestamp with time zone,
+    event_time DATE,
     name JSONB,
     description JSONB,
     additional_information_link TEXT,
@@ -1282,11 +1282,11 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
     is_active boolean DEFAULT true,
     CONSTRAINT planning_detail_line_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_line_local_id_key UNIQUE (local_id),
-    CONSTRAINT planning_detail_line_bindingness_of_location_fk FOREIGN KEY (bindingness_of_location)
+    CONSTRAINT planning_detail_line_bindingness_of_location_fkey FOREIGN KEY (bindingness_of_location)
         REFERENCES code_lists.bindingness_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
-    CONSTRAINT planning_detail_line_ground_relative_position_fk FOREIGN KEY (ground_relative_position)
+    CONSTRAINT planning_detail_line_ground_relative_position_fkey FOREIGN KEY (ground_relative_position)
         REFERENCES code_lists.ground_relativeness_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
@@ -1304,21 +1304,173 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_line
 (
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     planned_space_local_id TEXT NOT NULL,
     planning_detail_line_local_id TEXT NOT NULL,
     CONSTRAINT planned_space_detail_line_pkey PRIMARY KEY (id),
-    CONSTRAINT planned_space_plan_detail_line_fk_planned_space FOREIGN KEY (planned_space_local_id)
+    CONSTRAINT planned_space_plan_detail_line_planned_space_local_id_fkey FOREIGN KEY (planned_space_local_id)
         REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planned_space_plan_detail_line_fk_planning_detail_line FOREIGN KEY (planning_detail_line_local_id)
+    CONSTRAINT planned_space_plan_detail_line_planning_detail_line_fkey FOREIGN KEY (planning_detail_line_local_id)
         REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+
+-- Table: $SCHEMANAME$.planning_detail_line_numeric_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_numeric_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    planning_detail_line_id text NOT NULL,
+    numeric_id uuid NOT NULL,
+    CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (id),
+    CONSTRAINT planning_detail_line_numeric_value_key UNIQUE (planning_detail_line_id, numeric_id),
+    CONSTRAINT planning_detail_line_numeric_value_planning_detail_line_fkey FOREIGN KEY (planning_detail_line_id)
+        REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT planning_detail_line_numeric_value_numeric_id_fkey FOREIGN KEY (numeric_id)
+        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.planning_detail_line_plan_regulation_group
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    planning_detail_line_local_id TEXT NOT NULL,
+    plan_regulation_group_local_id TEXT NOT NULL,
+    CONSTRAINT planning_detail_line_plan_regulation_group_pkey PRIMARY KEY (id),
+    CONSTRAINT planning_detail_line_plan_reg_planning_detail_line_local_id_key UNIQUE (planning_detail_line_local_id, plan_regulation_group_local_id),
+    CONSTRAINT planning_detail_line_plan_reg_group_planning_detail_line_fkey FOREIGN KEY (planning_detail_line_local_id)
+        REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT planning_detail_line_plan_reg_group_plan_regulation_group_fkey FOREIGN KEY (plan_regulation_group_local_id)
+        REFERENCES $SCHEMANAME$.plan_regulation_group (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.planning_detail_point
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    storage_time timestamp with time zone,
+    geom geometry(Point,$PROJECTSRID$) NOT NULL,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    latest_change timestamp with time zone NOT NULL DEFAULT now(),
+    created timestamp with time zone NOT NULL DEFAULT now(),
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
+    modified_at timestamp with time zone NOT NULL,
+    bindingness_of_location character varying(2) NOT NULL,
+    ground_relative_position character varying(2) NOT NULL,
+    lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
+    name jsonb,
+    is_active boolean DEFAULT true,
+    CONSTRAINT planning_detail_point_pkey PRIMARY KEY (id),
+    CONSTRAINT planning_detail_point_local_id_key UNIQUE (local_id),
+    CONSTRAINT planning_detail_point_bindingness_of_location_fkey FOREIGN KEY (bindingness_of_location)
+        REFERENCES code_lists.bindingness_kind (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT planning_detail_point_ground_relative_position_fkey FOREIGN KEY (ground_relative_position)
+        REFERENCES code_lists.ground_relativeness_kind (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT planning_detail_point_lifecycle_status_fkey FOREIGN KEY (lifecycle_status)
+        REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT planning_detail_point_name_check CHECK (check_ryhti_language(name))
+);
+
+
+-- Table: $SCHEMANAME$.planned_space_plan_detail_point
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.planned_space_plan_detail_point;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_point
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_planned_space TEXT NOT NULL,
+    fk_planning_detail_point TEXT NOT NULL,
+    CONSTRAINT planned_space_plan_detail_point_pkey PRIMARY KEY (id),
+    CONSTRAINT planned_space_plan_detail_point_fk_planned_space_fkey FOREIGN KEY (fk_planned_space)
+        REFERENCES $SCHEMANAME$.planned_space (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT planned_space_plan_detail_point_fk_planning_detail_point_fkey FOREIGN KEY (fk_planning_detail_point)
+        REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.planning_detail_point_numeric_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_point_numeric_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    planning_detail_point_id text NOT NULL,
+    numeric_id uuid NOT NULL,
+    CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (id),
+    CONSTRAINT planning_detail_point_numeric_value_key UNIQUE (planning_detail_point_id, numeric_id),
+    CONSTRAINT planning_detail_point_numeric_value_planning_detail_point_fkey FOREIGN KEY (planning_detail_point_id)
+        REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT planning_detail_point_numeric_value_numeric_id_fkey FOREIGN KEY (numeric_id)
+        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.planning_detail_point_plan_regulation_group
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_plan_regulation_group (
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    planning_detail_point_local_id TEXT NOT NULL,
+    plan_regulation_group_local_id TEXT NOT NULL,
+    CONSTRAINT planning_detail_point_plan_regulation_group_pkey PRIMARY KEY (id),
+    CONSTRAINT planning_detail_point_plan_reg_planning_detail_point_key UNIQUE (planning_detail_point_local_id, plan_regulation_group_local_id),
+    CONSTRAINT planning_detail_point_plan_reg_group_planning_detail_point_fkey FOREIGN KEY (planning_detail_point_local_id)
+        REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT planning_detail_point_plan_reg_group_plan_regulation_group_fkey FOREIGN KEY (plan_regulation_group_local_id)
+        REFERENCES $SCHEMANAME$.plan_regulation_group (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
 
 -- Table: $SCHEMANAME$.planned_space_plan_regulation_group
 
@@ -1343,6 +1495,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_regulation_group
         DEFERRABLE INITIALLY DEFERRED
 );
 
+
 -- Table: $SCHEMANAME$.regulative_text
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.regulative_text;
@@ -1358,6 +1511,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.regulative_text
     CONSTRAINT regulative_text_pkey PRIMARY KEY (id),
     CONSTRAINT regulative_text_regulative_id_key UNIQUE (regulative_id)
 );
+
 
 -- Table: $SCHEMANAME$.planned_space_regulation
 
@@ -1382,69 +1536,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_regulation
         DEFERRABLE INITIALLY DEFERRED
 );
 
--- Table: $SCHEMANAME$.planning_detail_line_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_line_id text NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_line_numeric_value_key UNIQUE (planning_detail_line_id, numeric_id),
-    CONSTRAINT numeric_value_planning_detail_line_fk FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planning_detail_line_value_fk FOREIGN KEY (planning_detail_line_id)
-        REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
--- Table: $SCHEMANAME$.planning_detail_line_plan_regulation_group
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_line_local_id TEXT NOT NULL,
-    plan_regulation_group_local_id TEXT NOT NULL,
-    CONSTRAINT planning_detail_line_plan_regulation_group_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_line_plan_reg_planning_detail_line_local_id_key UNIQUE (planning_detail_line_local_id, plan_regulation_group_local_id),
-    CONSTRAINT planning_detail_line_plan_regulation_group_fk_plan_regulation_g FOREIGN KEY (plan_regulation_group_local_id)
-        REFERENCES $SCHEMANAME$.plan_regulation_group (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planning_detail_line_plan_regulation_group_fk_planning_detail_l FOREIGN KEY (planning_detail_line_local_id)
-        REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
--- Table: $SCHEMANAME$.planning_detail_point_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_point_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_point_id uuid NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_point_numeric_value_key UNIQUE (planning_detail_point_id, numeric_id),
-    CONSTRAINT numeric_value_planning_detail_point_fk FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
 
 -- Table: $SCHEMANAME$.referenced_document
 
@@ -1752,6 +1843,27 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_detail_line
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+
+-- Table: $SCHEMANAME$.zoning_element_plan_detail_point
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_plan_detail_point (
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    zoning_element_local_id TEXT NOT NULL,
+    planning_detail_point_local_id TEXT NOT NULL,
+    CONSTRAINT zoning_element_plan_detail_point_pkey PRIMARY KEY (id),
+    CONSTRAINT zoning_element_plan_detail_point_zoning_element_local_id_fkey FOREIGN KEY (zoning_element_local_id)
+        REFERENCES $SCHEMANAME$.zoning_element (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT zoning_element_plan_detail_point_planning_detail_point_local_id_fkey FOREIGN KEY (planning_detail_point_local_id)
+        REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
 
 -- Table: $SCHEMANAME$.zoning_element_plan_regulation_group
 
