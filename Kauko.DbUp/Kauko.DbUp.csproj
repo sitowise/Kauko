@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -21,6 +21,7 @@
 	  <EmbeddedResource Include="Scripts\011_create_ryhti_tables.sql" />
 	  <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
 	  <EmbeddedResource Include="Scripts\013_create_views.sql" />
+	  <EmbeddedResource Include="Scripts\014_create_roles.sql" />
   </ItemGroup>
 
   <ItemGroup>
