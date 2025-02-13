@@ -375,7 +375,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan
     valid_to date,
     is_released boolean NOT NULL DEFAULT false,
     type character varying(3) NOT NULL,
-    digital_origin character varying(3) NOT NULL,
+    digital_origin character varying(4) NOT NULL,
     ground_relative_position character varying(3) NOT NULL,
     legal_effectiveness character varying(2) NOT NULL DEFAULT '01'::TEXT,
     validity_time daterange,
@@ -1708,7 +1708,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
     parcel_number TEXT,
     bindingness_of_location character varying(3) NOT NULL DEFAULT '01'::TEXT,
     ground_relative_position character varying(3) NOT NULL,
-    land_use_kind character varying(6) NOT NULL,
+    land_use_kind character varying NOT NULL,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
     spatial_plan TEXT,
@@ -1753,8 +1753,7 @@ CASE
     WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
     WHEN valid_from IS NULL AND valid_to IS NULL THEN true
     ELSE false
-END),
-    CONSTRAINT zoning_element_land_use_kind_check CHECK (land_use_kind::text ~~ '01%'::text)
+END)
 );
 
 -- Table: $SCHEMANAME$.zoning_element_describing_line

@@ -57,21 +57,21 @@ CREATE TRIGGER upsert_url_bindingness_kind BEFORE INSERT OR UPDATE ON code_lists
 -- Name: detail_plan_addition_information_kind upsert_url_detail_plan_addition_information_kind; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_detail_plan_addition_information_kind BEFORE INSERT OR UPDATE ON code_lists.detail_plan_addition_information_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_LisatiedonLaji_AK/code/');
+CREATE TRIGGER upsert_url_detail_plan_addition_information_kind BEFORE INSERT OR UPDATE ON code_lists.detail_plan_addition_information_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavamaarayksen_Lisatiedonlaji/code/');
 
 
 --
 -- Name: detail_plan_regulation_kind upsert_url_detail_plan_regulation_kind; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_detail_plan_regulation_kind BEFORE INSERT OR UPDATE ON code_lists.detail_plan_regulation_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji_AK/code/');
+CREATE TRIGGER upsert_url_detail_plan_regulation_kind BEFORE INSERT OR UPDATE ON code_lists.detail_plan_regulation_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavamaaraysLaji/code/');
 
 
 --
 -- Name: detail_plan_theme upsert_url_detail_plan_theme; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_detail_plan_theme BEFORE INSERT OR UPDATE ON code_lists.detail_plan_theme FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_Kaavoitusteema_AK/code/');
+CREATE TRIGGER upsert_url_detail_plan_theme BEFORE INSERT OR UPDATE ON code_lists.detail_plan_theme FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/kaavoitusteema/code/');
 
 
 --
@@ -106,7 +106,7 @@ CREATE TRIGGER upsert_url_ground_relativeness_kind BEFORE INSERT OR UPDATE ON co
 -- Name: legal_effectiveness_kind upsert_url_legal_effectiveness_kind; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_legal_effectiveness_kind BEFORE INSERT OR UPDATE ON code_lists.legal_effectiveness_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_OikeusvaikutteisuudenLaji/code/');
+CREATE TRIGGER upsert_url_legal_effectiveness_kind BEFORE INSERT OR UPDATE ON code_lists.legal_effectiveness_kind FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/oikeusvaik_YK/code/');
 
 
 --
@@ -120,7 +120,7 @@ CREATE TRIGGER upsert_url_spatial_plan_kind BEFORE INSERT OR UPDATE ON code_list
 -- Name: spatial_plan_lifecycle_status upsert_url_spatial_plan_lifecycle_status; Type: TRIGGER; Schema: code_lists; Owner: -
 --
 
-CREATE TRIGGER upsert_url_spatial_plan_lifecycle_status BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_lifecycle_status FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/RY_KaavanElinkaaritila/code/');
+CREATE TRIGGER upsert_url_spatial_plan_lifecycle_status BEFORE INSERT OR UPDATE ON code_lists.spatial_plan_lifecycle_status FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/kaavaelinkaari/code/');
 
 
 --
