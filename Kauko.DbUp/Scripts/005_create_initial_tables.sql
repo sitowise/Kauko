@@ -1,3 +1,209 @@
+-- Table: $SCHEMANAME$.code_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.code_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.code_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    code_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value TEXT NOT NULL,
+    code_list TEXT,
+    title jsonb,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT code_value_pkey PRIMARY KEY (id),
+    CONSTRAINT code_value_code_value_uuid_key UNIQUE (code_value_uuid),
+    CONSTRAINT code_value_title_check CHECK (check_ryhti_language(title))
+);
+
+
+-- Table: $SCHEMANAME$.elevation_position_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.elevation_position_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    elevation_position_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value double precision NOT NULL,
+    unit_of_measure TEXT,
+    reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
+    vertical_reference_system integer NOT NULL,
+    is_active boolean NOT NULL DEFAULT true,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT elevation_position_value_pkey PRIMARY KEY (id),
+    CONSTRAINT elevation_position_value_elevation_position_value_uuid_key UNIQUE (elevation_position_value_uuid),
+    CONSTRAINT elevation_position_value_vertical_system_fk FOREIGN KEY (vertical_reference_system)
+        REFERENCES code_lists.finnish_vertical_coordinate_reference_system (value) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+-- Table: $SCHEMANAME$.elevation_range_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.elevation_range_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    elevation_range_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    minimum_value double precision,
+    maximum_value double precision,
+    unit_of_measure TEXT,
+    reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
+    vertical_reference_system integer NOT NULL,
+    is_active boolean NOT NULL DEFAULT true,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT elevation_range_value_pkey PRIMARY KEY (id),
+    CONSTRAINT elevation_range_value_elevation_range_value_uuid_key UNIQUE (elevation_range_value_uuid),
+    CONSTRAINT elevation_range_vertical_system_fk FOREIGN KEY (vertical_reference_system)
+        REFERENCES code_lists.finnish_vertical_coordinate_reference_system (value) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT elevation_range_value_value_check CHECK (minimum_value <= maximum_value)
+);
+
+-- Table: $SCHEMANAME$.geometry_area_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.geometry_area_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    geometry_area_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
+    obligatory boolean NOT NULL,
+    is_active boolean DEFAULT true,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT geometry_area_value_pkey PRIMARY KEY (id),
+    CONSTRAINT geometry_area_value_geometry_area_value_uuid_key UNIQUE (geometry_area_value_uuid)
+);
+
+-- Table: $SCHEMANAME$.geometry_line_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.geometry_line_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    geometry_line_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
+    obligatory boolean NOT NULL,
+    is_active boolean DEFAULT true,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT geometry_line_value_pkey PRIMARY KEY (id),
+    CONSTRAINT geometry_line_value_geometry_line_value_uuid_key UNIQUE (geometry_line_value_uuid)
+);
+
+-- Table: $SCHEMANAME$.geometry_point_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.geometry_point_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    geometry_point_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value geometry(Point,$PROJECTSRID$) NOT NULL,
+    obligatory boolean NOT NULL,
+    point_rotation double precision,
+    is_active boolean DEFAULT true,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT geometry_point_value_pkey PRIMARY KEY (id),
+    CONSTRAINT geometry_point_value_geometry_point_value_uuid_key UNIQUE (geometry_point_value_uuid)
+);
+
+
+-- Table: $SCHEMANAME$.numeric_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    numeric_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value double precision NOT NULL,
+    unit_of_measure TEXT,
+    obligatory boolean NOT NULL,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT numeric_value_pkey PRIMARY KEY (id),
+    CONSTRAINT numeric_value_numeric_value_uuid_key UNIQUE (numeric_value_uuid)
+);
+
+-- Table: $SCHEMANAME$.numeric_range
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_range;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    numeric_range_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    minimum_value double precision,
+    maximum_value double precision,
+    unit_of_measure TEXT,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT numeric_range_pkey PRIMARY KEY (id),
+    CONSTRAINT numeric_range_numeric_range_uuid_key UNIQUE (numeric_range_uuid),
+    CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value)
+);
+
+
+-- Table: $SCHEMANAME$.text_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.text_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    text_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value jsonb NOT NULL,
+    syntax TEXT,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT text_value_pkey PRIMARY KEY (id),
+    CONSTRAINT text_value_text_value_uuid_key UNIQUE (text_value_uuid),
+    CONSTRAINT text_value_value_check CHECK (check_ryhti_language(value))
+);
+
+-- Table: $SCHEMANAME$.time_instant_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.time_instant_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    time_instant_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value timestamp with time zone NOT NULL,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT time_instant_value_pkey PRIMARY KEY (id),
+    CONSTRAINT time_instant_value_time_instant_uuid_key UNIQUE (time_instant_uuid)
+);
+
+-- Table: $SCHEMANAME$.time_period_value
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.time_period_value;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    time_period_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    value tsrange NOT NULL,
+    time_period_from timestamp with time zone,
+    time_period_to timestamp with time zone,
+    fk_plan_regulation TEXT,
+    fk_supplementary_information TEXT,
+    CONSTRAINT time_period_value_pkey PRIMARY KEY (id),
+    CONSTRAINT time_period_value_time_period_uuid_key UNIQUE (time_period_uuid)
+);
+
+
 -- Table: $SCHEMANAME$.describing_line
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.describing_line;
@@ -575,6 +781,17 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
     validity_time daterange,
     valid_from date,
     valid_to date,
+    fk_code_value uuid,
+    fk_elevation_position_value uuid,
+    fk_elevation_range_value uuid,
+    fk_geometry_area_value uuid,
+    fk_geometry_line_value uuid,
+    fk_geometry_point_value uuid,
+    fk_numeric_double_value uuid,
+    fk_numeric_range uuid,
+    fk_text_value uuid,
+    fk_time_instant_value uuid,
+    fk_time_period_value uuid,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
@@ -591,7 +808,78 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
         ON UPDATE CASCADE
         ON DELETE NO ACTION
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT plan_regulation_name_check CHECK (check_ryhti_language(name))
+    CONSTRAINT plan_regulation_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT plan_regulation_fk_code_value FOREIGN KEY (fk_code_value)
+        REFERENCES $SCHEMANAME$.code_value (code_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_elevation_position_value FOREIGN KEY (fk_elevation_position_value)
+        REFERENCES $SCHEMANAME$.elevation_position_value (elevation_position_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_elevation_range_value FOREIGN KEY (fk_elevation_range_value)
+        REFERENCES $SCHEMANAME$.elevation_range_value (elevation_range_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_geometry_area_value FOREIGN KEY (fk_geometry_area_value)
+        REFERENCES $SCHEMANAME$.geometry_area_value (geometry_area_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_geometry_line_value FOREIGN KEY (fk_geometry_line_value)
+        REFERENCES $SCHEMANAME$.geometry_line_value (geometry_line_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_geometry_point_value FOREIGN KEY (fk_geometry_point_value)
+        REFERENCES $SCHEMANAME$.geometry_point_value (geometry_point_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_numeric_double_value FOREIGN KEY (fk_numeric_double_value)
+        REFERENCES $SCHEMANAME$.numeric_double_value (numeric_double_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_numeric_range FOREIGN KEY (fk_numeric_range)
+        REFERENCES $SCHEMANAME$.numeric_range (numeric_range_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_text_value FOREIGN KEY (fk_text_value)
+        REFERENCES $SCHEMANAME$.text_value (text_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_time_instant_value FOREIGN KEY (fk_time_instant_value)
+        REFERENCES $SCHEMANAME$.time_instant_value (time_instant_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_regulation_fk_time_period_value FOREIGN KEY (fk_time_period_value)
+        REFERENCES $SCHEMANAME$.time_period_value (time_period_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT ensure_one_fk
+        CHECK (
+            num_nonnulls(
+                fk_code_value, 
+                fk_elevation_position_value,
+                fk_elevation_range_value,
+                fk_geometry_area_value,
+                fk_geometry_line_value,
+                fk_geometry_point_value,
+                fk_numeric_double_value,
+                fk_numeric_range,
+                fk_text_value,
+                fk_time_instant_value,
+                fk_time_period_value
+            ) = ANY (ARRAY[0, 1])
+        )
 );
 
 -- Table: $SCHEMANAME$.plan_regulation_document
@@ -698,6 +986,17 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
     type TEXT NOT NULL,
     name jsonb,
     fk_plan_regulation TEXT NOT NULL,
+    fk_code_value uuid,
+    fk_elevation_position_value uuid,
+    fk_elevation_range_value uuid,
+    fk_geometry_area_value uuid,
+    fk_geometry_line_value uuid,
+    fk_geometry_point_value uuid,
+    fk_numeric_double_value uuid,
+    fk_numeric_range uuid,
+    fk_text_value uuid,
+    fk_time_instant_value uuid,
+    fk_time_period_value uuid,
     CONSTRAINT supplementary_information_pkey PRIMARY KEY (id),
     CONSTRAINT supplementary_information_local_id_key UNIQUE (local_id),
     CONSTRAINT supplementary_information_fk_plan_regulation FOREIGN KEY (fk_plan_regulation)
@@ -709,7 +1008,78 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.supplementary_information
         REFERENCES code_lists.detail_plan_addition_information_kind (codevalue) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE NO ACTION,
-    CONSTRAINT supplementary_information_name_check CHECK (check_ryhti_language(name))
+    CONSTRAINT supplementary_information_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT supplementary_information_fk_code_value FOREIGN KEY (fk_code_value)
+        REFERENCES $SCHEMANAME$.code_value (code_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_elevation_position_value FOREIGN KEY (fk_elevation_position_value)
+        REFERENCES $SCHEMANAME$.elevation_position_value (elevation_position_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_elevation_range_value FOREIGN KEY (fk_elevation_range_value)
+        REFERENCES $SCHEMANAME$.elevation_range_value (elevation_range_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_geometry_area_value FOREIGN KEY (fk_geometry_area_value)
+        REFERENCES $SCHEMANAME$.geometry_area_value (geometry_area_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_geometry_line_value FOREIGN KEY (fk_geometry_line_value)
+        REFERENCES $SCHEMANAME$.geometry_line_value (geometry_line_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_geometry_point_value FOREIGN KEY (fk_geometry_point_value)
+        REFERENCES $SCHEMANAME$.geometry_point_value (geometry_point_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_numeric_double_value FOREIGN KEY (fk_numeric_double_value)
+        REFERENCES $SCHEMANAME$.numeric_double_value (numeric_double_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_numeric_range FOREIGN KEY (fk_numeric_range)
+        REFERENCES $SCHEMANAME$.numeric_range (numeric_range_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_text_value FOREIGN KEY (fk_text_value)
+        REFERENCES $SCHEMANAME$.text_value (text_value_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_time_instant_value FOREIGN KEY (fk_time_instant_value)
+        REFERENCES $SCHEMANAME$.time_instant_value (time_instant_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT supplementary_information_fk_time_period_value FOREIGN KEY (fk_time_period_value)
+        REFERENCES $SCHEMANAME$.time_period_value (time_period_uuid) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT ensure_one_fk
+    CHECK (
+        num_nonnulls(
+            fk_code_value, 
+            fk_elevation_position_value,
+            fk_elevation_range_value,
+            fk_geometry_area_value,
+            fk_geometry_line_value,
+            fk_geometry_point_value,
+            fk_numeric_double_value,
+            fk_numeric_range,
+            fk_text_value,
+            fk_time_instant_value,
+            fk_time_period_value
+        ) = ANY (ARRAY[0, 1])
+    )
 );
 
 
@@ -1221,399 +1591,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element_planned_space
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
-);
-
-
--- Table: $SCHEMANAME$.code_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.code_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.code_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    code_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value TEXT NOT NULL,
-    code_list TEXT,
-    title jsonb,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT code_value_pkey PRIMARY KEY (id),
-    CONSTRAINT code_value_code_value_uuid_key UNIQUE (code_value_uuid),
-    CONSTRAINT code_value_title_check CHECK (check_ryhti_language(title)),
-    CONSTRAINT code_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT code_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
-
--- Table: $SCHEMANAME$.elevation_position_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.elevation_position_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    elevation_position_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value double precision NOT NULL,
-    unit_of_measure TEXT,
-    reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
-    vertical_reference_system integer NOT NULL,
-    is_active boolean NOT NULL DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT elevation_position_value_pkey PRIMARY KEY (id),
-    CONSTRAINT elevation_position_value_elevation_position_value_uuid_key UNIQUE (elevation_position_value_uuid),
-    CONSTRAINT elevation_position_value_vertical_system_fk FOREIGN KEY (vertical_reference_system)
-        REFERENCES code_lists.finnish_vertical_coordinate_reference_system (value) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    CONSTRAINT elevation_position_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT elevation_position_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.elevation_range_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.elevation_range_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    elevation_range_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    minimum_value double precision,
-    maximum_value double precision,
-    unit_of_measure TEXT,
-    reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
-    vertical_reference_system integer NOT NULL,
-    is_active boolean NOT NULL DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT elevation_range_value_pkey PRIMARY KEY (id),
-    CONSTRAINT elevation_range_value_elevation_range_value_uuid_key UNIQUE (elevation_range_value_uuid),
-    CONSTRAINT elevation_range_vertical_system_fk FOREIGN KEY (vertical_reference_system)
-        REFERENCES code_lists.finnish_vertical_coordinate_reference_system (value) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-    CONSTRAINT elevation_range_value_value_check CHECK (minimum_value <= maximum_value),
-    CONSTRAINT elevation_range_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT elevation_range_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.geometry_area_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.geometry_area_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    geometry_area_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
-    obligatory boolean NOT NULL,
-    is_active boolean DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT geometry_area_value_pkey PRIMARY KEY (id),
-    CONSTRAINT geometry_area_value_geometry_area_value_uuid_key UNIQUE (geometry_area_value_uuid),
-    CONSTRAINT geometry_area_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT geometry_area_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.geometry_line_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.geometry_line_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    geometry_line_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
-    obligatory boolean NOT NULL,
-    is_active boolean DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT geometry_line_value_pkey PRIMARY KEY (id),
-    CONSTRAINT geometry_line_value_geometry_line_value_uuid_key UNIQUE (geometry_line_value_uuid),
-    CONSTRAINT geometry_line_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT geometry_line_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.geometry_point_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.geometry_point_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    geometry_point_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value geometry(Point,$PROJECTSRID$) NOT NULL,
-    obligatory boolean NOT NULL,
-    point_rotation double precision,
-    is_active boolean DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT geometry_point_value_pkey PRIMARY KEY (id),
-    CONSTRAINT geometry_point_value_geometry_point_value_uuid_key UNIQUE (geometry_point_value_uuid),
-    CONSTRAINT geometry_point_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT geometry_point_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
-
--- Table: $SCHEMANAME$.numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    numeric_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value double precision NOT NULL,
-    unit_of_measure TEXT,
-    obligatory boolean NOT NULL,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT numeric_value_numeric_value_uuid_key UNIQUE (numeric_value_uuid),
-    CONSTRAINT numeric_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT numeric_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.numeric_range
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.numeric_range;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    numeric_range_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    minimum_value double precision,
-    maximum_value double precision,
-    unit_of_measure TEXT,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT numeric_range_pkey PRIMARY KEY (id),
-    CONSTRAINT numeric_range_numeric_range_uuid_key UNIQUE (numeric_range_uuid),
-    CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value),
-    CONSTRAINT numeric_range_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT numeric_range_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
-
--- Table: $SCHEMANAME$.text_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.text_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    text_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value jsonb NOT NULL,
-    syntax TEXT,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT text_value_pkey PRIMARY KEY (id),
-    CONSTRAINT text_value_text_value_uuid_key UNIQUE (text_value_uuid),
-    CONSTRAINT text_value_value_check CHECK (check_ryhti_language(value)),
-    CONSTRAINT text_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT text_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.time_instant_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.time_instant_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    time_instant_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value timestamp with time zone NOT NULL,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT time_instant_value_pkey PRIMARY KEY (id),
-    CONSTRAINT time_instant_value_time_instant_uuid_key UNIQUE (time_instant_uuid),
-    CONSTRAINT time_instant_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT time_instant_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
-);
-
--- Table: $SCHEMANAME$.time_period_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.time_period_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    time_period_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
-    value tsrange NOT NULL,
-    time_period_from timestamp with time zone,
-    time_period_to timestamp with time zone,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
-    CONSTRAINT time_period_value_pkey PRIMARY KEY (id),
-    CONSTRAINT time_period_value_time_period_uuid_key UNIQUE (time_period_uuid),
-    CONSTRAINT time_period_value_fk_plan_regulation_fkey FOREIGN KEY (fk_plan_regulation)
-        REFERENCES $SCHEMANAME$.plan_regulation (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT time_period_value_fk_supplementary_information_fkey FOREIGN KEY (fk_supplementary_information)
-        REFERENCES $SCHEMANAME$.supplementary_information (local_id) MATCH SIMPLE
-        ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT ensure_one_fk
-        CHECK (
-            num_nonnulls(
-                fk_plan_regulation,
-                fk_supplementary_information
-            ) = 1
-        )
 );
 
 
