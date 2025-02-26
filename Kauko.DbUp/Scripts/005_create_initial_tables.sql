@@ -490,7 +490,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_guidance
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
     storage_time timestamp with time zone,
     name jsonb,
-    value jsonb,
+    value jsonb NOT NULL,
     life_cycle_status TEXT NOT NULL,
     validity_time daterange,
     valid_from date,
