@@ -9,8 +9,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.code_value
     value TEXT NOT NULL,
     code_list TEXT,
     title jsonb,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT code_value_pkey PRIMARY KEY (id),
     CONSTRAINT code_value_code_value_uuid_key UNIQUE (code_value_uuid),
     CONSTRAINT code_value_title_check CHECK (check_ryhti_language(title))
@@ -30,8 +28,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_position_value
     reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
     vertical_reference_system integer NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT elevation_position_value_pkey PRIMARY KEY (id),
     CONSTRAINT elevation_position_value_elevation_position_value_uuid_key UNIQUE (elevation_position_value_uuid),
     CONSTRAINT elevation_position_value_vertical_system_fk FOREIGN KEY (vertical_reference_system)
@@ -54,8 +50,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.elevation_range_value
     reference_point geometry(Point,$PROJECTSRID$) NOT NULL,
     vertical_reference_system integer NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT elevation_range_value_pkey PRIMARY KEY (id),
     CONSTRAINT elevation_range_value_elevation_range_value_uuid_key UNIQUE (elevation_range_value_uuid),
     CONSTRAINT elevation_range_vertical_system_fk FOREIGN KEY (vertical_reference_system)
@@ -76,8 +70,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_area_value
     value geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
     is_active boolean DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT geometry_area_value_pkey PRIMARY KEY (id),
     CONSTRAINT geometry_area_value_geometry_area_value_uuid_key UNIQUE (geometry_area_value_uuid)
 );
@@ -93,8 +85,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_line_value
     value geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     obligatory boolean NOT NULL,
     is_active boolean DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT geometry_line_value_pkey PRIMARY KEY (id),
     CONSTRAINT geometry_line_value_geometry_line_value_uuid_key UNIQUE (geometry_line_value_uuid)
 );
@@ -111,8 +101,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.geometry_point_value
     obligatory boolean NOT NULL,
     point_rotation double precision,
     is_active boolean DEFAULT true,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT geometry_point_value_pkey PRIMARY KEY (id),
     CONSTRAINT geometry_point_value_geometry_point_value_uuid_key UNIQUE (geometry_point_value_uuid)
 );
@@ -129,8 +117,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_value
     value double precision NOT NULL,
     unit_of_measure TEXT,
     obligatory boolean NOT NULL,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT numeric_value_pkey PRIMARY KEY (id),
     CONSTRAINT numeric_value_numeric_value_uuid_key UNIQUE (numeric_value_uuid)
 );
@@ -146,8 +132,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range
     minimum_value double precision,
     maximum_value double precision,
     unit_of_measure TEXT,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT numeric_range_pkey PRIMARY KEY (id),
     CONSTRAINT numeric_range_numeric_range_uuid_key UNIQUE (numeric_range_uuid),
     CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value)
@@ -164,8 +148,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.text_value
     text_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value jsonb NOT NULL,
     syntax TEXT,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT text_value_pkey PRIMARY KEY (id),
     CONSTRAINT text_value_text_value_uuid_key UNIQUE (text_value_uuid),
     CONSTRAINT text_value_value_check CHECK (check_ryhti_language(value))
@@ -180,8 +162,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_instant_value
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     time_instant_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
     value timestamp with time zone NOT NULL,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT time_instant_value_pkey PRIMARY KEY (id),
     CONSTRAINT time_instant_value_time_instant_uuid_key UNIQUE (time_instant_uuid)
 );
@@ -197,8 +177,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_value
     value tsrange NOT NULL,
     time_period_from timestamp with time zone,
     time_period_to timestamp with time zone,
-    fk_plan_regulation TEXT,
-    fk_supplementary_information TEXT,
     CONSTRAINT time_period_value_pkey PRIMARY KEY (id),
     CONSTRAINT time_period_value_time_period_uuid_key UNIQUE (time_period_uuid)
 );
