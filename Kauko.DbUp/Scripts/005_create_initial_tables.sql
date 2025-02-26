@@ -754,7 +754,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_regulation
     storage_time timestamp with time zone,
     name jsonb,
     type TEXT NOT NULL,
-    value VARCHAR(255) NOT NULL,
     life_cycle_status TEXT NOT NULL,
     validity_time daterange,
     valid_from date,
