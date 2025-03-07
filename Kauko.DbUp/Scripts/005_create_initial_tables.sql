@@ -1199,6 +1199,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     geom geometry(MultiPolygon,$PROJECTSRID$) NOT NULL,
     storage_time timestamp with time zone,
+    name jsonb,
+    description jsonb,
     valid_from date,
     valid_to date,
     bindingness_of_location character varying(3) NOT NULL,
@@ -1206,6 +1208,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
     validity_time daterange,
+    internal_notes TEXT,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
@@ -1228,13 +1231,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
+    CONSTRAINT check_language_string_name CHECK (check_ryhti_language(name)),
+    CONSTRAINT check_language_string_description CHECK (check_ryhti_language(description)),
     CONSTRAINT planned_space_date_check CHECK (
-CASE
-    WHEN valid_from IS NOT NULL AND valid_to IS NULL THEN true
-    WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
-    WHEN valid_from IS NULL AND valid_to IS NULL THEN true
-    ELSE false
-END)
+        CASE
+            WHEN valid_from IS NOT NULL AND valid_to IS NULL THEN true
+            WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
+            WHEN valid_from IS NULL AND valid_to IS NULL THEN true
+            ELSE false
+        END)
 );
 
 -- Table: $SCHEMANAME$.planned_space_numeric_value
@@ -1271,14 +1276,18 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
     geom geometry(MultiLineString,$PROJECTSRID$) NOT NULL,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
+    name jsonb,
+    description jsonb,
+    valid_from date,
+    valid_to date,
+    bindingness_of_location character varying(2) NOT NULL,
+    ground_relative_position character varying(2) NOT NULL,
+    internal_notes TEXT,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
     modified_at timestamp with time zone NOT NULL,
-    bindingness_of_location character varying(2) NOT NULL,
-    ground_relative_position character varying(2) NOT NULL,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
-    name jsonb,
     is_active boolean DEFAULT true,
     CONSTRAINT planning_detail_line_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_line_local_id_key UNIQUE (local_id),
@@ -1294,7 +1303,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT planning_detail_line_name_check CHECK (check_ryhti_language(name))
+    CONSTRAINT planning_detail_line_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT planning_detail_line_description_check CHECK (check_ryhti_language(description)),
+    CONSTRAINT planning_detail_line_date_check CHECK (
+        CASE
+            WHEN valid_from IS NOT NULL AND valid_to IS NULL THEN true
+            WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
+            WHEN valid_from IS NULL AND valid_to IS NULL THEN true
+            ELSE false
+        END)
 );
 
 
@@ -1377,14 +1394,18 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
     geom geometry(Point,$PROJECTSRID$) NOT NULL,
     local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
+    name jsonb,
+    description jsonb,
+    valid_from date,
+    valid_to date,
+    bindingness_of_location character varying(2) NOT NULL,
+    ground_relative_position character varying(2) NOT NULL,
+    internal_notes TEXT,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
     modified_at timestamp with time zone NOT NULL,
-    bindingness_of_location character varying(2) NOT NULL,
-    ground_relative_position character varying(2) NOT NULL,
     lifecycle_status character varying(3) NOT NULL DEFAULT '01'::TEXT,
-    name jsonb,
     is_active boolean DEFAULT true,
     CONSTRAINT planning_detail_point_pkey PRIMARY KEY (id),
     CONSTRAINT planning_detail_point_local_id_key UNIQUE (local_id),
@@ -1400,7 +1421,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point (
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT planning_detail_point_name_check CHECK (check_ryhti_language(name))
+    CONSTRAINT planning_detail_point_name_check CHECK (check_ryhti_language(name)),
+    CONSTRAINT planning_detail_point_description_check CHECK (check_ryhti_language(description)),
+    CONSTRAINT zoning_date_check CHECK (
+        CASE
+            WHEN valid_from IS NOT NULL AND valid_to IS NULL THEN true
+            WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
+            WHEN valid_from IS NULL AND valid_to IS NULL THEN true
+            ELSE false
+        END)
 );
 
 
@@ -1700,6 +1729,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
     storage_time timestamp with time zone,
     localized_name TEXT NOT NULL,
     name jsonb,
+    description jsonb,
     type integer NOT NULL,
     up_to_dateness integer NOT NULL,
     valid_from date,
@@ -1713,6 +1743,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
     latest_change timestamp with time zone NOT NULL DEFAULT now(),
     spatial_plan TEXT,
     validity_time daterange,
+    internal_notes TEXT,
     created timestamp with time zone NOT NULL DEFAULT now(),
     created_by text NOT NULL,
     modified_by text NOT NULL,
@@ -1745,15 +1776,16 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.zoning_element
         REFERENCES code_lists.spatial_plan_lifecycle_status (codevalue) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION,
-    CONSTRAINT check_language_string CHECK (check_ryhti_language(name)),
+    CONSTRAINT check_language_string_name CHECK (check_ryhti_language(name)),
+    CONSTRAINT check_language_string_description CHECK (check_ryhti_language(description)),
     CONSTRAINT validate_validity_dates CHECK ($SCHEMANAME$.validate_zoning_element_validity_dates(valid_from, valid_to, spatial_plan)),
     CONSTRAINT zoning_date_check CHECK (
-CASE
-    WHEN valid_from IS NOT NULL AND valid_to IS NULL THEN true
-    WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
-    WHEN valid_from IS NULL AND valid_to IS NULL THEN true
-    ELSE false
-END)
+        CASE
+            WHEN valid_from IS NOT NULL AND valid_to IS NULL THEN true
+            WHEN valid_from IS NOT NULL AND valid_to > valid_from THEN true
+            WHEN valid_from IS NULL AND valid_to IS NULL THEN true
+            ELSE false
+        END)
 );
 
 -- Table: $SCHEMANAME$.zoning_element_describing_line
