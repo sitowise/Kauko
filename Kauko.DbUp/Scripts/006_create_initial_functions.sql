@@ -307,86 +307,72 @@ AS $BODY$
 BEGIN
   UPDATE $SCHEMANAME$.spatial_plan sp
   SET lifecycle_status = '06'
-  WHERE sp.lifecycle_status IN ('01', '02', '03', '04', '05')
+  WHERE sp.lifecycle_status IN ('01', '02', '03', '04', '05', '07', '09')
     AND sp.approval_time >= Current_Date;
 
   UPDATE $SCHEMANAME$.spatial_plan sp
-  SET lifecycle_status = '11'
-  WHERE sp.lifecycle_status = '06'
-    AND sp.validity_time @> Current_Date;
-
-  UPDATE $SCHEMANAME$.spatial_plan sp
-  SET lifecycle_status = '10'
-  WHERE sp.lifecycle_status = '08'
-    AND sp.validity_time @> Current_Date;
-
-  UPDATE $SCHEMANAME$.spatial_plan sp
-  SET lifecycle_status = '12'
-  WHERE sp.lifecycle_status IN ('10', '11')
-    AND NOT sp.validity_time @> Current_Date;
-
-  UPDATE $SCHEMANAME$.zoning_element ze
   SET lifecycle_status = '13'
-  FROM $SCHEMANAME$.spatial_plan sp
-  WHERE sp.local_id = ze.spatial_plan
-    AND sp.lifecycle_status = '13'
-    AND ze.lifecycle_status IN ('06', '07', '08', '09');
+  WHERE sp.lifecycle_status IN ('06', '08')
+    AND sp.validity_time @> Current_Date;
+
+  UPDATE $SCHEMANAME$.spatial_plan sp
+  SET lifecycle_status = '14'
+  WHERE sp.lifecycle_status IN ('12', '13')
+    AND NOT sp.validity_time @> Current_Date;
 
   UPDATE $SCHEMANAME$.zoning_element ze
   SET lifecycle_status = '14'
   FROM $SCHEMANAME$.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
     AND sp.lifecycle_status = '14'
+    AND ze.lifecycle_status IN ('06', '07', '08', '09');
+
+  UPDATE $SCHEMANAME$.zoning_element ze
+  SET lifecycle_status = '17'
+  FROM $SCHEMANAME$.spatial_plan sp
+  WHERE sp.local_id = ze.spatial_plan
+    AND sp.lifecycle_status = '17'
     AND ze.lifecycle_status IN ('02', '03', '04', '05');
 
   UPDATE $SCHEMANAME$.zoning_element ze
   SET lifecycle_status = sp.lifecycle_status
   FROM $SCHEMANAME$.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
-      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05', '16')
       AND ze.lifecycle_status <> sp.lifecycle_status;
 
   UPDATE $SCHEMANAME$.zoning_element ze
-  SET lifecycle_status = '11'
-  WHERE ze.lifecycle_status = '06'
+  SET lifecycle_status = '13'
+  WHERE ze.lifecycle_status IN ('06', '08')
     AND ze.validity_time @> Current_Date;
 
   UPDATE $SCHEMANAME$.zoning_element ze
   SET
-    lifecycle_status = '11',
+    lifecycle_status = '13',
     valid_from = GREATEST(ze.valid_from, sp.valid_from),
     valid_to = LEAST(ze.valid_to, sp.valid_to)
   FROM $SCHEMANAME$.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
-    AND ze.lifecycle_status IN ('06', '07', '08', '09')
-    AND sp.lifecycle_status = '11';
+    AND ze.lifecycle_status IN ('06', '08')
+    AND sp.lifecycle_status = '13';
 
   UPDATE $SCHEMANAME$.zoning_element ze
-  SET lifecycle_status = '12'
-  WHERE ze.lifecycle_status IN ('10', '11')
+  SET lifecycle_status = '14'
+  WHERE ze.lifecycle_status IN ('12', '13')
     AND NOT ze.validity_time @> Current_Date;
 
   UPDATE $SCHEMANAME$.zoning_element ze
-  SET lifecycle_status = '12',
+  SET lifecycle_status = '14',
       valid_to = sp.valid_to
   FROM $SCHEMANAME$.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
-    AND ze.lifecycle_status IN ('10', '11')
-    AND sp.lifecycle_status = '12';
-
-  UPDATE $SCHEMANAME$.planned_space ps
-  SET lifecycle_status = '11'
-  WHERE ps.lifecycle_status IN ('06', '07', '08', '09')
-    AND ps.validity_time @> Current_Date;
+    AND ze.lifecycle_status IN ('12', '13')
+    AND sp.lifecycle_status = '14';
 
   UPDATE $SCHEMANAME$.planned_space ps
   SET lifecycle_status = '13'
-  FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
-    ON ze_ps.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '13'
-  WHERE ps.local_id = ze_ps.planned_space_local_id
-    AND ps.lifecycle_status IN ('06', '07', '08', '09');
+  WHERE ps.lifecycle_status IN ('06', '08')
+    AND ps.validity_time @> Current_Date;
 
   UPDATE $SCHEMANAME$.planned_space ps
   SET lifecycle_status = '14'
@@ -394,6 +380,15 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
     ON ze_ps.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
+  WHERE ps.local_id = ze_ps.planned_space_local_id
+    AND ps.lifecycle_status IN ('08', '13');
+
+  UPDATE $SCHEMANAME$.planned_space ps
+  SET lifecycle_status = '17'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
+    ON ze_ps.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '17'
   WHERE ps.local_id = ze_ps.planned_space_local_id
     AND ps.lifecycle_status IN ('02', '03', '04', '05');
 
@@ -402,52 +397,52 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
       ON ze_ps.zoning_element_local_id = ze.local_id
-      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '16')
   WHERE ps.local_id = ze_ps.planned_space_local_id
       AND ps.lifecycle_status <> ze.lifecycle_status;
 
   UPDATE $SCHEMANAME$.planned_space ps
   SET
-    lifecycle_status = '11',
+    lifecycle_status = '13',
     valid_from = GREATEST(ps.valid_from, ze.valid_from),
     valid_to = LEAST(ps.valid_from, ze.valid_from)
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
     ON ze_ps.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '11'
+    AND ze.lifecycle_status = '13'
   WHERE ps.local_id = ze_ps.planned_space_local_id
-    AND ps.lifecycle_status IN ('06', '07', '08', '09');
+    AND ps.lifecycle_status IN ('06', '08');
 
   UPDATE $SCHEMANAME$.planned_space ps
-  SET lifecycle_status = '12'
-  WHERE ps.lifecycle_status IN ('10', '11')
+  SET lifecycle_status = '14'
+  WHERE ps.lifecycle_status IN ('12', '13')
     AND ps.validity_time @> Current_Date;
 
   UPDATE $SCHEMANAME$.planned_space ps
-  SET lifecycle_status = '12',
+  SET lifecycle_status = '14',
       valid_to = ze.valid_to
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
     ON ze_ps.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '12'
+    AND ze.lifecycle_status = '14'
   WHERE ps.local_id = ze_ps.planned_space_local_id
-    AND ps.lifecycle_status IN ('10', '11');
+    AND ps.lifecycle_status IN ('12', '13');
     
-  UPDATE $SCHEMANAME$.planning_detail_line pdl
-  SET lifecycle_status = '13'
-  FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
-    ON ze_pdl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '13'
-  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
-    AND pdl.lifecycle_status IN ('06', '07', '08', '09');
-
   UPDATE $SCHEMANAME$.planning_detail_line pdl
   SET lifecycle_status = '14'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
     ON ze_pdl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
+  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
+    AND pdl.lifecycle_status IN ('08', '13');
+
+  UPDATE $SCHEMANAME$.planning_detail_line pdl
+  SET lifecycle_status = '17'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
+    ON ze_pdl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '17'
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
     AND pdl.lifecycle_status IN ('02', '03', '04', '05');
 
@@ -456,45 +451,45 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
     ON ze_pdl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '16')
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
     AND pdl.lifecycle_status <> ze.lifecycle_status;
 
   UPDATE $SCHEMANAME$.planning_detail_line pdl
-  SET lifecycle_status = '11'
-  FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
-    ON ze_pdl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '11'
-  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
-    AND pdl.lifecycle_status IN ('06', '07', '08', '09');
-
-  UPDATE $SCHEMANAME$.planning_detail_line pdl
-  SET lifecycle_status = '12'
-  FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
-    ON ze_pdl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '12'
-  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
-    AND pdl.lifecycle_status IN ('10', '11');
-
--- Update lifecycle_status to '13' for planning_detail_point
-  UPDATE $SCHEMANAME$.planning_detail_point pdp
   SET lifecycle_status = '13'
   FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
-    ON ze_pdp.zoning_element_local_id = ze.local_id
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
+    ON ze_pdl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '13'
-  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
-    AND pdp.lifecycle_status IN ('06', '07', '08', '09');
+  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
+    AND pdl.lifecycle_status IN ('06', '08');
 
--- Update lifecycle_status to '14' for planning_detail_point
+  UPDATE $SCHEMANAME$.planning_detail_line pdl
+  SET lifecycle_status = '14'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
+    ON ze_pdl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '14'
+  WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
+    AND pdl.lifecycle_status IN ('12', '13');
+
+-- Update lifecycle_status to '13' for planning_detail_point
   UPDATE $SCHEMANAME$.planning_detail_point pdp
   SET lifecycle_status = '14'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
     ON ze_pdp.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
+  WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
+    AND pdp.lifecycle_status IN ('08', '13');
+
+-- Update lifecycle_status to '14' for planning_detail_point
+  UPDATE $SCHEMANAME$.planning_detail_point pdp
+  SET lifecycle_status = '17'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
+    ON ze_pdp.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '17'
   WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
     AND pdp.lifecycle_status IN ('02', '03', '04', '05');
 
@@ -504,41 +499,32 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
     ON ze_pdp.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '16')
   WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
     AND pdp.lifecycle_status <> ze.lifecycle_status;
 
 -- Update lifecycle_status to '11' for planning_detail_point
   UPDATE $SCHEMANAME$.planning_detail_point pdp
-  SET lifecycle_status = '11'
+  SET lifecycle_status = '13'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
     ON ze_pdp.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '11'
+    AND ze.lifecycle_status = '13'
   WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
-    AND pdp.lifecycle_status IN ('06', '07', '08', '09');
+    AND pdp.lifecycle_status IN ('06', '08');
 
 -- Update lifecycle_status to '12' for planning_detail_point
   UPDATE $SCHEMANAME$.planning_detail_point pdp
-  SET lifecycle_status = '12'
+  SET lifecycle_status = '14'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
     ON ze_pdp.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '12'
+    AND ze.lifecycle_status = '14'
   WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
-    AND pdp.lifecycle_status IN ('10', '11');
+    AND pdp.lifecycle_status IN ('12', '13');
 
 
 -- ##########################
-
-  UPDATE $SCHEMANAME$.describing_line dl
-  SET lifecycle_status = '13'
-  FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
-    ON ze_dl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '13'
-  WHERE dl.id = ze_dl.describing_line_id
-    AND dl.lifecycle_status IN ('06', '07', '08', '09');
 
   UPDATE $SCHEMANAME$.describing_line dl
   SET lifecycle_status = '14'
@@ -546,6 +532,15 @@ BEGIN
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
+  WHERE dl.id = ze_dl.describing_line_id
+    AND dl.lifecycle_status IN ('08', '13');
+
+  UPDATE $SCHEMANAME$.describing_line dl
+  SET lifecycle_status = '17'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
+    ON ze_dl.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '17'
   WHERE dl.id = ze_dl.describing_line_id
     AND dl.lifecycle_status IN ('02', '03', '04', '05');
 
@@ -554,36 +549,27 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '16')
   WHERE dl.id = ze_dl.describing_line_id
     AND ze.lifecycle_status <> dl.lifecycle_status;
 
   UPDATE $SCHEMANAME$.describing_line dl
-  SET lifecycle_status = '11'
+  SET lifecycle_status = '13'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '11'
+    AND ze.lifecycle_status = '13'
   WHERE dl.id = ze_dl.describing_line_id
-    AND dl.lifecycle_status IN ('06', '07', '08', '09');
+    AND dl.lifecycle_status IN ('06', '08');
 
   UPDATE $SCHEMANAME$.describing_line dl
-  SET lifecycle_status = '12'
+  SET lifecycle_status = '14'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '12'
+    AND ze.lifecycle_status = '14'
   WHERE dl.id = ze_dl.describing_line_id
-    AND dl.lifecycle_status IN ('10', '11');
-
-  UPDATE $SCHEMANAME$.describing_text dt
-  SET lifecycle_status = '11'
-  FROM $SCHEMANAME$.zoning_element ze
-  JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
-    ON ze_dt.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '11'
-  WHERE dt.id = ze_dt.describing_text_id
-    AND dt.lifecycle_status IN ('06', '07', '08', '09');
+    AND dl.lifecycle_status IN ('12', '13');
 
   UPDATE $SCHEMANAME$.describing_text dt
   SET lifecycle_status = '13'
@@ -592,7 +578,7 @@ BEGIN
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '13'
   WHERE dt.id = ze_dt.describing_text_id
-    AND dt.lifecycle_status IN ('06', '07', '08', '09');
+    AND dt.lifecycle_status IN ('06', '08');
 
   UPDATE $SCHEMANAME$.describing_text dt
   SET lifecycle_status = '14'
@@ -601,6 +587,15 @@ BEGIN
     ON ze_dt.zoning_element_local_id = ze.local_id
     AND ze.lifecycle_status = '14'
   WHERE dt.id = ze_dt.describing_text_id
+    AND dt.lifecycle_status IN ('08', '13');
+
+  UPDATE $SCHEMANAME$.describing_text dt
+  SET lifecycle_status = '17'
+  FROM $SCHEMANAME$.zoning_element ze
+  JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
+    ON ze_dt.zoning_element_local_id = ze.local_id
+    AND ze.lifecycle_status = '17'
+  WHERE dt.id = ze_dt.describing_text_id
     AND dt.lifecycle_status IN ('02', '03', '04', '05');
 
   UPDATE $SCHEMANAME$.describing_text dt
@@ -608,40 +603,40 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '15')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '16')
   WHERE dt.id = ze_dt.describing_text_id
     AND ze.lifecycle_status <> dt.lifecycle_status;
 
   UPDATE $SCHEMANAME$.describing_text dt
-  SET lifecycle_status = '12'
+  SET lifecycle_status = '14'
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status = '12'
+    AND ze.lifecycle_status = '14'
   WHERE dt.id = ze_dt.describing_text_id
-    AND dt.lifecycle_status IN ('10', '11');
+    AND dt.lifecycle_status IN ('12', '13');
 
   WITH RECURSIVE valid_spatial_plans(local_id) AS (
       SELECT DISTINCT sp.local_id
       FROM $SCHEMANAME$.spatial_plan sp
         INNER JOIN $SCHEMANAME$.zoning_element ze
           ON ze.spatial_plan = sp.local_id
-      WHERE ze.lifecycle_status = '11'
-        AND sp.lifecycle_status IN ('06', '07', '08')
+      WHERE ze.lifecycle_status IN ('12', '13')
+        AND sp.lifecycle_status IN ('06', '08')
       EXCEPT
       SELECT sp2.local_id
       FROM $SCHEMANAME$.spatial_plan sp2
         INNER JOIN $SCHEMANAME$.zoning_element ze2
           ON ze2.spatial_plan = sp2.local_id
-      WHERE ze2.lifecycle_status IN ('06', '07', '08', '10')
+      WHERE ze2.lifecycle_status IN ('06', '08')
   )
   UPDATE $SCHEMANAME$.spatial_plan sp
-  SET lifecycle_status = '11'
+  SET lifecycle_status = '13'
   FROM valid_spatial_plans vsp
   WHERE sp.local_id = vsp.local_id;
 
   UPDATE $SCHEMANAME$.spatial_plan
-  SET lifecycle_status = '11'
+  SET lifecycle_status = '13'
   WHERE local_id IN (
     SELECT sp.local_id
     FROM $SCHEMANAME$.spatial_plan sp
@@ -655,23 +650,8 @@ BEGIN
       SELECT 1
       FROM $SCHEMANAME$.zoning_element ze
       WHERE ze.spatial_plan = sp.local_id
-      AND ze.lifecycle_status != '11'
+      AND ze.lifecycle_status != '13'
     ));
-
-  UPDATE $SCHEMANAME$.spatial_plan
-  SET lifecycle_status = '10'
-  WHERE local_id IN (
-    SELECT DISTINCT sp.local_id
-    FROM $SCHEMANAME$.spatial_plan sp
-    JOIN $SCHEMANAME$.zoning_element ze ON ze.spatial_plan = sp.local_id
-    WHERE ze.lifecycle_status = '11'
-    AND EXISTS (
-      SELECT 1
-      FROM $SCHEMANAME$.zoning_element ze2
-      WHERE ze2.spatial_plan = sp.local_id
-      AND ze2.lifecycle_status != '11'
-    )
-  );
 
 END;
 $BODY$;
