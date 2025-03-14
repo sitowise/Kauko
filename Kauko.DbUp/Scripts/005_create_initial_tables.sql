@@ -1234,30 +1234,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_line
 );
 
 
--- Table: $SCHEMANAME$.planning_detail_line_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_line_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_line_id text NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_line_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_line_numeric_value_key UNIQUE (planning_detail_line_id, numeric_id),
-    CONSTRAINT planning_detail_line_numeric_value_planning_detail_line_fkey FOREIGN KEY (planning_detail_line_id)
-        REFERENCES $SCHEMANAME$.planning_detail_line (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planning_detail_line_numeric_value_numeric_id_fkey FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
-
 -- Table: $SCHEMANAME$.planning_detail_line_plan_regulation_group
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_line_plan_regulation_group;
@@ -1349,30 +1325,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planned_space_plan_detail_point
     CONSTRAINT planned_space_plan_detail_point_fk_planning_detail_point_fkey FOREIGN KEY (fk_planning_detail_point)
         REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED
-);
-
-
--- Table: $SCHEMANAME$.planning_detail_point_numeric_value
-
--- DROP TABLE IF EXISTS $SCHEMANAME$.planning_detail_point_numeric_value;
-
-CREATE TABLE IF NOT EXISTS $SCHEMANAME$.planning_detail_point_numeric_value
-(
-    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    planning_detail_point_id text NOT NULL,
-    numeric_id uuid NOT NULL,
-    CONSTRAINT planning_detail_point_numeric_value_pkey PRIMARY KEY (id),
-    CONSTRAINT planning_detail_point_numeric_value_key UNIQUE (planning_detail_point_id, numeric_id),
-    CONSTRAINT planning_detail_point_numeric_value_planning_detail_point_fkey FOREIGN KEY (planning_detail_point_id)
-        REFERENCES $SCHEMANAME$.planning_detail_point (local_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-        DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT planning_detail_point_numeric_value_numeric_id_fkey FOREIGN KEY (numeric_id)
-        REFERENCES $SCHEMANAME$.numeric_value (numeric_value_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
