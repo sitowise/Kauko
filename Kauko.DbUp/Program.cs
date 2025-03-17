@@ -1,6 +1,8 @@
 ﻿using DbUp;
 using DbUp.Engine;
+using System;
 using System.Reflection;
+using Npgsql;
 
 namespace Kauko.DbUpdater
 {
@@ -44,7 +46,7 @@ namespace Kauko.DbUpdater
                 DatabaseUpgradeResult result;
 
                 UpgradeEngine upgrader;
-
+                bool isFirstRun = CheckIfFirstRun(connectionString, municipalityName.ToLower() + "_gk" + gkNumber);
 
 
                 if (args.FirstOrDefault() == "markinitial")
@@ -55,8 +57,25 @@ namespace Kauko.DbUpdater
                 {
                     upgrader = DeployChanges.To
                       .PostgresqlDatabase(connectionString)
-                      .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
-					  .WithVariablesEnabled()
+                      // drop views script: run always first, except for on the first run do not run at all
+                      .WithScriptsEmbeddedInAssembly(
+                        Assembly.GetExecutingAssembly(), 
+                        script => !isFirstRun && script.Equals("Kauko.DbUp.Scripts.kauko_views_drop.sql"), 
+                        new SqlScriptOptions { ScriptType = DbUp.Support.ScriptType.RunAlways, RunGroupOrder = 1 }
+                      )
+                      // numbered patch scripts
+                      .WithScriptsEmbeddedInAssembly(
+                        Assembly.GetExecutingAssembly(), 
+                        script => !script.StartsWith("Kauko.DbUp.Scripts.kauko_views_"),  
+                        new SqlScriptOptions { ScriptType = DbUp.Support.ScriptType.RunOnce, RunGroupOrder = 2 }
+                      )
+                      // create views script: run always last
+                      .WithScriptsEmbeddedInAssembly(
+                        Assembly.GetExecutingAssembly(), 
+                        script => script.Equals("Kauko.DbUp.Scripts.kauko_views_create.sql"), 
+                        new SqlScriptOptions { ScriptType = DbUp.Support.ScriptType.RunAlways, RunGroupOrder = 3 }
+                      )
+                      .WithVariablesEnabled()
 					  .WithVariable("BODY", "$BODY$") // This is a bug or at least a misfeature in DbUp
 					  .WithVariable("function", "$function$") // This is a bug or at least a misfeature in DbUp
 					  .WithVariable("PROJECTSRID", srid.ToString())
@@ -111,6 +130,24 @@ namespace Kauko.DbUpdater
             }
 
             return -1;
+        }
+
+        private static bool CheckIfFirstRun(string connectionString, string schemaName)
+        {
+            using (var connection = new NpgsqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new NpgsqlCommand(
+                    "SELECT schema_name FROM information_schema.schemata WHERE schema_name = @schemaName",
+                    connection))
+                {
+                    command.Parameters.AddWithValue("@schemaName", schemaName);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        return !reader.HasRows; // Returns true if the schema does not exist, i.e., it's the first run
+                    }
+                }
+            }
         }
     }
 }
