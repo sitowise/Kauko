@@ -14,14 +14,15 @@
     <EmbeddedResource Include="Scripts\004_create_public_schema_functions.sql" />
     <EmbeddedResource Include="Scripts\005_create_initial_tables.sql" />
     <EmbeddedResource Include="Scripts\006_create_initial_functions.sql" />
-  	<EmbeddedResource Include="Scripts\007_create_initial_triggers.sql" />
-	  <EmbeddedResource Include="Scripts\008_create_code_list_triggers.sql" />
-	  <EmbeddedResource Include="Scripts\009_create_public_schema_triggers.sql" />
-	  <EmbeddedResource Include="Scripts\010_create_initial_indexing.sql" />
-	  <EmbeddedResource Include="Scripts\011_create_ryhti_tables.sql" />
-	  <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
-	  <EmbeddedResource Include="Scripts\013_create_views.sql" />
-	  <EmbeddedResource Include="Scripts\014_create_roles.sql" />
+    <EmbeddedResource Include="Scripts\007_create_initial_triggers.sql" />
+    <EmbeddedResource Include="Scripts\008_create_code_list_triggers.sql" />
+    <EmbeddedResource Include="Scripts\009_create_public_schema_triggers.sql" />
+    <EmbeddedResource Include="Scripts\010_create_initial_indexing.sql" />
+    <EmbeddedResource Include="Scripts\011_create_ryhti_tables.sql" />
+    <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
+    <EmbeddedResource Include="Scripts\013_create_views.sql" />
+    <EmbeddedResource Include="Scripts\014_create_roles.sql" />
+    <EmbeddedResource Include="Scripts\014_drop_trigger_insert_version_name.sql" />
   </ItemGroup>
 
   <ItemGroup>
