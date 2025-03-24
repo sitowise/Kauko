@@ -227,3 +227,49 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision_document
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+
+-- Table: $SCHEMANAME$.other_plan_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.other_plan_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.other_plan_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    name jsonb,
+    file_key TEXT,
+    other_plan_material_link TEXT,
+    personal_data_content TEXT NOT NULL,
+    category_of_publicity TEXT NOT NULL,
+    created timestamp with time zone NOT NULL DEFAULT now(),
+    created_by text NOT NULL,
+    modified_by text NOT NULL,
+    modified_at timestamp with time zone NOT NULL,
+    CONSTRAINT other_plan_document_pkey PRIMARY KEY (id),
+    CONSTRAINT other_plan_document_local_id_key UNIQUE (local_id),
+    CONSTRAINT other_plan_document_name_check CHECK (check_ryhti_language(name))
+);
+
+
+-- Table: $SCHEMANAME$.spatial_plan_other_plan_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_other_plan_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_other_plan_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_spatial_plan TEXT NOT NULL,
+    fk_other_plan_document TEXT NOT NULL,
+    CONSTRAINT sp_other_plan_document_pkey PRIMARY KEY (id),
+    CONSTRAINT sp_other_plan_document_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
+        REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT sp_other_plan_document_fk_other_plan_document_fkey FOREIGN KEY (fk_other_plan_document)
+        REFERENCES $SCHEMANAME$.other_plan_document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
