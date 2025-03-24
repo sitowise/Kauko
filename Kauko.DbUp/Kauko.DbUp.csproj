@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\kauko_views_drop.sql" />
-    <EmbeddedResource Include="Scripts\kauko_views_create.sql" />
+    <EmbeddedResource Include="Scripts\views\kauko_views_drop.sql" />
+    <EmbeddedResource Include="Scripts\views\kauko_views_create.sql" />
     <EmbeddedResource Include="Scripts\001_initialization.sql" />
     <EmbeddedResource Include="Scripts\002_insert_code_list_data.sql" />
     <EmbeddedResource Include="Scripts\003_create_public_schema_tables.sql" />

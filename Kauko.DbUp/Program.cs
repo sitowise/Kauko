@@ -60,19 +60,19 @@ namespace Kauko.DbUpdater
                       // drop views script: run always first, except for on the first run do not run at all
                       .WithScriptsEmbeddedInAssembly(
                         Assembly.GetExecutingAssembly(), 
-                        script => !isFirstRun && script.Equals("Kauko.DbUp.Scripts.kauko_views_drop.sql"), 
+                        script => !isFirstRun && script.Equals("Kauko.DbUp.Scripts.views.kauko_views_drop.sql"), 
                         new SqlScriptOptions { ScriptType = DbUp.Support.ScriptType.RunAlways, RunGroupOrder = 1 }
                       )
                       // numbered patch scripts
                       .WithScriptsEmbeddedInAssembly(
                         Assembly.GetExecutingAssembly(), 
-                        script => !script.StartsWith("Kauko.DbUp.Scripts.kauko_views_"),  
+                        script => !script.StartsWith("Kauko.DbUp.Scripts.views.kauko_views_"),  
                         new SqlScriptOptions { ScriptType = DbUp.Support.ScriptType.RunOnce, RunGroupOrder = 2 }
                       )
                       // create views script: run always last
                       .WithScriptsEmbeddedInAssembly(
                         Assembly.GetExecutingAssembly(), 
-                        script => script.Equals("Kauko.DbUp.Scripts.kauko_views_create.sql"), 
+                        script => script.Equals("Kauko.DbUp.Scripts.views.kauko_views_create.sql"), 
                         new SqlScriptOptions { ScriptType = DbUp.Support.ScriptType.RunAlways, RunGroupOrder = 3 }
                       )
                       .WithVariablesEnabled()
