@@ -158,3 +158,72 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_source_data_document
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+
+-- Table: $SCHEMANAME$.plan_handling_event_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.plan_handling_event_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_plan_handling_event TEXT NOT NULL,
+    fk_document TEXT NOT NULL,
+    CONSTRAINT plan_handling_event_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_handling_event_document_fk_plan_handling_event_fkey FOREIGN KEY (fk_plan_handling_event)
+        REFERENCES $SCHEMANAME$.plan_handling_event (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_handling_event_document_fk_document_fkey FOREIGN KEY (fk_document)
+        REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.plan_interaction_event_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.plan_interaction_event_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_plan_interaction_event TEXT NOT NULL,
+    fk_document TEXT NOT NULL,
+    CONSTRAINT plan_interaction_event_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_interaction_event_document_fk_plan_interaction_event_fkey FOREIGN KEY (fk_plan_interaction_event)
+        REFERENCES $SCHEMANAME$.plan_interaction_event (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_interaction_event_document_fk_document_fkey FOREIGN KEY (fk_document)
+        REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.plan_decision_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.plan_decision_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_plan_decision TEXT NOT NULL,
+    fk_document TEXT NOT NULL,
+    CONSTRAINT plan_decision_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_decision_document_fk_plan_decision_fkey FOREIGN KEY (fk_plan_decision)
+        REFERENCES $SCHEMANAME$.plan_decision (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_decision_document_fk_document_fkey FOREIGN KEY (fk_document)
+        REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
