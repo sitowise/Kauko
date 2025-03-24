@@ -252,6 +252,17 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.other_plan_document
 );
 
 
+-- Trigger: upsert_creator_and_modifier_trigger
+
+-- DROP TRIGGER IF EXISTS upsert_creator_and_modifier_trigger ON $SCHEMANAME$.other_plan_document;
+
+CREATE OR REPLACE TRIGGER upsert_creator_and_modifier_trigger
+    BEFORE INSERT OR UPDATE 
+    ON $SCHEMANAME$.other_plan_document
+    FOR EACH ROW
+    EXECUTE FUNCTION $SCHEMANAME$.upsert_creator_and_modifier_trigger();
+
+
 -- Table: $SCHEMANAME$.spatial_plan_other_plan_document
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_other_plan_document;
