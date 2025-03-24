@@ -89,6 +89,166 @@ CREATE TRIGGER upsert_plan_source_data_type BEFORE INSERT OR UPDATE ON code_list
 
 
 
+-- New code list: personal_data_content_type
+---------------------------------------------------------------
+
+--
+-- Name: personal_data_content_type; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.personal_data_content_type (
+    id integer PRIMARY KEY,
+    codevalue character varying(4) NOT NULL,
+    uri character varying(255) NOT NULL,
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
+    description_fi character varying,
+    description_sv character varying,
+    CONSTRAINT personal_data_content_type_codevalue_key UNIQUE (codevalue),
+    CONSTRAINT personal_data_content_type_uri UNIQUE (uri)
+);
+
+--
+-- Name: personal_data_content_type_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
+--
+
+CREATE SEQUENCE code_lists.personal_data_content_type_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: personal_data_content_type_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.personal_data_content_type_id_seq OWNED BY code_lists.personal_data_content_type.id;
+
+--
+-- Name: personal_data_content_type id; Type: DEFAULT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.personal_data_content_type ALTER COLUMN id SET DEFAULT nextval('code_lists.personal_data_content_type_id_seq'::regclass);
+
+--
+-- Data for Name: personal_data_content_type; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.personal_data_content_type (
+    id, 
+    codevalue, 
+    uri, 
+    preflabel_fi, 
+    preflabel_sv,
+    description_fi,
+    description_sv
+) VALUES 
+(1, '1', 'http://uri.suomi.fi/codelist/rytj/henkilotietosisalto/code/1', 'Ei sisällä henkilötietoja', 'Innehåller inga personuppgifter', null, null),
+(2, '2', 'http://uri.suomi.fi/codelist/rytj/henkilotietosisalto/code/2', 'Sisältää nimitietoja', 'Innehåller namnuppgifter', 'Esimerkiksi suunnittelijan, päätöksen tekijän, lausunnonantajan tai selvityksen tekijän etu- ja sukunimi. Ei sisällä henkilötunnusta, ei osoitetietoja eikä muita yhteystietoja.', 'Till exempel för- och efternamn på planerare, beslutsfattare, personer som gett ett utlåtande eller gjort en utredning. Innehåller ingen personbeteckning, inga adressuppgifter eller andra kontaktuppgifter.'),
+(3, '3', 'http://uri.suomi.fi/codelist/rytj/henkilotietosisalto/code/3', 'Sisältää henkilötietoa, josta henkilö tunnistettavissa', 'Innehåller personuppgifter, på basis av vilka en person kan identifieras', 'Sisältää esimerkiksi henkilötunnuksen tai kotiosoitteen tiedot.', 'Innehåller till exempel uppgifter om personbeteckning eller hemadress.');
+
+--
+-- Name: personal_data_content_type_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
+--
+
+SELECT pg_catalog.setval('code_lists.personal_data_content_type_id_seq', 3, true);
+
+--
+-- Name: personal_data_content_type upsert_personal_data_content_type; Type: TRIGGER; Schema: code_lists; Owner: -
+--
+
+CREATE TRIGGER upsert_personal_data_content_type BEFORE INSERT OR UPDATE ON code_lists.personal_data_content_type FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/henkilotietosisalto/code/');
+
+
+
+-- New code list: publicity_category
+---------------------------------------------------------------
+
+--
+-- Name: publicity_category; Type: TABLE; Schema: code_lists; Owner: -
+--
+
+CREATE TABLE code_lists.publicity_category (
+    id integer PRIMARY KEY,
+    codevalue character varying(4) NOT NULL,
+    uri character varying(255) NOT NULL,
+    preflabel_fi character varying NOT NULL,
+    preflabel_sv character varying,
+    CONSTRAINT publicity_category_codevalue_key UNIQUE (codevalue),
+    CONSTRAINT publicity_category_uri UNIQUE (uri)
+);
+
+--
+-- Name: publicity_category_id_seq; Type: SEQUENCE; Schema: code_lists; Owner: -
+--
+
+CREATE SEQUENCE code_lists.publicity_category_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+--
+-- Name: publicity_category_id_seq; Type: SEQUENCE OWNED BY; Schema: code_lists; Owner: -
+--
+
+ALTER SEQUENCE code_lists.publicity_category_id_seq OWNED BY code_lists.publicity_category.id;
+
+--
+-- Name: publicity_category id; Type: DEFAULT; Schema: code_lists; Owner: -
+--
+
+ALTER TABLE ONLY code_lists.publicity_category ALTER COLUMN id SET DEFAULT nextval('code_lists.publicity_category_id_seq'::regclass);
+
+--
+-- Data for Name: publicity_category; Type: TABLE DATA; Schema: code_lists; Owner: -
+--
+
+INSERT INTO code_lists.publicity_category (
+    id, 
+    codevalue, 
+    uri, 
+    preflabel_fi, 
+    preflabel_sv
+) VALUES 
+(1, '1', 'http://uri.suomi.fi/codelist/rytj/julkisuus/code/1', 'Julkinen asiakirja', 'Offentligt dokument'),
+(2, '2', 'http://uri.suomi.fi/codelist/rytj/julkisuus/code/2', 'Sisältää turvaluokiteltua tietoa', 'Innehåller säkerhetsklassificerad information'),
+(3, '3', 'http://uri.suomi.fi/codelist/rytj/julkisuus/code/3', 'Sisältää salassapidettävää tietoa', 'Innehåller sekretessbelagd information'),
+(4, '4', 'http://uri.suomi.fi/codelist/rytj/julkisuus/code/4', 'Tiedon jakaminen muille kuin viranomaisille vaatii tarkistamista', 'Delning av information till andra än myndigheter kräver granskning');
+
+--
+-- Name: publicity_category_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
+--
+
+SELECT pg_catalog.setval('code_lists.publicity_category_id_seq', 4, true);
+
+--
+-- Name: publicity_category upsert_publicity_category; Type: TRIGGER; Schema: code_lists; Owner: -
+--
+
+CREATE TRIGGER upsert_publicity_category BEFORE INSERT OR UPDATE ON code_lists.publicity_category FOR EACH ROW EXECUTE FUNCTION code_lists.code_url_trigger('http://uri.suomi.fi/codelist/rytj/julkisuus/code/');
+
+
+
+-- Add code list personal_data_content_type and publicity_category references to table document
+---------------------------------------------------------------
+
+ALTER TABLE $SCHEMANAME$.document ADD CONSTRAINT document_personal_data_content_fkey FOREIGN KEY (personal_data_content)
+    REFERENCES code_lists.personal_data_content_type (codevalue) MATCH SIMPLE
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT;
+
+ALTER TABLE $SCHEMANAME$.document ADD CONSTRAINT document_category_of_publicity_fkey FOREIGN KEY (category_of_publicity)
+    REFERENCES code_lists.publicity_category (codevalue) MATCH SIMPLE
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT;
+
+
+
 -- New tables
 ---------------------------------------------------------------
 
@@ -248,6 +408,14 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.other_plan_document
     modified_at timestamp with time zone NOT NULL,
     CONSTRAINT other_plan_document_pkey PRIMARY KEY (id),
     CONSTRAINT other_plan_document_local_id_key UNIQUE (local_id),
+    CONSTRAINT other_plan_document_personal_data_content_fkey FOREIGN KEY (personal_data_content)
+        REFERENCES code_lists.personal_data_content_type (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT other_plan_document_category_of_publicity_fkey FOREIGN KEY (category_of_publicity)
+        REFERENCES code_lists.publicity_category (codevalue) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
     CONSTRAINT other_plan_document_name_check CHECK (check_ryhti_language(name))
 );
 
