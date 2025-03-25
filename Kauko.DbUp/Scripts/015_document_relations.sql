@@ -544,3 +544,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_language
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_commentary_document;
+DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_commentary;
+DROP TABLE IF EXISTS $SCHEMANAME$.patricipation_evalution_plan_document;
+DROP TABLE IF EXISTS $SCHEMANAME$.participation_and_evalution_plan;
