@@ -522,3 +522,25 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_operator_document
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+-- Table: $SCHEMANAME$.document_language
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.document_language;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_language
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_document TEXT NOT NULL,
+    fk_language INTEGER NOT NULL,
+    CONSTRAINT document_language_pkey PRIMARY KEY (id),
+    CONSTRAINT document_language_fk_document_fkey FOREIGN KEY (fk_document)
+        REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT document_language_fk_language_fkey FOREIGN KEY (fk_language)
+        REFERENCES code_lists.ryhti_language (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
