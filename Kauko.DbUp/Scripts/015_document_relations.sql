@@ -249,7 +249,7 @@ ALTER TABLE $SCHEMANAME$.document ADD CONSTRAINT document_category_of_publicity_
 
 
 
--- New tables
+-- Table additions and changes
 ---------------------------------------------------------------
 
 -- Table: $SCHEMANAME$.plan_source_data
@@ -448,6 +448,51 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_other_plan_document
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT sp_other_plan_document_fk_other_plan_document_fkey FOREIGN KEY (fk_other_plan_document)
         REFERENCES $SCHEMANAME$.other_plan_document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+
+-- Table: $SCHEMANAME$.plan_report
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.plan_report;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_report
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    local_id TEXT NOT NULL DEFAULT uuid_generate_v4(),
+    CONSTRAINT plan_report_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_report_local_id_key UNIQUE (local_id)
+);
+
+
+ALTER TABLE $SCHEMANAME$.spatial_plan
+    ADD fk_plan_report TEXT,
+    ADD CONSTRAINT spatial_plan_fk_plan_report_fkey FOREIGN KEY (fk_plan_report)
+    REFERENCES $SCHEMANAME$.plan_report (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+        DEFERRABLE INITIALLY DEFERRED;
+
+
+-- Table: $SCHEMANAME$.plan_report_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.plan_report_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_report_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_plan_report TEXT NOT NULL,
+    fk_document TEXT NOT NULL,
+    CONSTRAINT plan_report_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_report_document_fk_plan_report_fkey FOREIGN KEY (fk_plan_report)
+        REFERENCES $SCHEMANAME$.plan_report (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_report_document_fk_document_fkey FOREIGN KEY (fk_document)
+        REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
