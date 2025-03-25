@@ -254,7 +254,7 @@ ALTER TABLE $SCHEMANAME$.document ADD CONSTRAINT document_category_of_publicity_
 
 -- Table: $SCHEMANAME$.plan_source_data
 
--- DROP TABLE IF EXISTS $SCHEMANAME$.plan_source_data;
+DROP TABLE IF EXISTS $SCHEMANAME$.plan_source_data;
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_source_data
 (
