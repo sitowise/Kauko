@@ -497,3 +497,28 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_report_document
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED
 );
+
+ALTER TABLE $SCHEMANAME$.document DROP COLUMN languages;
+
+
+-- Table: $SCHEMANAME$.plan_operator_document
+
+-- DROP TABLE IF EXISTS $SCHEMANAME$.plan_operator_document;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_operator_document
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    fk_plan_operator TEXT NOT NULL,
+    fk_document TEXT NOT NULL,
+    CONSTRAINT plan_operator_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_operator_document_fk_plan_operator_fkey FOREIGN KEY (fk_plan_operator)
+        REFERENCES $SCHEMANAME$.plan_operator (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT plan_operator_document_fk_document_fkey FOREIGN KEY (fk_document)
+        REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+        DEFERRABLE INITIALLY DEFERRED
+);
