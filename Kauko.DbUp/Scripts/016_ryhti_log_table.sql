@@ -16,6 +16,6 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.ryhti_log
     CONSTRAINT ryhti_log_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED
 );
