@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_main_plan_source_data
     fk_spatial_plan_main TEXT NOT NULL,
     fk_plan_source_data TEXT NOT NULL,
     CONSTRAINT spatial_plan_main_plan_source_data_pkey PRIMARY KEY (id),
+    CONSTRAINT spatial_plan_main_plan_source_data_key UNIQUE (fk_spatial_plan_main, fk_plan_source_data),
     CONSTRAINT spm_psd_fk_spatial_plan_main_fkey FOREIGN KEY (fk_spatial_plan_main)
         REFERENCES $SCHEMANAME$.spatial_plan_main (local_plan_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -307,6 +308,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_source_data_document
     fk_plan_source_data TEXT NOT NULL,
     fk_document TEXT NOT NULL,
     CONSTRAINT plan_source_data_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_source_data_document_key UNIQUE (fk_plan_source_data, fk_document),
     CONSTRAINT plan_source_data_document_fk_plan_source_data_fkey FOREIGN KEY (fk_plan_source_data)
         REFERENCES $SCHEMANAME$.plan_source_data (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -330,6 +332,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_handling_event_document
     fk_plan_handling_event TEXT NOT NULL,
     fk_document TEXT NOT NULL,
     CONSTRAINT plan_handling_event_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_handling_event_document_key UNIQUE (fk_plan_handling_event, fk_document),
     CONSTRAINT plan_handling_event_document_fk_plan_handling_event_fkey FOREIGN KEY (fk_plan_handling_event)
         REFERENCES $SCHEMANAME$.plan_handling_event (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -353,6 +356,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_interaction_event_document
     fk_plan_interaction_event TEXT NOT NULL,
     fk_document TEXT NOT NULL,
     CONSTRAINT plan_interaction_event_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_interaction_event_document_key UNIQUE (fk_plan_interaction_event, fk_document),
     CONSTRAINT plan_interaction_event_document_fk_plan_interaction_event_fkey FOREIGN KEY (fk_plan_interaction_event)
         REFERENCES $SCHEMANAME$.plan_interaction_event (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -376,6 +380,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_decision_document
     fk_plan_decision TEXT NOT NULL,
     fk_document TEXT NOT NULL,
     CONSTRAINT plan_decision_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_decision_document_key UNIQUE (fk_plan_decision, fk_document),
     CONSTRAINT plan_decision_document_fk_plan_decision_fkey FOREIGN KEY (fk_plan_decision)
         REFERENCES $SCHEMANAME$.plan_decision (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -441,6 +446,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_other_plan_document
     fk_spatial_plan TEXT NOT NULL,
     fk_other_plan_document TEXT NOT NULL,
     CONSTRAINT sp_other_plan_document_pkey PRIMARY KEY (id),
+    CONSTRAINT spatial_plan_other_plan_document_key UNIQUE (fk_spatial_plan, fk_other_plan_document),
     CONSTRAINT sp_other_plan_document_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -486,6 +492,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_report_document
     fk_plan_report TEXT NOT NULL,
     fk_document TEXT NOT NULL,
     CONSTRAINT plan_report_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_report_document_key UNIQUE (fk_plan_report, fk_document),
     CONSTRAINT plan_report_document_fk_plan_report_fkey FOREIGN KEY (fk_plan_report)
         REFERENCES $SCHEMANAME$.plan_report (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -511,6 +518,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_operator_document
     fk_plan_operator TEXT NOT NULL,
     fk_document TEXT NOT NULL,
     CONSTRAINT plan_operator_document_pkey PRIMARY KEY (id),
+    CONSTRAINT plan_operator_document_key UNIQUE (fk_plan_operator, fk_document),
     CONSTRAINT plan_operator_document_fk_plan_operator_fkey FOREIGN KEY (fk_plan_operator)
         REFERENCES $SCHEMANAME$.plan_operator (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -523,6 +531,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.plan_operator_document
         DEFERRABLE INITIALLY DEFERRED
 );
 
+
 -- Table: $SCHEMANAME$.document_language
 
 -- DROP TABLE IF EXISTS $SCHEMANAME$.document_language;
@@ -533,6 +542,7 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_language
     fk_document TEXT NOT NULL,
     fk_language INTEGER NOT NULL,
     CONSTRAINT document_language_pkey PRIMARY KEY (id),
+    CONSTRAINT document_language_key UNIQUE (fk_document, fk_language),
     CONSTRAINT document_language_fk_document_fkey FOREIGN KEY (fk_document)
         REFERENCES $SCHEMANAME$.document (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
@@ -541,9 +551,10 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.document_language
     CONSTRAINT document_language_fk_language_fkey FOREIGN KEY (fk_language)
         REFERENCES code_lists.ryhti_language (id) MATCH SIMPLE
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE RESTRICT
         DEFERRABLE INITIALLY DEFERRED
 );
+
 
 DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_commentary_document;
 DROP TABLE IF EXISTS $SCHEMANAME$.spatial_plan_commentary;
