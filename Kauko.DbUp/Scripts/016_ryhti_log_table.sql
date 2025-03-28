@@ -49,9 +49,9 @@ INSERT INTO code_lists.ryhti_transfer_status (
     preflabel_sv, 
     preflabel_en
 ) VALUES 
-(1, 0, 'siirrossa virheitä', 'fel i överföringen', 'errors in transfer'),
-(2, 1, 'siirto onnistui', 'överföringen lyckades', 'transfer succeeded'),
-(3, 2, 'siirtosovelluksen sisäinen virhe', 'internt fel i överföringsapplikationen', 'internal error in transfer application');
+(1, 1, 'siirto onnistui', 'överföringen lyckades', 'transfer succeeded'),
+(2, 2, 'siirrossa virheitä', 'fel i överföringen', 'errors in transfer'),
+(3, 3, 'siirtosovelluksen sisäinen virhe', 'internt fel i överföringsapplikationen', 'internal error in transfer application');
 
 --
 -- Name: ryhti_transfer_status_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
