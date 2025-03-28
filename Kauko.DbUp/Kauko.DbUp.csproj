@@ -23,6 +23,7 @@
 	  <EmbeddedResource Include="Scripts\013_create_views.sql" />
 	  <EmbeddedResource Include="Scripts\014_create_roles.sql" />
     <EmbeddedResource Include="Scripts\016_ryhti_log_table.sql" />
+    <EmbeddedResource Include="Scripts\019_planned_space_plan_detail_line_column_name_change.sql" />
   </ItemGroup>
 
   <ItemGroup>
