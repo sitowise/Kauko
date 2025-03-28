@@ -22,6 +22,7 @@
 	  <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
 	  <EmbeddedResource Include="Scripts\013_create_views.sql" />
 	  <EmbeddedResource Include="Scripts\014_create_roles.sql" />
+    <EmbeddedResource Include="Scripts\016_ryhti_log_table.sql" />
   </ItemGroup>
 
   <ItemGroup>
