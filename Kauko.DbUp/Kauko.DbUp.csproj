@@ -26,6 +26,7 @@
     <EmbeddedResource Include="Scripts\014_drop_trigger_insert_version_name.sql" />
     <EmbeddedResource Include="Scripts\015_document_relations.sql" />
     <EmbeddedResource Include="Scripts\016_ryhti_log_table.sql" />
+    <EmbeddedResource Include="Scripts\017_bindingness_of_location_as_nullable.sql" />
   </ItemGroup>
 
   <ItemGroup>
