@@ -23,6 +23,7 @@
     <EmbeddedResource Include="Scripts\011_create_ryhti_tables.sql" />
     <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
     <EmbeddedResource Include="Scripts\013_create_roles.sql" />
+    <EmbeddedResource Include="Scripts\014_drop_trigger_insert_version_name.sql" />
     <EmbeddedResource Include="Scripts\016_ryhti_log_table.sql" />
   </ItemGroup>
 
