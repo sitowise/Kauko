@@ -30,6 +30,7 @@
     <EmbeddedResource Include="Scripts\018_plan_regulation_verbal_regulation.sql" />
     <EmbeddedResource Include="Scripts\019_planned_space_plan_detail_line_column_name_change.sql" />
     <EmbeddedResource Include="Scripts\020_tstzrange_fix.sql" />
+    <EmbeddedResource Include="Scripts\021_legal_effectiveness_nullable_for_detail_plans.sql" />
   </ItemGroup>
 
   <ItemGroup>
