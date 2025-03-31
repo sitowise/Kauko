@@ -32,6 +32,7 @@
     <EmbeddedResource Include="Scripts\020_tstzrange_fix.sql" />
     <EmbeddedResource Include="Scripts\021_legal_effectiveness_nullable_for_detail_plans.sql" />
     <EmbeddedResource Include="Scripts\022_update_regulation_kind_main_class_katu.sql" />
+    <EmbeddedResource Include="Scripts\023_fix_supplementary_info_relations.sql" />
   </ItemGroup>
 
   <ItemGroup>
