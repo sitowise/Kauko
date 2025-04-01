@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_matter;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_phase;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_interaction;

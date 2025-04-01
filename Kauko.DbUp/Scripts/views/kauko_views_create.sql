@@ -1,3 +1,34 @@
+-- View: $SCHEMANAME$.view_ryhti_plan
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN - Kaavan tiedot
+--
+--  2025-03-26 TPu
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan AS
+SELECT
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    SPLS.uri AS life_cycle_status,
+    LEK.uri AS legal_effect_of_local_master_plans,
+    NULL AS scale,
+    ST_SRID (SP.geom) AS geometry_srid,
+    SP.geom AS geometry,
+    SP.version_name AS plan_description, -- onko tämä oikea teksti tähän?
+    SP.valid_from AS period_of_validity_begin,
+    SP.valid_to AS period_of_validity_end,
+    SP.approval_time AS approval_date
+FROM
+    $SCHEMANAME$.spatial_plan SP
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = SP.lifecycle_status
+JOIN code_lists.legal_effectiveness_kind LEK ON LEK.codevalue = SP.legal_effectiveness;
+
+
+
 -- View: $SCHEMANAME$.view_ryhti_plan_matter
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_matter;
