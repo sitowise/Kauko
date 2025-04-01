@@ -135,3 +135,35 @@ FROM
 JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_handling_event = PHE.local_id
 JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
 JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_event_type;
+
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_object
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object;
+
+-----------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OBJECT - Kaavakohteiden tiedot
+--
+--  2025-03-26 TPu
+------------------------------------------------------------------------------------------	
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object AS
+SELECT -- Maankäyttöalue
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    ZE.local_id AS plan_object_key,
+    SPLS.uri AS life_cycle_status, 
+    GRK.uri AS underground_status, 
+    ST_SRID (ZE.geom) AS geometry_srid,
+    ZE.geom AS geometry,
+    ZE.name,
+    ZE.description,
+    ZE.valid_from AS period_of_validity_begin,
+    ZE.valid_to AS period_of_validity_end
+FROM
+    $SCHEMANAME$.zoning_element ZE
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = ZE.spatial_plan
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = ZE.lifecycle_status
+JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = ZE.ground_relative_position;
