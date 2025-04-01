@@ -2,3 +2,7 @@ DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_matter;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_phase;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_interaction;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_handling;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_relations;

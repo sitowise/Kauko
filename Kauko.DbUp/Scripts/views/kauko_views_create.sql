@@ -135,3 +135,83 @@ FROM
 JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_handling_event = PHE.local_id
 JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
 JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_event_type;
+
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_REGULATION - Kaavan määräykset
+--
+--  2025-03-26 TPu: ensimmäinen versio. Arvot puuttuvat!
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation AS
+SELECT
+    PR.local_id AS plan_regulation_key,
+    SPLS.uri AS life_cycle_status,
+    DPRK.uri AS type,
+    PR.valid_from AS period_of_validity_begin,
+    PR.valid_to AS period_of_validity_end
+FROM
+    $SCHEMANAME$.plan_regulation PR
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PR.life_cycle_status
+JOIN code_lists.detail_plan_regulation_kind DPRK ON DPRK.codevalue = PR.type;
+
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation_group
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_REGULATION_GROUP - Kaavan määräysryhmät
+--
+--  2025-03-26 TPu
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group AS
+SELECT
+    PRG.local_id AS plan_regulation_group_key,
+    PRG.name,
+    PRG.letter_identifier,
+    PRG.color_number,
+    PRG.group_number
+FROM
+    $SCHEMANAME$.plan_regulation_group PRG;
+
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_REGULATION_GROUP_REGULATION_RELATIONS - Kaavan määräysryhmään kuuluvat kaavamääräykset
+--
+--  2025-03-26 TPu
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations AS
+SELECT
+    PRGR.plan_regulation_group_local_id AS plan_regulation_group_key,
+    PRGR.plan_regulation_local_id AS plan_regulation_key
+FROM
+    $SCHEMANAME$.plan_regulation_group_regulation PRGR;
+
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation_group_relations
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_relations;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_REGULATION_GROUP_RELATIONS - Kaavakohteen kaavamääräysryhmät
+--
+--  2025-03-26 TPu: lisättävä loputkin kaavakohdelajit
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_relations AS
+SELECT -- MAANKÄYTTÖALUE
+    ZEPRG.zoning_element_local_id AS plan_object_key,
+    ZEPRG.plan_regulation_group_local_id AS plan_regulation_group_key
+FROM
+    $SCHEMANAME$.zoning_element_plan_regulation_group ZEPRG;
