@@ -73,10 +73,11 @@ INSERT INTO code_lists.plan_regulation_theme_style (
 (21, '21', 'Vapaa-ajan/matkailun alue'),
 (22, '22', 'Teollisuusalue'),
 (23, '23', 'Virkistysalue'),
-(24, '24', 'Vesialue');
+(24, '24', 'Vesialue'),
+(25, '25', 'Työpaikkojen alue (yleiskaava)');
 
 --
 -- Name: plan_regulation_theme_style_id_seq; Type: SEQUENCE SET; Schema: code_lists; Owner: -
 --
 
-SELECT pg_catalog.setval('code_lists.plan_regulation_theme_style_id_seq', 24, true);
+SELECT pg_catalog.setval('code_lists.plan_regulation_theme_style_id_seq', 25, true);
