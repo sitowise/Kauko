@@ -305,3 +305,25 @@ SELECT -- MAANKÄYTTÖALUE
     ZEPRG.plan_regulation_group_local_id AS plan_regulation_group_key
 FROM
     $SCHEMANAME$.zoning_element_plan_regulation_group ZEPRG;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_operator
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_operator;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OPERATOR - Kaavan toimijan tiedot (esim. päätöksen tekijä, kaavan vastuutaho)
+--
+--  2024-10-23 TPu
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_operator AS
+SELECT
+    PO.local_id AS plan_operator_key,
+    PO.first_name AS first_name,
+    PO.last_name AS last_name,
+    PO.professional_title AS title,
+    PO.organization_name AS organization_name,
+    PO.business_id AS business_id
+FROM
+    $SCHEMANAME$.plan_operator PO;
