@@ -166,3 +166,36 @@ FROM
 JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_handling_event = PHE.local_id
 JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
 JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_event_type;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_decision
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_decision;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_DECISION - Kaavan päätöksen tiedot
+--
+--  2024-10-23 TPu
+--  2025-01-24 TPu Muutettu lukemaan tiedot plan_decision ja koodistotauluista
+--  2025-01-31 TPu: Muutettu plan_key -> plan_matter_key (4.2.2025: arvoksi spatial_plan_main.id)
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_decision AS
+SELECT
+    SPM.id AS plan_matter_key,  -- ex. plan_key,
+    SP.local_id AS plan_matter_phase_key,
+    PD.local_id AS plan_decision_key,
+    PDN.uri AS name,
+    PD.decision_date,
+    PD.decision_adoption_date AS date_of_decision,
+    PD.decision_article,
+    PD.decision_text,
+    PDMT.uri AS type_of_decision_maker,
+    PD.decision_identifier,
+    PD.date_of_validity,
+    PD.fk_decision_maker AS decision_makers_key
+FROM
+    $SCHEMANAME$.plan_decision PD
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_decision = PD.local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.plan_decision_name PDN ON PDN.codevalue = PD.name
+JOIN code_lists.plan_decision_maker_type PDMT ON PDMT.codevalue = PD.decision_maker_type;
