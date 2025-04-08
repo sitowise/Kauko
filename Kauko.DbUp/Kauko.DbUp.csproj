@@ -36,6 +36,8 @@
     <EmbeddedResource Include="Scripts\024_set_default_privileges_for_roles.sql" />
     <EmbeddedResource Include="Scripts\025_ground_relative_position_as_nullable.sql" />
     <EmbeddedResource Include="Scripts\026_plan_regulation_theme_style.sql" />
+    <EmbeddedResource Include="Scripts\027_plan_regulation_style_columns.sql" />
+    <EmbeddedResource Include="Scripts\028_create_trigger_get_theme_for_zoning_element.sql" />
   </ItemGroup>
 
   <ItemGroup>
