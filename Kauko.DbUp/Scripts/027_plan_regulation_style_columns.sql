@@ -17,3 +17,6 @@ ALTER TABLE code_lists.detail_plan_regulation_kind
 
 -- Add styles for detail_plan_regulation_kind
 -- TODO
+
+-- update main_class for two codes in detail_plan_regulation_kind
+UPDATE code_lists.detail_plan_regulation_kind SET main_class = 'Alueen käyttötarkoitus' WHERE id IN (149,150);
