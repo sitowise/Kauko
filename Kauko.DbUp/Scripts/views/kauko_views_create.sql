@@ -1,3 +1,33 @@
+-- View: $SCHEMANAME$.view_ryhti_plan
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN - Kaavan tiedot
+--
+--  2025-03-26 TPu
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan AS
+SELECT
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    SPLS.uri AS life_cycle_status,
+    LEK.uri AS legal_effect_of_local_master_plans,
+    NULL AS scale,
+    ST_SRID (SP.geom) AS geometry_srid,
+    SP.geom AS geometry,
+    SP.version_name AS plan_description, -- onko tämä oikea teksti tähän?
+    SP.valid_from AS period_of_validity_begin,
+    SP.valid_to AS period_of_validity_end,
+    SP.approval_time AS approval_date
+FROM
+    $SCHEMANAME$.spatial_plan SP
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = SP.lifecycle_status
+LEFT JOIN code_lists.legal_effectiveness_kind LEK ON LEK.codevalue = SP.legal_effectiveness;
+
+
 -- View: $SCHEMANAME$.view_ryhti_plan_matter
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_matter;
@@ -137,6 +167,69 @@ JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
 JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_event_type;
 
 
+-- View: $SCHEMANAME$.view_ryhti_plan_object
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object;
+
+-----------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OBJECT - Kaavakohteiden tiedot
+--
+--  2025-03-26 TPu
+------------------------------------------------------------------------------------------	
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object AS
+SELECT -- Maankäyttöalue
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    ZE.local_id AS plan_object_key,
+    SPLS.uri AS life_cycle_status, 
+    GRK.uri AS underground_status, 
+    ST_SRID (ZE.geom) AS geometry_srid,
+    ZE.geom AS geometry,
+    ZE.name,
+    ZE.description,
+    ZE.valid_from AS period_of_validity_begin,
+    ZE.valid_to AS period_of_validity_end
+FROM
+    $SCHEMANAME$.zoning_element ZE
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = ZE.spatial_plan
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = ZE.lifecycle_status
+JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = ZE.ground_relative_position;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_decision
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_decision;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_DECISION - Kaavan päätöksen tiedot
+--
+--  2024-10-23 TPu
+--  2025-01-24 TPu Muutettu lukemaan tiedot plan_decision ja koodistotauluista
+--  2025-01-31 TPu: Muutettu plan_key -> plan_matter_key (4.2.2025: arvoksi spatial_plan_main.id)
+------------------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_decision AS
+SELECT
+    SPM.id AS plan_matter_key,  -- ex. plan_key,
+    SP.local_id AS plan_matter_phase_key,
+    PD.local_id AS plan_decision_key,
+    PDN.uri AS name,
+    PD.decision_date,
+    PD.decision_adoption_date AS date_of_decision,
+    PD.decision_article,
+    PD.decision_text,
+    PDMT.uri AS type_of_decision_maker,
+    PD.decision_identifier,
+    PD.date_of_validity,
+    PD.fk_decision_maker AS decision_makers_key
+FROM
+    $SCHEMANAME$.plan_decision PD
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_decision = PD.local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.plan_decision_name PDN ON PDN.codevalue = PD.name
+JOIN code_lists.plan_decision_maker_type PDMT ON PDMT.codevalue = PD.decision_maker_type;
+
 
 -- View: $SCHEMANAME$.view_ryhti_plan_regulation
 
@@ -160,7 +253,6 @@ JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PR.life_c
 JOIN code_lists.detail_plan_regulation_kind DPRK ON DPRK.codevalue = PR.type;
 
 
-
 -- View: $SCHEMANAME$.view_ryhti_plan_regulation_group
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group;
@@ -181,7 +273,6 @@ FROM
     $SCHEMANAME$.plan_regulation_group PRG;
 
 
-
 -- View: $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations;
@@ -197,7 +288,6 @@ SELECT
     PRGR.plan_regulation_local_id AS plan_regulation_key
 FROM
     $SCHEMANAME$.plan_regulation_group_regulation PRGR;
-
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_regulation_group_relations
