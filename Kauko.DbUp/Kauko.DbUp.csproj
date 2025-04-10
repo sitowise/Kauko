@@ -10,35 +10,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\views\kauko_views_drop.sql" />
     <EmbeddedResource Include="Scripts\views\kauko_views_create.sql" />
-    <EmbeddedResource Include="Scripts\001_initialization.sql" />
-    <EmbeddedResource Include="Scripts\002_insert_code_list_data.sql" />
-    <EmbeddedResource Include="Scripts\003_create_public_schema_tables.sql" />
-    <EmbeddedResource Include="Scripts\004_create_public_schema_functions.sql" />
-    <EmbeddedResource Include="Scripts\005_create_initial_tables.sql" />
-    <EmbeddedResource Include="Scripts\006_create_initial_functions.sql" />
-    <EmbeddedResource Include="Scripts\007_create_initial_triggers.sql" />
-    <EmbeddedResource Include="Scripts\008_create_code_list_triggers.sql" />
-    <EmbeddedResource Include="Scripts\009_create_public_schema_triggers.sql" />
-    <EmbeddedResource Include="Scripts\010_create_initial_indexing.sql" />
-    <EmbeddedResource Include="Scripts\011_create_ryhti_tables.sql" />
-    <EmbeddedResource Include="Scripts\012_create_ryhti_functions.sql" />
-    <EmbeddedResource Include="Scripts\013_create_roles.sql" />
-    <EmbeddedResource Include="Scripts\014_drop_trigger_insert_version_name.sql" />
-    <EmbeddedResource Include="Scripts\015_document_relations.sql" />
-    <EmbeddedResource Include="Scripts\016_ryhti_log_table.sql" />
-    <EmbeddedResource Include="Scripts\017_bindingness_of_location_as_nullable.sql" />
-    <EmbeddedResource Include="Scripts\018_plan_regulation_verbal_regulation.sql" />
-    <EmbeddedResource Include="Scripts\019_planned_space_plan_detail_line_column_name_change.sql" />
-    <EmbeddedResource Include="Scripts\020_tstzrange_fix.sql" />
-    <EmbeddedResource Include="Scripts\021_legal_effectiveness_nullable_for_detail_plans.sql" />
-    <EmbeddedResource Include="Scripts\022_update_regulation_kind_main_class_katu.sql" />
-    <EmbeddedResource Include="Scripts\023_fix_supplementary_info_relations.sql" />
-    <EmbeddedResource Include="Scripts\024_set_default_privileges_for_roles.sql" />
-    <EmbeddedResource Include="Scripts\025_ground_relative_position_as_nullable.sql" />
-    <EmbeddedResource Include="Scripts\026_plan_regulation_theme_style.sql" />
-    <EmbeddedResource Include="Scripts\027_plan_regulation_style_columns.sql" />
-    <EmbeddedResource Include="Scripts\028_create_trigger_update_theme_for_zoning_element.sql" />
-    <EmbeddedResource Include="Scripts\029_localized_name_as_nullable.sql" />
+    <EmbeddedResource Include="Scripts\*.sql" />
   </ItemGroup>
 
   <ItemGroup>
