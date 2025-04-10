@@ -1,8 +1,8 @@
--- FUNCTION: $SCHEMANAME$.get_theme_for_zoning_element()
+-- FUNCTION: $SCHEMANAME$.update_theme_for_zoning_element()
 
--- DROP FUNCTION IF EXISTS $SCHEMANAME$.get_theme_for_zoning_element();
+-- DROP FUNCTION IF EXISTS $SCHEMANAME$.update_theme_for_zoning_element();
 
-CREATE OR REPLACE FUNCTION $SCHEMANAME$.get_theme_for_zoning_element()
+CREATE OR REPLACE FUNCTION $SCHEMANAME$.update_theme_for_zoning_element()
     RETURNS trigger
     LANGUAGE 'plpgsql'
     COST 100
@@ -33,11 +33,11 @@ BEGIN
     LIMIT 1;
 
     IF (_style IS NOT NULL AND NEW."style" IS NULL) THEN
-        NEW."style" := _style;
+        UPDATE $SCHEMANAME$.zoning_element SET style = _style WHERE local_id = NEW."local_id";
     END IF;
 
     IF (_letter_identifier IS NOT NULL AND NEW."localized_name" IS NULL) THEN
-        NEW."localized_name" := _letter_identifier;
+        UPDATE $SCHEMANAME$.zoning_element SET localized_name = _letter_identifier WHERE local_id = NEW."local_id";
     END IF;
 
     RETURN NEW;
@@ -45,14 +45,15 @@ END;
 $BODY$;
 
 
--- Trigger: get_theme_for_zoning_element
+-- Trigger: update_theme_for_zoning_element
 
--- DROP TRIGGER IF EXISTS get_theme_for_zoning_element ON $SCHEMANAME$.zoning_element;
+-- DROP TRIGGER IF EXISTS update_theme_for_zoning_element ON $SCHEMANAME$.zoning_element;
 
-CREATE OR REPLACE TRIGGER get_theme_for_zoning_element
+CREATE CONSTRAINT TRIGGER update_theme_for_zoning_element
     AFTER INSERT
     ON $SCHEMANAME$.zoning_element
-    FOR EACH STATEMENT
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
     WHEN (pg_trigger_depth() < 1)
-    EXECUTE FUNCTION $SCHEMANAME$.get_theme_for_zoning_element();
+    EXECUTE FUNCTION $SCHEMANAME$.update_theme_for_zoning_element();
     
