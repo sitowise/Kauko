@@ -1,0 +1,2 @@
+ALTER TABLE $SCHEMANAME$.zoning_element
+ALTER COLUMN localized_name DROP NOT NULL;

@@ -273,16 +273,17 @@ FROM
     $SCHEMANAME$.plan_regulation_group PRG;
 
 
--- View: $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_relations
 
--- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations;
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_relations;
 
 ------------------------------------------------------------------------------------------
 --  VIEW VIEW_RYHTI_PLAN_REGULATION_GROUP_REGULATION_RELATIONS - Kaavan määräysryhmään kuuluvat kaavamääräykset
 --
 --  2025-03-26 TPu
-------------------------------------------------------------------------------------------
-CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_requlation_relations AS
+--  2025-04-10 TPu: näkymän nimen kirjoitusvirhe korjattu 
+------------------------------------------------------------------------------------------	
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_relations AS
 SELECT
     PRGR.plan_regulation_group_local_id AS plan_regulation_group_key,
     PRGR.plan_regulation_local_id AS plan_regulation_key
