@@ -1,16 +1,3 @@
-CREATE TABLE code_lists.document_kind (
-	id serial4 NOT NULL,
-	codevalue varchar(2) NOT NULL,
-	uri varchar(255) NOT NULL,
-	preflabel_fi varchar NOT NULL,
-	preflabel_sv varchar NULL,
-	definition_fi varchar NULL,
-	description_fi varchar NULL,
-	CONSTRAINT document_kind_codevalue_key UNIQUE (codevalue),
-	CONSTRAINT document_kind_pkey PRIMARY KEY (id),
-	CONSTRAINT document_kind_uri_key UNIQUE (uri)
-);
-
 DELETE FROM code_lists.document_kind;
 
 INSERT INTO code_lists.document_kind
