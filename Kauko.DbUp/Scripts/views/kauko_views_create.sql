@@ -415,8 +415,9 @@ SELECT
         WHERE DL.fk_document = DOC.local_id
     ) AS languages,
     (
-        SELECT json_agg(DD.referenced_document_local_id)
+        SELECT json_agg(DOC2.document_id)
         FROM $SCHEMANAME$.document_document DD
+        JOIN $SCHEMANAME$.document DOC2 ON DOC2.local_id = DD.referenced_document_local_id
         WHERE DD.referencing_document_local_id = DOC.local_id
     ) AS related_plan_attachment_documents
 FROM
