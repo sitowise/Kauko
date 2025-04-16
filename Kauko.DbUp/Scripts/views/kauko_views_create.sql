@@ -328,3 +328,48 @@ SELECT
     PO.business_id AS business_id
 FROM
     $SCHEMANAME$.plan_operator PO;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation_additional_information
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_additional_information;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_REGULATION_ADDITIONAL_INFORMATION - Kaavamääräyksen lisätiedot
+--
+--  2025-04-16 TKu
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_additional_information AS
+SELECT
+    PRSI.fk_plan_regulation AS plan_regulation_key,
+    SI.local_id AS additional_information_key,
+    DPAIK.uri AS type,
+    CV.value AS code_value,
+    EPV.value AS elevation_position_value,
+    ERV.minimum_value AS elevation_range_minimum_value,
+    ERV.maximum_value AS elevation_range_maximum_value,
+    GAV.value AS geometry_area_value,
+    GLV.value AS geometry_line_value,
+    GPV.value AS geometry_point_value,
+    NV.value AS numeric_value,
+    NR.minimum_value AS numeric_range_minimum_value,
+    NR.maximum_value AS numeric_range_maximum_value,
+    TV.value AS text_value,
+    TIV.value AS time_instant_value,
+    TPV.value AS time_period_value
+FROM
+    $SCHEMANAME$.supplementary_information SI
+JOIN code_lists.detail_plan_addition_information_kind DPAIK ON DPAIK.codevalue = SI.type
+JOIN $SCHEMANAME$.plan_regulation_supplementary_information PRSI ON PRSI.fk_supplementary_information = SI.local_id
+LEFT JOIN $SCHEMANAME$.code_value CV ON CV.code_value_uuid = SI.fk_code_value
+LEFT JOIN $SCHEMANAME$.elevation_position_value EPV ON EPV.elevation_position_value_uuid = SI.fk_elevation_position_value
+LEFT JOIN $SCHEMANAME$.elevation_range_value ERV ON ERV.elevation_range_value_uuid = SI.fk_elevation_range_value
+LEFT JOIN $SCHEMANAME$.geometry_area_value GAV ON GAV.geometry_area_value_uuid = SI.fk_geometry_area_value
+LEFT JOIN $SCHEMANAME$.geometry_line_value GLV ON GLV.geometry_line_value_uuid = SI.fk_geometry_line_value
+LEFT JOIN $SCHEMANAME$.geometry_point_value GPV ON GPV.geometry_point_value_uuid = SI.fk_geometry_point_value
+LEFT JOIN $SCHEMANAME$.numeric_value NV ON NV.numeric_value_uuid = SI.fk_numeric_value
+LEFT JOIN $SCHEMANAME$.numeric_range NR ON NR.numeric_range_uuid = SI.fk_numeric_range
+LEFT JOIN $SCHEMANAME$.text_value TV ON TV.text_value_uuid = SI.fk_text_value
+LEFT JOIN $SCHEMANAME$.time_instant_value TIV ON TIV.time_instant_uuid = SI.fk_time_instant_value
+LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_time_period_value;
