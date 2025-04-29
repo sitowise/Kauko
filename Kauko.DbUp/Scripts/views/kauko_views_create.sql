@@ -394,6 +394,9 @@ LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_tim
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_attachment_document AS
 SELECT
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
     DOC.local_id AS attachment_document_key,
     DOC.document_id AS document_identifier,
     DOC.name,
@@ -422,12 +425,43 @@ SELECT
     ) AS related_plan_attachment_documents
 FROM
     $SCHEMANAME$.document DOC
+JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPD.spatial_plan_local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
 JOIN code_lists.personal_data_content_type PDCT ON PDCT.codevalue = DOC.personal_data_content
 JOIN code_lists.publicity_category PC ON PC.codevalue = DOC.category_of_publicity
 JOIN code_lists.document_retention_time DRT ON DRT.codevalue = DOC.retention_time
 JOIN code_lists.document_kind DK ON DK.codevalue = DOC.type
 WHERE
     DOC.type NOT IN ('03', '05'); -- Rajataan pois liitetyypit 03 Kaavakartta ja 05 Kaavakartta ja kaavamääräykset
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_map
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_map;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_MAP - Kaavakartta
+--
+--  2025-04-23 TPu
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_map AS
+SELECT
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    DOC.local_id AS map_key,
+    DOC.name,
+    DOC.file_id AS file_key,
+    ST_SRID (SP.geom) AS geometry_srid
+FROM
+    $SCHEMANAME$.document DOC
+JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPD.spatial_plan_local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+WHERE
+    DOC.type IN ('03', '05'); -- Mukana vain liitetyypit 03 Kaavakartta ja 05 Kaavakartta ja kaavamääräykset
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_attachment_document_operator
