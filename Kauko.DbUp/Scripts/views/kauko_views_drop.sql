@@ -11,3 +11,6 @@ DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_rel
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_relations;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_operator;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_additional_information;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_attachment_document;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_map;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_attachment_document_operator;

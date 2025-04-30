@@ -7,6 +7,7 @@
 --
 --  2025-03-26 TPu
 ------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan AS
 SELECT
     SPM.id AS plan_matter_key,
@@ -175,7 +176,8 @@ JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_e
 --  VIEW VIEW_RYHTI_PLAN_OBJECT - Kaavakohteiden tiedot
 --
 --  2025-03-26 TPu
-------------------------------------------------------------------------------------------	
+------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object AS
 SELECT -- Maankäyttöalue
     SPM.id AS plan_matter_key,
@@ -209,6 +211,7 @@ JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = ZE.ground_relati
 --  2025-01-24 TPu Muutettu lukemaan tiedot plan_decision ja koodistotauluista
 --  2025-01-31 TPu: Muutettu plan_key -> plan_matter_key (4.2.2025: arvoksi spatial_plan_main.id)
 ------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_decision AS
 SELECT
     SPM.id AS plan_matter_key,  -- ex. plan_key,
@@ -240,6 +243,7 @@ JOIN code_lists.plan_decision_maker_type PDMT ON PDMT.codevalue = PD.decision_ma
 --
 --  2025-03-26 TPu: ensimmäinen versio. Arvot puuttuvat!
 ------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation AS
 SELECT
     PR.local_id AS plan_regulation_key,
@@ -262,6 +266,7 @@ JOIN code_lists.detail_plan_regulation_kind DPRK ON DPRK.codevalue = PR.type;
 --
 --  2025-03-26 TPu
 ------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group AS
 SELECT
     PRG.local_id AS plan_regulation_group_key,
@@ -283,6 +288,7 @@ FROM
 --  2025-03-26 TPu
 --  2025-04-10 TPu: näkymän nimen kirjoitusvirhe korjattu 
 ------------------------------------------------------------------------------------------	
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_relations AS
 SELECT
     PRGR.plan_regulation_group_local_id AS plan_regulation_group_key,
@@ -300,6 +306,7 @@ FROM
 --
 --  2025-03-26 TPu: lisättävä loputkin kaavakohdelajit
 ------------------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_relations AS
 SELECT -- MAANKÄYTTÖALUE
     ZEPRG.zoning_element_local_id AS plan_object_key,
@@ -373,3 +380,103 @@ LEFT JOIN $SCHEMANAME$.numeric_range NR ON NR.numeric_range_uuid = SI.fk_numeric
 LEFT JOIN $SCHEMANAME$.text_value TV ON TV.text_value_uuid = SI.fk_text_value
 LEFT JOIN $SCHEMANAME$.time_instant_value TIV ON TIV.time_instant_uuid = SI.fk_time_instant_value
 LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_time_period_value;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_attachment_document
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_attachment_document;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_ATTACHMENT_DOCUMENT - Liiteasiakirjat
+--
+--  2025-04-16 TKu
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_attachment_document AS
+SELECT
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    DOC.local_id AS attachment_document_key,
+    DOC.document_id AS document_identifier,
+    DOC.name,
+    PDCT.uri AS personal_data_content,
+    PC.uri AS category_of_publicity,
+    DOC.accessibility,
+    DRT.uri AS retention_time,
+    DOC.confirmation_date,
+    DOC.file_id AS file_key,
+    NULL AS descriptors,
+    DOC.document_date,
+    DOC.arrived_date,
+    DK.uri AS type_of_attachment,
+    DOC.document_specification,
+    (
+        SELECT json_agg(RL.code)
+        FROM $SCHEMANAME$.document_language DL
+        JOIN code_lists.ryhti_language RL ON RL.id = DL.fk_language
+        WHERE DL.fk_document = DOC.local_id
+    ) AS languages,
+    (
+        SELECT json_agg(DOC2.document_id)
+        FROM $SCHEMANAME$.document_document DD
+        JOIN $SCHEMANAME$.document DOC2 ON DOC2.local_id = DD.referenced_document_local_id
+        WHERE DD.referencing_document_local_id = DOC.local_id
+    ) AS related_plan_attachment_documents
+FROM
+    $SCHEMANAME$.document DOC
+JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPD.spatial_plan_local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN code_lists.personal_data_content_type PDCT ON PDCT.codevalue = DOC.personal_data_content
+JOIN code_lists.publicity_category PC ON PC.codevalue = DOC.category_of_publicity
+JOIN code_lists.document_retention_time DRT ON DRT.codevalue = DOC.retention_time
+JOIN code_lists.document_kind DK ON DK.codevalue = DOC.type
+WHERE
+    DOC.type NOT IN ('03', '05'); -- Rajataan pois liitetyypit 03 Kaavakartta ja 05 Kaavakartta ja kaavamääräykset
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_map
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_map;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_MAP - Kaavakartta
+--
+--  2025-04-23 TPu
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_map AS
+SELECT
+    SPM.id AS plan_matter_key,
+    SP.local_id AS plan_matter_phase_key,
+    SP.local_plan_id AS plan_key,
+    DOC.local_id AS map_key,
+    DOC.name,
+    DOC.file_id AS file_key,
+    ST_SRID (SP.geom) AS geometry_srid
+FROM
+    $SCHEMANAME$.document DOC
+JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPD.spatial_plan_local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+WHERE
+    DOC.type IN ('03', '05'); -- Mukana vain liitetyypit 03 Kaavakartta ja 05 Kaavakartta ja kaavamääräykset
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_attachment_document_operator
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_attachment_document_operator;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_ATTACHMENT_DOCUMENT_OPERATOR - Liiteasiakirjojen laatijat
+--
+--  2025-04-16 TKu
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_attachment_document_operator AS
+SELECT
+    POD.fk_document AS attachment_document_key,
+    POD.fk_plan_operator AS plan_operator_key
+FROM
+    $SCHEMANAME$.plan_operator_document POD;
