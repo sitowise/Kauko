@@ -14,12 +14,12 @@ DECLARE
   _spatial_plan RECORD;
   _zoning_element_geoms geometry[];
 BEGIN
-  _spatial_plan := (
-    SELECT local_id, geom, validity_time, lifecycle_status
-    FROM $SCHEMANAME$.spatial_plan
-    WHERE local_id = spatial_local_id
-    LIMIT 1
-  );
+  RAISE NOTICE 'Calling get_valid_spatial_plan_area(%)', spatial_local_id;
+  SELECT *
+    INTO   _spatial_plan
+    FROM   $SCHEMANAME$.spatial_plan
+    WHERE  local_id = spatial_local_id
+    LIMIT  1;
   IF _spatial_plan IS NULL THEN
     RAISE EXCEPTION 'Spatial plan with local_id % does not exist', spatial_local_id;
   END IF;
@@ -456,7 +456,7 @@ WHERE ST_Crosses(
         WHERE ze.local_id = zes.local_id
       ),
       0.1))
-      AND dl.lifecycle_status IN ('11', '12', '13')
+      AND dl.lifecycle_status IN ('11', '12', '13');
 
     UPDATE $SCHEMANAME$.describing_text dt
     SET lifecycle_status = '12'
@@ -536,7 +536,7 @@ BEGIN
   SET lifecycle_status = sp.lifecycle_status
   FROM $SCHEMANAME$.spatial_plan sp
   WHERE sp.local_id = ze.spatial_plan
-      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05', '17')
+      AND sp.lifecycle_status IN ('01', '02', '03', '04', '05', '06', '17')
       AND ze.lifecycle_status <> sp.lifecycle_status;
 
   UPDATE $SCHEMANAME$.zoning_element ze
@@ -595,7 +595,7 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_planned_space ze_ps
       ON ze_ps.zoning_element_local_id = ze.local_id
-      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '17')
+      AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '06', '17')
   WHERE ps.local_id = ze_ps.planned_space_local_id
       AND ps.lifecycle_status <> ze.lifecycle_status;
 
@@ -614,7 +614,8 @@ BEGIN
   UPDATE $SCHEMANAME$.planned_space ps
   SET lifecycle_status = '14'
   WHERE ps.lifecycle_status IN ('10', '11', '12', '13')
-    AND ps.validity_time @> Current_Date;
+    AND NOT upper_inf(ps.validity_time)
+    AND upper(ps.validity_time) < Current_Date;
 
   UPDATE $SCHEMANAME$.planned_space ps
   SET lifecycle_status = '14',
@@ -649,7 +650,7 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_line ze_pdl
     ON ze_pdl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '17')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '06', '17')
   WHERE pdl.local_id = ze_pdl.planning_detail_line_local_id
     AND pdl.lifecycle_status <> ze.lifecycle_status;
 
@@ -697,7 +698,7 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_plan_detail_point ze_pdp
     ON ze_pdp.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '17')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '06', '17')
   WHERE pdp.local_id = ze_pdp.planning_detail_point_local_id
     AND pdp.lifecycle_status <> ze.lifecycle_status;
 
@@ -747,7 +748,7 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_line ze_dl
     ON ze_dl.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '17')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '06', '17')
   WHERE dl.id = ze_dl.describing_line_id
     AND ze.lifecycle_status <> dl.lifecycle_status;
 
@@ -801,7 +802,7 @@ BEGIN
   FROM $SCHEMANAME$.zoning_element ze
   JOIN $SCHEMANAME$.zoning_element_describing_text ze_dt
     ON ze_dt.zoning_element_local_id = ze.local_id
-    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '17')
+    AND ze.lifecycle_status IN ('01', '02', '03', '04', '05', '06', '17')
   WHERE dt.id = ze_dt.describing_text_id
     AND ze.lifecycle_status <> dt.lifecycle_status;
 
