@@ -6,13 +6,14 @@
 --  VIEW VIEW_RYHTI_PLAN - Kaavan tiedot
 --
 --  2025-03-26 TPu
+--  2025-05-28 TKu  Changed plan_key to come from spatial_plan.local_id
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan AS
 SELECT
     SPM.id AS plan_matter_key,
     SP.local_id AS plan_matter_phase_key,
-    SP.local_plan_id AS plan_key,
+    SP.local_id AS plan_key,
     SPLS.uri AS life_cycle_status,
     LEK.uri AS legal_effect_of_local_master_plans,
     NULL AS scale,
@@ -176,13 +177,14 @@ JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_e
 --  VIEW VIEW_RYHTI_PLAN_OBJECT - Kaavakohteiden tiedot
 --
 --  2025-03-26 TPu
+--  2025-05-28 TKu  Changed plan_key to come from spatial_plan.local_id
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object AS
 SELECT -- Maankäyttöalue
     SPM.id AS plan_matter_key,
     SP.local_id AS plan_matter_phase_key,
-    SP.local_plan_id AS plan_key,
+    SP.local_id AS plan_key,
     ZE.local_id AS plan_object_key,
     SPLS.uri AS life_cycle_status, 
     GRK.uri AS underground_status, 
@@ -390,13 +392,14 @@ LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_tim
 --  VIEW VIEW_RYHTI_PLAN_ATTACHMENT_DOCUMENT - Liiteasiakirjat
 --
 --  2025-04-16 TKu
+--  2025-05-28 TKu  Changed plan_key to come from spatial_plan.local_id
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_attachment_document AS
 SELECT
     SPM.id AS plan_matter_key,
     SP.local_id AS plan_matter_phase_key,
-    SP.local_plan_id AS plan_key,
+    SP.local_id AS plan_key,
     DOC.local_id AS attachment_document_key,
     DOC.document_id AS document_identifier,
     DOC.name,
@@ -445,13 +448,15 @@ WHERE
 --
 --  2025-04-23 TPu
 --  2025-05-14 TKu  Default value for geometry_srid
+--  2025-05-28 TKu  Changed plan_key to come from spatial_plan.local_id
+
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_map AS
 SELECT
     SPM.id AS plan_matter_key,
     SP.local_id AS plan_matter_phase_key,
-    SP.local_plan_id AS plan_key,
+    SP.local_id AS plan_key,
     DOC.local_id AS map_key,
     DOC.name,
     DOC.file_id AS file_key,
