@@ -444,6 +444,7 @@ WHERE
 --  VIEW VIEW_RYHTI_PLAN_MAP - Kaavakartta
 --
 --  2025-04-23 TPu
+--  2025-05-14 TKu  Default value for geometry_srid
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_map AS
@@ -454,7 +455,7 @@ SELECT
     DOC.local_id AS map_key,
     DOC.name,
     DOC.file_id AS file_key,
-    ST_SRID (SP.geom) AS geometry_srid
+    'http://uri.suomi.fi/codelist/rakrek/ETRS89/code/EPSG3067' AS geometry_srid
 FROM
     $SCHEMANAME$.document DOC
 JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
