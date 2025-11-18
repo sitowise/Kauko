@@ -131,7 +131,7 @@ ALTER TABLE $SCHEMANAME$.spatial_plan_other_plan_document ADD CONSTRAINT spatial
 -- spatial_plan_plan_regulation_group
 ALTER TABLE $SCHEMANAME$.spatial_plan_plan_regulation_group DROP CONSTRAINT IF EXISTS spatial_plan_plan_regulation_group_pkey;
 ALTER TABLE $SCHEMANAME$.spatial_plan_plan_regulation_group DROP COLUMN IF EXISTS id;
-ALTER TABLE $SCHEMANAME$.spatial_plan_plan_regulation_group ADD CONSTRAINT spatial_plan_plan_regulation_group_pkey PRIMARY KEY (spatial_plan_local_id, plan_regulation_group_local_id);
+ALTER TABLE $SCHEMANAME$.spatial_plan_plan_regulation_group ADD CONSTRAINT spatial_plan_plan_regulation_group_pkey PRIMARY KEY (fk_spatial_plan, fk_plan_regulation_group);
 
 -- spatial_plan_planner
 ALTER TABLE $SCHEMANAME$.spatial_plan_planner DROP CONSTRAINT IF EXISTS spatial_plan_planner_pkey;
