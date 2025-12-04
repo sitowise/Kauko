@@ -92,7 +92,11 @@ ALTER TABLE $SCHEMANAME$.supplementary_information
 -----------------------------------
 
 ALTER TABLE $SCHEMANAME$.time_period_value
-    DROP COLUMN IF EXISTS value;
+    DROP COLUMN IF EXISTS value,
+    DROP COLUMN IF EXISTS time_period_from,
+    DROP COLUMN IF EXISTS time_period_to,
+    ADD time_period_begin timestamp with time zone NOT NULL,
+    ADD time_period_end timestamp with time zone;
 
 
 -- New value table: time_period_date_only_value
@@ -105,7 +109,8 @@ ALTER TABLE $SCHEMANAME$.time_period_value
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_date_only_value (
 	id int4 GENERATED ALWAYS AS IDENTITY,
 	time_period_date_only_value_uuid uuid DEFAULT uuid_generate_v4() NOT NULL,
-	value date NOT NULL,
+	time_period_date_only_begin date NOT NULL,
+    time_period_date_only_end date,
 	CONSTRAINT time_period_date_only_value_pkey PRIMARY KEY (id),
 	CONSTRAINT tpdo_value_time_period_date_only_value_uuid_key UNIQUE (time_period_date_only_value_uuid)
 );
@@ -141,14 +146,12 @@ ALTER TABLE $SCHEMANAME$.plan_regulation
     DROP CONSTRAINT IF EXISTS plan_regulation_fk_geometry_line_value,
     DROP CONSTRAINT IF EXISTS plan_regulation_fk_geometry_point_value,
     DROP CONSTRAINT IF EXISTS plan_regulation_fk_time_instant_value,
-    DROP CONSTRAINT IF EXISTS plan_regulation_fk_time_period_value,
     DROP COLUMN IF EXISTS fk_elevation_position_value,
     DROP COLUMN IF EXISTS fk_elevation_range_value,
     DROP COLUMN IF EXISTS fk_geometry_area_value,
     DROP COLUMN IF EXISTS fk_geometry_line_value,
     DROP COLUMN IF EXISTS fk_geometry_point_value,
-    DROP COLUMN IF EXISTS fk_time_instant_value,
-    DROP COLUMN IF EXISTS fk_time_period_value;
+    DROP COLUMN IF EXISTS fk_time_instant_value;
 
 ALTER TABLE $SCHEMANAME$.supplementary_information
     DROP CONSTRAINT IF EXISTS supplementary_information_fk_elevation_position_value,
@@ -157,14 +160,12 @@ ALTER TABLE $SCHEMANAME$.supplementary_information
     DROP CONSTRAINT IF EXISTS supplementary_information_fk_geometry_line_value,
     DROP CONSTRAINT IF EXISTS supplementary_information_fk_geometry_point_value,
     DROP CONSTRAINT IF EXISTS supplementary_information_fk_time_instant_value,
-    DROP CONSTRAINT IF EXISTS supplementary_information_fk_time_period_value,
     DROP COLUMN IF EXISTS fk_elevation_position_value,
     DROP COLUMN IF EXISTS fk_elevation_range_value,
     DROP COLUMN IF EXISTS fk_geometry_area_value,
     DROP COLUMN IF EXISTS fk_geometry_line_value,
     DROP COLUMN IF EXISTS fk_geometry_point_value,
-    DROP COLUMN IF EXISTS fk_time_instant_value,
-    DROP COLUMN IF EXISTS fk_time_period_value;
+    DROP COLUMN IF EXISTS fk_time_instant_value;
 
 -- Drop tables
 
@@ -174,7 +175,7 @@ DROP TABLE IF EXISTS $SCHEMANAME$.geometry_area_value;
 DROP TABLE IF EXISTS $SCHEMANAME$.geometry_line_value;
 DROP TABLE IF EXISTS $SCHEMANAME$.geometry_point_value;
 DROP TABLE IF EXISTS $SCHEMANAME$.time_instant_value;
-DROP TABLE IF EXISTS $SCHEMANAME$.time_period_value;
+DROP TABLE IF EXISTS $SCHEMANAME$.time_period_date_only;
 
 
 -- Add renewed check constraints
@@ -190,6 +191,7 @@ ALTER TABLE $SCHEMANAME$.plan_regulation
                 fk_text_value,
                 fk_indentifier_value,
                 fk_localized_text_value,
+                fk_time_period_value,
                 fk_time_period_date_only_value
             ) = ANY (ARRAY[0, 1])
         );
@@ -204,6 +206,7 @@ ALTER TABLE $SCHEMANAME$.supplementary_information
                 fk_text_value,
                 fk_indentifier_value,
                 fk_localized_text_value,
+                fk_time_period_value,
                 fk_time_period_date_only_value
             ) = ANY (ARRAY[0, 1])
         );

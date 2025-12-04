@@ -347,7 +347,7 @@ FROM
 --  VIEW VIEW_RYHTI_PLAN_REGULATION_ADDITIONAL_INFORMATION - Kaavamääräyksen lisätiedot
 --
 --  2025-04-16 TKu
---  2025-11-06 TKu Columns removed:
+--  2025-12-04 TKu Columns removed:
 --                   - elevation_position_value
 --                   - elevation_range_minimum_value
 --                   - elevation_range_maximum_value
@@ -359,7 +359,10 @@ FROM
 --                 Columns added:
 --                   - indentifier_value
 --                   - localized_text_value
---                   - time_period_date_only_value
+--                   - time_period_begin
+--                   - time_period_end
+--                   - time_period_date_only_begin
+--                   - time_period_date_only_end
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_additional_information AS
@@ -374,7 +377,10 @@ SELECT
     IV.value AS indentifier_value,
     TV.value AS text_value,
     LTV.value AS localized_text_value,
-    TPDOV.value AS time_period_date_only_value
+    TPV.time_period_begin AS time_period_begin,
+    TPV.time_period_end AS time_period_end,
+    TPDOV.time_period_date_only_begin AS time_period_date_only_begin,
+    TPDOV.time_period_date_only_end AS time_period_date_only_end
 FROM
     $SCHEMANAME$.supplementary_information SI
 JOIN code_lists.detail_plan_addition_information_kind DPAIK ON DPAIK.codevalue = SI.type
@@ -385,6 +391,7 @@ LEFT JOIN $SCHEMANAME$.numeric_range NR ON NR.numeric_range_uuid = SI.fk_numeric
 LEFT JOIN $SCHEMANAME$.indentifier_value IV ON IV.indentifier_value_uuid = SI.fk_indentifier_value
 LEFT JOIN $SCHEMANAME$.text_value TV ON TV.text_value_uuid = SI.fk_text_value
 LEFT JOIN $SCHEMANAME$.localized_text_value LTV ON LTV.localized_text_value_uuid = SI.fk_localized_text_value
+LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_time_period_value
 LEFT JOIN $SCHEMANAME$.time_period_date_only_value TPDOV ON TPDOV.time_period_date_only_value_uuid = SI.fk_time_period_date_only_value;
 
 
