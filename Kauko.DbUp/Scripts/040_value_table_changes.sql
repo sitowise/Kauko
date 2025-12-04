@@ -96,7 +96,8 @@ ALTER TABLE $SCHEMANAME$.time_period_value
     DROP COLUMN IF EXISTS time_period_from,
     DROP COLUMN IF EXISTS time_period_to,
     ADD time_period_begin timestamp with time zone NOT NULL,
-    ADD time_period_end timestamp with time zone;
+    ADD time_period_end timestamp with time zone,
+    ADD CONSTRAINT time_period_value_time_period_check CHECK (time_period_end IS NULL OR time_period_end >= time_period_begin);
 
 
 -- New value table: time_period_date_only_value
@@ -112,7 +113,8 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_date_only_value (
 	time_period_date_only_begin date NOT NULL,
     time_period_date_only_end date,
 	CONSTRAINT time_period_date_only_value_pkey PRIMARY KEY (id),
-	CONSTRAINT tpdo_value_time_period_date_only_value_uuid_key UNIQUE (time_period_date_only_value_uuid)
+	CONSTRAINT tpdo_value_time_period_date_only_value_uuid_key UNIQUE (time_period_date_only_value_uuid),
+    CONSTRAINT time_period_date_only_value_time_period_date_only_check CHECK (time_period_date_only_end IS NULL OR time_period_date_only_end >= time_period_date_only_begin)
 );
 
 -- Add foreign keys
