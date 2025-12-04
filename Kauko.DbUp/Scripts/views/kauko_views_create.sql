@@ -347,6 +347,22 @@ FROM
 --  VIEW VIEW_RYHTI_PLAN_REGULATION_ADDITIONAL_INFORMATION - Kaavamääräyksen lisätiedot
 --
 --  2025-04-16 TKu
+--  2025-12-04 TKu Columns removed:
+--                   - elevation_position_value
+--                   - elevation_range_minimum_value
+--                   - elevation_range_maximum_value
+--                   - geometry_area_value
+--                   - geometry_line_value
+--                   - geometry_point_value
+--                   - time_instant_value
+--                   - time_period_value
+--                 Columns added:
+--                   - indentifier_value
+--                   - localized_text_value
+--                   - time_period_begin
+--                   - time_period_end
+--                   - time_period_date_only_begin
+--                   - time_period_date_only_end
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_additional_information AS
@@ -355,33 +371,28 @@ SELECT
     SI.local_id AS additional_information_key,
     DPAIK.uri AS type,
     CV.value AS code_value,
-    EPV.value AS elevation_position_value,
-    ERV.minimum_value AS elevation_range_minimum_value,
-    ERV.maximum_value AS elevation_range_maximum_value,
-    GAV.value AS geometry_area_value,
-    GLV.value AS geometry_line_value,
-    GPV.value AS geometry_point_value,
     NV.value AS numeric_value,
     NR.minimum_value AS numeric_range_minimum_value,
     NR.maximum_value AS numeric_range_maximum_value,
+    IV.value AS indentifier_value,
     TV.value AS text_value,
-    TIV.value AS time_instant_value,
-    TPV.value AS time_period_value
+    LTV.value AS localized_text_value,
+    TPV.time_period_begin AS time_period_begin,
+    TPV.time_period_end AS time_period_end,
+    TPDOV.time_period_date_only_begin AS time_period_date_only_begin,
+    TPDOV.time_period_date_only_end AS time_period_date_only_end
 FROM
     $SCHEMANAME$.supplementary_information SI
 JOIN code_lists.detail_plan_addition_information_kind DPAIK ON DPAIK.codevalue = SI.type
 JOIN $SCHEMANAME$.plan_regulation_supplementary_information PRSI ON PRSI.fk_supplementary_information = SI.local_id
 LEFT JOIN $SCHEMANAME$.code_value CV ON CV.code_value_uuid = SI.fk_code_value
-LEFT JOIN $SCHEMANAME$.elevation_position_value EPV ON EPV.elevation_position_value_uuid = SI.fk_elevation_position_value
-LEFT JOIN $SCHEMANAME$.elevation_range_value ERV ON ERV.elevation_range_value_uuid = SI.fk_elevation_range_value
-LEFT JOIN $SCHEMANAME$.geometry_area_value GAV ON GAV.geometry_area_value_uuid = SI.fk_geometry_area_value
-LEFT JOIN $SCHEMANAME$.geometry_line_value GLV ON GLV.geometry_line_value_uuid = SI.fk_geometry_line_value
-LEFT JOIN $SCHEMANAME$.geometry_point_value GPV ON GPV.geometry_point_value_uuid = SI.fk_geometry_point_value
 LEFT JOIN $SCHEMANAME$.numeric_value NV ON NV.numeric_value_uuid = SI.fk_numeric_value
 LEFT JOIN $SCHEMANAME$.numeric_range NR ON NR.numeric_range_uuid = SI.fk_numeric_range
+LEFT JOIN $SCHEMANAME$.indentifier_value IV ON IV.indentifier_value_uuid = SI.fk_indentifier_value
 LEFT JOIN $SCHEMANAME$.text_value TV ON TV.text_value_uuid = SI.fk_text_value
-LEFT JOIN $SCHEMANAME$.time_instant_value TIV ON TIV.time_instant_uuid = SI.fk_time_instant_value
-LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_time_period_value;
+LEFT JOIN $SCHEMANAME$.localized_text_value LTV ON LTV.localized_text_value_uuid = SI.fk_localized_text_value
+LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_time_period_value
+LEFT JOIN $SCHEMANAME$.time_period_date_only_value TPDOV ON TPDOV.time_period_date_only_value_uuid = SI.fk_time_period_date_only_value;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_attachment_document
