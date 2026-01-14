@@ -357,7 +357,7 @@ FROM
 --                   - time_instant_value
 --                   - time_period_value
 --                 Columns added:
---                   - indentifier_value
+--                   - identifier_value
 --                   - localized_text_value
 --                   - time_period_begin
 --                   - time_period_end
@@ -374,7 +374,7 @@ SELECT
     NV.value AS numeric_value,
     NR.minimum_value AS numeric_range_minimum_value,
     NR.maximum_value AS numeric_range_maximum_value,
-    IV.value AS indentifier_value,
+    IV.value AS identifier_value,
     TV.value AS text_value,
     LTV.value AS localized_text_value,
     TPV.time_period_begin AS time_period_begin,
@@ -388,7 +388,7 @@ JOIN $SCHEMANAME$.plan_regulation_supplementary_information PRSI ON PRSI.fk_supp
 LEFT JOIN $SCHEMANAME$.code_value CV ON CV.code_value_uuid = SI.fk_code_value
 LEFT JOIN $SCHEMANAME$.numeric_value NV ON NV.numeric_value_uuid = SI.fk_numeric_value
 LEFT JOIN $SCHEMANAME$.numeric_range NR ON NR.numeric_range_uuid = SI.fk_numeric_range
-LEFT JOIN $SCHEMANAME$.indentifier_value IV ON IV.indentifier_value_uuid = SI.fk_indentifier_value
+LEFT JOIN $SCHEMANAME$.identifier_value IV ON IV.identifier_value_uuid = SI.fk_identifier_value
 LEFT JOIN $SCHEMANAME$.text_value TV ON TV.text_value_uuid = SI.fk_text_value
 LEFT JOIN $SCHEMANAME$.localized_text_value LTV ON LTV.localized_text_value_uuid = SI.fk_localized_text_value
 LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = SI.fk_time_period_value

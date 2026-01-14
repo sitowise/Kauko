@@ -176,15 +176,15 @@ CREATE TABLE IF NOT EXISTS $SCHEMANAME$.time_period_date_only (
 
 CREATE TABLE IF NOT EXISTS $SCHEMANAME$.spatial_plan_plan_regulation_group (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
-    spatial_plan_local_id TEXT NOT NULL,
-    plan_regulation_group_local_id TEXT NOT NULL,
+    fk_spatial_plan TEXT NOT NULL,
+    fk_plan_regulation_group TEXT NOT NULL,
     CONSTRAINT spatial_plan_plan_regulation_group_pkey PRIMARY KEY (id),
-    CONSTRAINT spatial_plan_plan_regulation_group_fk_spatial_plan_local_id FOREIGN KEY (spatial_plan_local_id)
+    CONSTRAINT spatial_plan_plan_regulation_group_fk_spatial_plan_fkey FOREIGN KEY (fk_spatial_plan)
         REFERENCES $SCHEMANAME$.spatial_plan (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
         DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT spatial_plan_plan_regulation_group_fk_plan_regulation_group_local_id FOREIGN KEY (plan_regulation_group_local_id)
+    CONSTRAINT spatial_plan_plan_regulation_group_fk_plan_regulation_group_fkey FOREIGN KEY (fk_plan_regulation_group)
         REFERENCES $SCHEMANAME$.plan_regulation_group (local_id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
