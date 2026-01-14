@@ -49,10 +49,9 @@ CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_matter
 AS
 SELECT
     SPM.id AS plan_matter_key,
-    SPM.ryhti_plan_id AS permanent_plan_identifier, 
+    SPM.ryhti_plan_id AS permanent_plan_identifier,
     SP.land_administration_authority AS administrative_area_identifiers,
-    SP.language,
-    CASE 
+    CASE
         WHEN SP.type like '2%' THEN 2
         WHEN SP.type like '3%' THEN 3
         ELSE NULL
@@ -120,7 +119,7 @@ SELECT
     SPM.id AS plan_matter_key,
     SP.local_id AS plan_matter_phase_key,
     PIE.local_id AS interaction_event_key,
-    PIET.uri AS interaction_event_type, 
+    PIET.uri AS interaction_event_type,
     PIE.event_time_begin,
     PIE.event_time_end,
     PIE.name,
@@ -186,8 +185,8 @@ SELECT -- Maankäyttöalue
     SP.local_id AS plan_matter_phase_key,
     SP.local_id AS plan_key,
     ZE.local_id AS plan_object_key,
-    SPLS.uri AS life_cycle_status, 
-    GRK.uri AS underground_status, 
+    SPLS.uri AS life_cycle_status,
+    GRK.uri AS underground_status,
     ST_SRID (ZE.geom) AS geometry_srid,
     ZE.geom AS geometry,
     ZE.name,
@@ -288,8 +287,8 @@ FROM
 --  VIEW VIEW_RYHTI_PLAN_REGULATION_GROUP_REGULATION_RELATIONS - Kaavan määräysryhmään kuuluvat kaavamääräykset
 --
 --  2025-03-26 TPu
---  2025-04-10 TPu: näkymän nimen kirjoitusvirhe korjattu 
-------------------------------------------------------------------------------------------	
+--  2025-04-10 TPu: näkymän nimen kirjoitusvirhe korjattu
+------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_relations AS
 SELECT
