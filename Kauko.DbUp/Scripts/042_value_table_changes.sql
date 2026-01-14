@@ -63,6 +63,48 @@ ALTER TABLE $SCHEMANAME$.supplementary_information
         DEFERRABLE INITIALLY DEFERRED;
 
 
+-- Rename table numeric_range --> numeric_range_value
+-------------------------------------------------------
+
+ALTER TABLE $SCHEMANAME$.plan_regulation
+    DROP CONSTRAINT IF EXISTS plan_regulation_fk_numeric_range,
+    DROP COLUMN IF EXISTS fk_numeric_range;
+
+ALTER TABLE $SCHEMANAME$.supplementary_information
+    DROP CONSTRAINT IF EXISTS supplementary_information_fk_numeric_range,
+    DROP COLUMN IF EXISTS fk_numeric_range;
+
+DROP TABLE IF EXISTS $SCHEMANAME$.numeric_range;
+
+CREATE TABLE IF NOT EXISTS $SCHEMANAME$.numeric_range_value
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
+    numeric_range_value_uuid uuid NOT NULL DEFAULT uuid_generate_v4(),
+    minimum_value double precision,
+    maximum_value double precision,
+    unit_of_measure TEXT,
+    CONSTRAINT numeric_range_value_pkey PRIMARY KEY (id),
+    CONSTRAINT numeric_range_numeric_range_value_uuid_key UNIQUE (numeric_range_value_uuid),
+    CONSTRAINT numeric_range_value_check CHECK (minimum_value <= maximum_value)
+);
+
+ALTER TABLE $SCHEMANAME$.plan_regulation
+    ADD fk_numeric_range_value uuid,
+    ADD CONSTRAINT plan_regulation_fk_numeric_range_value FOREIGN KEY (fk_numeric_range_value)
+    REFERENCES $SCHEMANAME$.numeric_range_value(numeric_range_value_uuid)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+        DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE $SCHEMANAME$.supplementary_information
+    ADD fk_numeric_range_value uuid,
+    ADD CONSTRAINT supplementary_information_fk_numeric_range_value FOREIGN KEY (fk_numeric_range_value)
+    REFERENCES $SCHEMANAME$.numeric_range_value(numeric_range_value_uuid)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+        DEFERRABLE INITIALLY DEFERRED;
+
+
 -- Drop useless table localized_text
 --------------------------------------
 
@@ -78,7 +120,7 @@ ALTER TABLE $SCHEMANAME$.plan_regulation
             num_nonnulls(
                 fk_code_value,
                 fk_numeric_value,
-                fk_numeric_range,
+                fk_numeric_range_value,
                 fk_text_value,
                 fk_identifier_value,
                 fk_localized_text_value,
@@ -93,7 +135,7 @@ ALTER TABLE $SCHEMANAME$.supplementary_information
             num_nonnulls(
                 fk_code_value,
                 fk_numeric_value,
-                fk_numeric_range,
+                fk_numeric_range_value,
                 fk_text_value,
                 fk_identifier_value,
                 fk_localized_text_value,
