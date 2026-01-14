@@ -14,4 +14,5 @@ ALTER TABLE $SCHEMANAME$.document
 --------------------------------------------
 
 ALTER TABLE $SCHEMANAME$.zoning_element
+    DROP COLUMN IF EXISTS type,
     DROP COLUMN IF EXISTS up_to_dateness;
