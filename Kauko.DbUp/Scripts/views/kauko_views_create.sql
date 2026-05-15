@@ -7,25 +7,28 @@
 --
 --  2025-03-26 TPu
 --  2025-05-28 TKu  Changed plan_key to come from spatial_plan.local_id
+--  2026-05-15      RYHTIEXPORT-310: Liitetään spatial_plan_phase-tauluun
+--                  plan_matter_phase_key-arvon saamiseksi
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan AS
 SELECT
     SPM.id AS plan_matter_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     SP.local_id AS plan_key,
     SPLS.uri AS life_cycle_status,
     LEK.uri AS legal_effect_of_local_master_plans,
     NULL AS scale,
-    ST_SRID (SP.geom) AS geometry_srid,
+    ST_SRID(SP.geom) AS geometry_srid,
     SP.geom AS geometry,
-    SP.version_name AS plan_description, -- onko tämä oikea teksti tähän?
+    SP.version_name AS plan_description,
     SP.valid_from AS period_of_validity_begin,
     SP.valid_to AS period_of_validity_end,
     SP.approval_time AS approval_date
 FROM
     $SCHEMANAME$.spatial_plan SP
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = SP.lifecycle_status
 LEFT JOIN code_lists.legal_effectiveness_kind LEK ON LEK.codevalue = SP.legal_effectiveness;
 
@@ -43,6 +46,8 @@ LEFT JOIN code_lists.legal_effectiveness_kind LEK ON LEK.codevalue = SP.legal_ef
 --  2025-01-?? TPu  Changed column name: plan_key -> plan_matter_key
 --                  Changed plan_key to come from spatial_plan_main.id
 --                  Added NULL condition to spatial_plan.type case-when expression
+--  2026-05-15      RYHTIEXPORT-310: Luetaan type, initiation_time, digital_origin,
+--                  land_administration_authority spatial_plan_main-taulusta
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_matter
@@ -50,26 +55,25 @@ AS
 SELECT
     SPM.id AS plan_matter_key,
     SPM.ryhti_plan_id AS permanent_plan_identifier,
-    SP.land_administration_authority AS administrative_area_identifiers,
+    SPM.land_administration_authority AS administrative_area_identifiers,
     CASE
-        WHEN SP.type like '2%' THEN 2
-        WHEN SP.type like '3%' THEN 3
+        WHEN SPM.type LIKE '2%' THEN 2
+        WHEN SPM.type LIKE '3%' THEN 3
         ELSE NULL
     END AS plan_main_type,
     SPK.uri AS plan_type,
     SPM.plan_identifier AS producer_plan_identifier,
-    SP.initiation_time AS time_of_initiation,
+    SPM.initiation_time AS time_of_initiation,
     DOK.uri AS digital_origin,
     SPM.name,
-    SP.created AS plan_created,
-    PO.local_id as responsible_party_key,
+    SPM.created AS plan_created,
+    PO.local_id AS responsible_party_key,
     SPM.description
 FROM
-    $SCHEMANAME$.spatial_plan SP
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+    $SCHEMANAME$.spatial_plan_main SPM
 JOIN $SCHEMANAME$.plan_operator PO ON PO.local_id = SPM.fk_responsible
-JOIN code_lists.spatial_plan_kind SPK ON SPK.codevalue = SP.type
-JOIN code_lists.digital_origin_kind DOK ON DOK.codevalue = SP.digital_origin;
+JOIN code_lists.spatial_plan_kind SPK ON SPK.codevalue = SPM.type
+JOIN code_lists.digital_origin_kind DOK ON DOK.codevalue = SPM.digital_origin;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_phase
@@ -83,19 +87,20 @@ JOIN code_lists.digital_origin_kind DOK ON DOK.codevalue = SP.digital_origin;
 --  2025-01-?? TPu  Added spatial_plan_main to joins
 --                  Changed column name: plan_key -> plan_matter_key
 --                  Changed plan_key to come from spatial_plan_main.id
+--  2026-05-15      RYHTIEXPORT-310: Luetaan spatial_plan_phase-taulusta
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_phase
 AS
 SELECT
     SPM.id AS plan_matter_key,
-    SP.local_id as plan_matter_phase_key,
-    SP.geom as geometry,
-    SPLS.uri as life_cycle_status
+    SPP.local_phase_key AS plan_matter_phase_key,
+    SPP.geom AS geometry,
+    SPLS.uri AS life_cycle_status
 FROM
-    $SCHEMANAME$.spatial_plan SP
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
-JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = SP.lifecycle_status;
+    $SCHEMANAME$.spatial_plan_phase SPP
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = SPP.lifecycle_status;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_interaction
@@ -111,13 +116,15 @@ JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = SP.lifecy
 --                  Changed column name: plan_key -> plan_matter_key
 --                  Changed plan_key to come from spatial_plan_main.id
 --                  Added column location_srid
+--  2026-05-15      RYHTIEXPORT-310: Liitetään spatial_plan_phase-tauluun
+--                  fk_spatial_plan_phase-sarakkeen kautta
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_interaction
 AS
 SELECT
     SPM.id AS plan_matter_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     PIE.local_id AS interaction_event_key,
     PIET.uri AS interaction_event_type,
     PIE.event_time_begin,
@@ -131,8 +138,8 @@ SELECT
 FROM
     $SCHEMANAME$.plan_interaction_event PIE
 JOIN $SCHEMANAME$.spatial_plan_interaction_event SPIE ON SPIE.fk_plan_interaction_event = PIE.local_id
-JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPIE.fk_spatial_plan
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SPIE.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 JOIN code_lists.plan_interaction_event_type PIET ON PIET.codevalue = PIE.interaction_event_type;
 
 
@@ -148,12 +155,14 @@ JOIN code_lists.plan_interaction_event_type PIET ON PIET.codevalue = PIE.interac
 --  2025-01-?? TPu  Added spatial_plan_main to joins
 --                  Changed column name: plan_key -> plan_matter_key
 --                  Changed plan_key to come from spatial_plan_main.id
+--  2026-05-15      RYHTIEXPORT-310: Liitetään spatial_plan_phase-tauluun
+--                  fk_plan_handling_event-sarakkeen kautta
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_handling AS
 SELECT
     SPM.id AS plan_matter_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     PHE.local_id AS handling_event_key,
     PHET.uri AS handling_event_type,
     PHE.event_time,
@@ -163,8 +172,8 @@ SELECT
     PHE.cancelled
 FROM
     $SCHEMANAME$.plan_handling_event PHE
-JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_handling_event = PHE.local_id
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.fk_plan_handling_event = PHE.local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_event_type;
 
 
@@ -177,12 +186,13 @@ JOIN code_lists.plan_handling_event_type PHET ON PHET.codevalue = PHE.handling_e
 --
 --  2025-03-26 TPu
 --  2025-05-28 TKu  Changed plan_key to come from spatial_plan.local_id
+--  2026-05-15      RYHTIEXPORT-310: Liitetään spatial_plan_phase-tauluun
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object AS
 SELECT -- Maankäyttöalue
     SPM.id AS plan_matter_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     SP.local_id AS plan_key,
     ZE.local_id AS plan_object_key,
     SPLS.uri AS life_cycle_status,
@@ -196,7 +206,8 @@ SELECT -- Maankäyttöalue
 FROM
     $SCHEMANAME$.zoning_element ZE
 JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = ZE.spatial_plan
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = ZE.lifecycle_status
 JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = ZE.ground_relative_position;
 
@@ -211,12 +222,14 @@ JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = ZE.ground_relati
 --  2024-10-23 TPu
 --  2025-01-24 TPu Muutettu lukemaan tiedot plan_decision ja koodistotauluista
 --  2025-01-31 TPu: Muutettu plan_key -> plan_matter_key (4.2.2025: arvoksi spatial_plan_main.id)
+--  2026-05-15      RYHTIEXPORT-310: Liitetään spatial_plan_phase-tauluun
+--                  fk_plan_decision-sarakkeen kautta
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_decision AS
 SELECT
-    SPM.id AS plan_matter_key,  -- ex. plan_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPM.id AS plan_matter_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     PD.local_id AS plan_decision_key,
     PDN.uri AS name,
     PD.decision_date,
@@ -229,8 +242,8 @@ SELECT
     PD.fk_decision_maker AS decision_makers_key
 FROM
     $SCHEMANAME$.plan_decision PD
-JOIN $SCHEMANAME$.spatial_plan SP ON SP.fk_plan_decision = PD.local_id
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.fk_plan_decision = PD.local_id
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 JOIN code_lists.plan_decision_name PDN ON PDN.codevalue = PD.name
 JOIN code_lists.plan_decision_maker_type PDMT ON PDMT.codevalue = PD.decision_maker_type;
 
@@ -408,7 +421,7 @@ LEFT JOIN $SCHEMANAME$.time_period_date_only_value TPDOV ON TPDOV.time_period_da
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_attachment_document AS
 SELECT
     SPM.id AS plan_matter_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     SP.local_id AS plan_key,
     DOC.local_id AS attachment_document_key,
     DOC.document_id AS document_identifier,
@@ -440,7 +453,8 @@ FROM
     $SCHEMANAME$.document DOC
 JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
 JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPD.spatial_plan_local_id
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 JOIN code_lists.personal_data_content_type PDCT ON PDCT.codevalue = DOC.personal_data_content
 JOIN code_lists.publicity_category PC ON PC.codevalue = DOC.category_of_publicity
 JOIN code_lists.document_retention_time DRT ON DRT.codevalue = DOC.retention_time
@@ -465,7 +479,7 @@ WHERE
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_map AS
 SELECT
     SPM.id AS plan_matter_key,
-    SP.local_id AS plan_matter_phase_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
     SP.local_id AS plan_key,
     DOC.local_id AS map_key,
     DOC.name,
@@ -475,7 +489,8 @@ FROM
     $SCHEMANAME$.document DOC
 JOIN $SCHEMANAME$.spatial_plan_document SPD ON SPD.document_local_id = DOC.local_id
 JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = SPD.spatial_plan_local_id
-JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_id = SP.local_plan_id
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
 WHERE
     DOC.type IN ('03', '05'); -- Mukana vain liitetyypit 03 Kaavakartta ja 05 Kaavakartta ja kaavamääräykset
 
