@@ -16,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="dbup-core" Version="5.0.87" />
     <PackageReference Include="dbup-postgresql" Version="5.0.40" />
-    <PackageReference Include="Npgsql" Version="8.0.2" />
+    <PackageReference Include="Npgsql" Version="8.0.3" />
   </ItemGroup>
 
 </Project>
