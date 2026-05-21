@@ -96,7 +96,8 @@ SELECT
     SPM.id AS plan_matter_key,
     SPP.local_phase_key AS plan_matter_phase_key,
     SPP.geom AS geometry,
-    SPLS.uri AS life_cycle_status
+    SPLS.uri AS life_cycle_status,
+    SPP.version_name AS phase_description
 FROM
     $SCHEMANAME$.spatial_plan_phase SPP
 JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
