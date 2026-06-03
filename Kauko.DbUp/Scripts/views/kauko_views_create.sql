@@ -71,9 +71,9 @@ SELECT
     SPM.description
 FROM
     $SCHEMANAME$.spatial_plan_main SPM
-JOIN $SCHEMANAME$.plan_operator PO ON PO.local_id = SPM.fk_responsible
-JOIN code_lists.spatial_plan_kind SPK ON SPK.codevalue = SPM.type
-JOIN code_lists.digital_origin_kind DOK ON DOK.codevalue = SPM.digital_origin;
+LEFT JOIN $SCHEMANAME$.plan_operator PO ON PO.local_id = SPM.fk_responsible
+LEFT JOIN code_lists.spatial_plan_kind SPK ON SPK.codevalue = SPM.type
+LEFT JOIN code_lists.digital_origin_kind DOK ON DOK.codevalue = SPM.digital_origin;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_phase
