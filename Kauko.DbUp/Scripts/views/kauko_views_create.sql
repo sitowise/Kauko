@@ -213,6 +213,114 @@ JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = ZE.lifecy
 JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = ZE.ground_relative_position;
 
 
+-- View: $SCHEMANAME$.view_ryhti_plan_object_planned_space
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_planned_space;
+
+-----------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OBJECT_PLANNED_SPACE - Osa-alueiden tiedot
+--
+--  2026-08-31 RYHTIEXPORT-346: ensimmäinen versio
+--  Note: INNER JOIN to junction table — rows with no linked zoning_element are excluded.
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object_planned_space AS
+SELECT -- Osa-alue
+    SPM.id AS plan_matter_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
+    SP.local_id AS plan_key,
+    PS.local_id AS plan_object_key,
+    SPLS.uri AS life_cycle_status,
+    GRK.uri AS underground_status,
+    ST_SRID (PS.geom) AS geometry_srid,
+    PS.geom AS geometry,
+    PS.name,
+    PS.description,
+    PS.valid_from AS period_of_validity_begin,
+    PS.valid_to AS period_of_validity_end
+FROM
+    $SCHEMANAME$.planned_space PS
+JOIN $SCHEMANAME$.zoning_element_planned_space ZEPS ON ZEPS.planned_space_local_id = PS.local_id
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPS.zoning_element_local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = ZE.spatial_plan
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PS.lifecycle_status
+JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = PS.ground_relative_position;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_object_detail_line
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_detail_line;
+
+-----------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OBJECT_DETAIL_LINE - Viivamaisten kaavakohteiden tiedot
+--
+--  2026-08-31 RYHTIEXPORT-346: ensimmäinen versio
+--  Note: INNER JOIN to junction table — rows with no linked zoning_element are excluded.
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object_detail_line AS
+SELECT -- Viivamainen kaavakohde
+    SPM.id AS plan_matter_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
+    SP.local_id AS plan_key,
+    PDL.local_id AS plan_object_key,
+    SPLS.uri AS life_cycle_status,
+    GRK.uri AS underground_status,
+    ST_SRID (PDL.geom) AS geometry_srid,
+    PDL.geom AS geometry,
+    PDL.name,
+    PDL.description,
+    PDL.valid_from AS period_of_validity_begin,
+    PDL.valid_to AS period_of_validity_end
+FROM
+    $SCHEMANAME$.planning_detail_line PDL
+JOIN $SCHEMANAME$.zoning_element_plan_detail_line ZEPDL ON ZEPDL.planning_detail_line_local_id = PDL.local_id
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPDL.zoning_element_local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = ZE.spatial_plan
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PDL.lifecycle_status
+JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = PDL.ground_relative_position;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_object_detail_point
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_detail_point;
+
+-----------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OBJECT_DETAIL_POINT - Pistemäisten kaavakohteiden tiedot
+--
+--  2026-08-31 RYHTIEXPORT-346: ensimmäinen versio
+--  Note: INNER JOIN to junction table — rows with no linked zoning_element are excluded.
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object_detail_point AS
+SELECT -- Pistemäinen kaavakohde
+    SPM.id AS plan_matter_key,
+    SPP.local_phase_key AS plan_matter_phase_key,
+    SP.local_id AS plan_key,
+    PDP.local_id AS plan_object_key,
+    SPLS.uri AS life_cycle_status,
+    GRK.uri AS underground_status,
+    ST_SRID (PDP.geom) AS geometry_srid,
+    PDP.geom AS geometry,
+    PDP.name,
+    PDP.description,
+    PDP.valid_from AS period_of_validity_begin,
+    PDP.valid_to AS period_of_validity_end
+FROM
+    $SCHEMANAME$.planning_detail_point PDP
+JOIN $SCHEMANAME$.zoning_element_plan_detail_point ZEPDP ON ZEPDP.planning_detail_point_local_id = PDP.local_id
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPDP.zoning_element_local_id
+JOIN $SCHEMANAME$.spatial_plan SP ON SP.local_id = ZE.spatial_plan
+JOIN $SCHEMANAME$.spatial_plan_phase SPP ON SPP.local_phase_key = SP.fk_spatial_plan_phase
+JOIN $SCHEMANAME$.spatial_plan_main SPM ON SPM.local_plan_main_id = SPP.local_plan_main_id
+JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PDP.lifecycle_status
+JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = PDP.ground_relative_position;
+
+
 -- View: $SCHEMANAME$.view_ryhti_plan_decision
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_decision;
@@ -320,6 +428,8 @@ FROM
 --  VIEW VIEW_RYHTI_PLAN_REGULATION_GROUP_RELATIONS - Kaavakohteen kaavamääräysryhmät
 --
 --  2025-03-26 TPu: lisättävä loputkin kaavakohdelajit
+--  2026-08-31 RYHTIEXPORT-346: lisätty loput kaavakohdelajit (osa-alue, viivamainen
+--             ja pistemäinen kaavakohde)
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_group_relations AS
@@ -327,7 +437,25 @@ SELECT -- MAANKÄYTTÖALUE
     ZEPRG.zoning_element_local_id AS plan_object_key,
     ZEPRG.plan_regulation_group_local_id AS plan_regulation_group_key
 FROM
-    $SCHEMANAME$.zoning_element_plan_regulation_group ZEPRG;
+    $SCHEMANAME$.zoning_element_plan_regulation_group ZEPRG
+UNION ALL
+SELECT -- OSA-ALUE
+    PSPRG.planned_space_local_id AS plan_object_key,
+    PSPRG.plan_regulation_group_local_id AS plan_regulation_group_key
+FROM
+    $SCHEMANAME$.planned_space_plan_regulation_group PSPRG
+UNION ALL
+SELECT -- VIIVAMAINEN KAAVAMÄÄRÄYSKOHDE
+    PDLPRG.planning_detail_line_local_id AS plan_object_key,
+    PDLPRG.plan_regulation_group_local_id AS plan_regulation_group_key
+FROM
+    $SCHEMANAME$.planning_detail_line_plan_regulation_group PDLPRG
+UNION ALL
+SELECT -- PISTEMÄINEN KAAVAMÄÄRÄYSKOHDE
+    PDPPRG.planning_detail_point_local_id AS plan_object_key,
+    PDPPRG.plan_regulation_group_local_id AS plan_regulation_group_key
+FROM
+    $SCHEMANAME$.planning_detail_point_plan_regulation_group PDPPRG;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_operator
