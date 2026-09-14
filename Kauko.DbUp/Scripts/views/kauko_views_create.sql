@@ -365,6 +365,9 @@ JOIN code_lists.plan_decision_maker_type PDMT ON PDMT.codevalue = PD.decision_ma
 --  VIEW VIEW_RYHTI_PLAN_REGULATION - Kaavan määräykset
 --
 --  2025-03-26 TPu: ensimmäinen versio. Arvot puuttuvat!
+--  2026-09-14 RYHTIEXPORT-352: lisätty data_type ja arvolohko (samat sarakkeet kuin
+--             view_ryhti_plan_regulation_additional_information:ssa), plus
+--             unit_of_measure numeeristen arvojen yksikölle.
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation AS
@@ -373,11 +376,36 @@ SELECT
     SPLS.uri AS life_cycle_status,
     DPRK.uri AS type,
     PR.valid_from AS period_of_validity_begin,
-    PR.valid_to AS period_of_validity_end
+    PR.valid_to AS period_of_validity_end,
+    PR.data_type,
+    CV.value AS code_value,
+    CV.code_list AS code_value_code_list,
+    CV.title AS code_value_title,
+    NV.value AS numeric_value,
+    NV.unit_of_measure AS numeric_value_unit_of_measure,
+    NR.minimum_value AS numeric_range_minimum_value,
+    NR.maximum_value AS numeric_range_maximum_value,
+    NR.unit_of_measure AS numeric_range_unit_of_measure,
+    IV.value AS identifier_value,
+    TV.value AS text_value,
+    LTV.value AS localized_text_value,
+    LTV.syntax AS localized_text_value_syntax,
+    TPV.time_period_begin,
+    TPV.time_period_end,
+    TPDOV.time_period_date_only_begin,
+    TPDOV.time_period_date_only_end
 FROM
     $SCHEMANAME$.plan_regulation PR
 JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PR.life_cycle_status
-JOIN code_lists.detail_plan_regulation_kind DPRK ON DPRK.codevalue = PR.type;
+JOIN code_lists.detail_plan_regulation_kind DPRK ON DPRK.codevalue = PR.type
+LEFT JOIN $SCHEMANAME$.code_value CV ON CV.code_value_uuid = PR.fk_code_value
+LEFT JOIN $SCHEMANAME$.numeric_value NV ON NV.numeric_value_uuid = PR.fk_numeric_value
+LEFT JOIN $SCHEMANAME$.numeric_range_value NR ON NR.numeric_range_value_uuid = PR.fk_numeric_range_value
+LEFT JOIN $SCHEMANAME$.identifier_value IV ON IV.identifier_value_uuid = PR.fk_identifier_value
+LEFT JOIN $SCHEMANAME$.text_value TV ON TV.text_value_uuid = PR.fk_text_value
+LEFT JOIN $SCHEMANAME$.localized_text_value LTV ON LTV.localized_text_value_uuid = PR.fk_localized_text_value
+LEFT JOIN $SCHEMANAME$.time_period_value TPV ON TPV.time_period_uuid = PR.fk_time_period_value
+LEFT JOIN $SCHEMANAME$.time_period_date_only_value TPDOV ON TPDOV.time_period_date_only_value_uuid = PR.fk_time_period_date_only_value;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_regulation_group
@@ -504,6 +532,9 @@ FROM
 --                   - time_period_end
 --                   - time_period_date_only_begin
 --                   - time_period_date_only_end
+--  2026-09-14 RYHTIEXPORT-352: lisätty data_type, code_value_code_list, code_value_title,
+--             localized_text_value_syntax, numeric_value_unit_of_measure ja
+--             numeric_range_unit_of_measure.
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_additional_information AS
@@ -511,13 +542,19 @@ SELECT
     PRSI.fk_plan_regulation AS plan_regulation_key,
     SI.local_id AS additional_information_key,
     DPAIK.uri AS type,
+    SI.data_type,
     CV.value AS code_value,
+    CV.code_list AS code_value_code_list,
+    CV.title AS code_value_title,
     NV.value AS numeric_value,
+    NV.unit_of_measure AS numeric_value_unit_of_measure,
     NR.minimum_value AS numeric_range_minimum_value,
     NR.maximum_value AS numeric_range_maximum_value,
+    NR.unit_of_measure AS numeric_range_unit_of_measure,
     IV.value AS identifier_value,
     TV.value AS text_value,
     LTV.value AS localized_text_value,
+    LTV.syntax AS localized_text_value_syntax,
     TPV.time_period_begin AS time_period_begin,
     TPV.time_period_end AS time_period_end,
     TPDOV.time_period_date_only_begin AS time_period_date_only_begin,
