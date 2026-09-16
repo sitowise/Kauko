@@ -4,9 +4,15 @@
 -- supplementary_information row can carry. Recorded on the owner row rather
 -- than on the value tables, so a single column always identifies the format
 -- regardless of which value table is populated.
+--
+-- Integer surrogate key, matching every other code lookup table in this
+-- schema (verbal_regulation, detail_plan_regulation_kind, plan_source_data_type,
+-- etc.) -- codevalue is a plain UNIQUE constraint, not the primary key.
 
 CREATE TABLE IF NOT EXISTS code_lists.attribute_data_type (
-    codevalue text PRIMARY KEY
+    id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    codevalue text NOT NULL,
+    CONSTRAINT attribute_data_type_codevalue_key UNIQUE (codevalue)
 );
 
 INSERT INTO code_lists.attribute_data_type (codevalue) VALUES
