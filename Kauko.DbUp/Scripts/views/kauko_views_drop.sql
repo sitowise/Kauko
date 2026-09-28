@@ -7,6 +7,7 @@ DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_planned_space;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_detail_line;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_detail_point;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_containment;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_decision;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group;
