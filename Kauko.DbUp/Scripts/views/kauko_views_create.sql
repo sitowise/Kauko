@@ -426,7 +426,8 @@ SELECT
     TPV.time_period_begin,
     TPV.time_period_end,
     TPDOV.time_period_date_only_begin,
-    TPDOV.time_period_date_only_end
+    TPDOV.time_period_date_only_end,
+    PR.regulation_number
 FROM
     $SCHEMANAME$.plan_regulation PR
 JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PR.life_cycle_status
