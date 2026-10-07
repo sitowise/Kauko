@@ -13,6 +13,8 @@ DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_regulation_relations;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_group_relations;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_general_regulation_group_relations;
+DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_verbal_regulation;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_operator;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_additional_information;
 DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_attachment_document;

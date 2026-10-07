@@ -519,6 +519,45 @@ FROM
     $SCHEMANAME$.planning_detail_point_plan_regulation_group PDPPRG;
 
 
+-- View: $SCHEMANAME$.view_ryhti_general_regulation_group_relations
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_general_regulation_group_relations;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_GENERAL_REGULATION_GROUP_RELATIONS
+--
+--  Pairs of spatial_plan and plan_regulation_group from the
+--  spatial_plan_plan_regulation_group link table.
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_general_regulation_group_relations AS
+SELECT
+    SPPRG.fk_spatial_plan AS plan_key,
+    SPPRG.fk_plan_regulation_group AS general_regulation_group_key
+FROM
+    $SCHEMANAME$.spatial_plan_plan_regulation_group SPPRG;
+
+
+-- View: $SCHEMANAME$.view_ryhti_plan_regulation_verbal_regulation
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_regulation_verbal_regulation;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_REGULATION_VERBAL_REGULATION
+--
+--  Verbal regulation code list URIs per plan_regulation, from the
+--  plan_regulation_verbal_regulation link table.
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_regulation_verbal_regulation AS
+SELECT
+    PRVR.fk_plan_regulation AS plan_regulation_key,
+    VR.uri AS verbal_regulation
+FROM
+    $SCHEMANAME$.plan_regulation_verbal_regulation PRVR
+JOIN code_lists.verbal_regulation VR ON VR.codevalue = PRVR.fk_verbal_regulation;
+
+
 -- View: $SCHEMANAME$.view_ryhti_plan_operator
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_operator;
