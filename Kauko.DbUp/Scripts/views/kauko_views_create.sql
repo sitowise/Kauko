@@ -328,9 +328,10 @@ JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = PDP.ground_relat
 ------------------------------------------------------------------------------------------
 --  VIEW VIEW_RYHTI_PLAN_OBJECT_CONTAINMENT
 --
---  Pairs of zoning_element (containing) and planned_space or planning_detail_point
---  (contained) from the zoning_element_planned_space and zoning_element_plan_detail_point
---  link tables, with the plan key of the zoning element.
+--  Pairs of zoning_element (containing) and planned_space, planning_detail_point or
+--  planning_detail_line (contained) from the zoning_element_planned_space,
+--  zoning_element_plan_detail_point and zoning_element_plan_detail_line link tables,
+--  with the plan key of the zoning element.
 ------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object_containment AS
@@ -348,7 +349,15 @@ SELECT
     ZEPDP.planning_detail_point_local_id
 FROM
     $SCHEMANAME$.zoning_element_plan_detail_point ZEPDP
-JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPDP.zoning_element_local_id;
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPDP.zoning_element_local_id
+UNION ALL
+SELECT
+    ZE.spatial_plan,
+    ZEPDL.zoning_element_local_id,
+    ZEPDL.planning_detail_line_local_id
+FROM
+    $SCHEMANAME$.zoning_element_plan_detail_line ZEPDL
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPDL.zoning_element_local_id;
 
 
 -- View: $SCHEMANAME$.view_ryhti_plan_decision
