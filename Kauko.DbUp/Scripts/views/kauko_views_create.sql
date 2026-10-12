@@ -321,6 +321,36 @@ JOIN code_lists.spatial_plan_lifecycle_status SPLS ON SPLS.codevalue = PDP.lifec
 JOIN code_lists.ground_relativeness_kind GRK ON GRK.codevalue = PDP.ground_relative_position;
 
 
+-- View: $SCHEMANAME$.view_ryhti_plan_object_containment
+
+-- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_object_containment;
+
+------------------------------------------------------------------------------------------
+--  VIEW VIEW_RYHTI_PLAN_OBJECT_CONTAINMENT
+--
+--  Pairs of zoning_element (containing) and planned_space or planning_detail_point
+--  (contained) from the zoning_element_planned_space and zoning_element_plan_detail_point
+--  link tables, with the plan key of the zoning element.
+------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW $SCHEMANAME$.view_ryhti_plan_object_containment AS
+SELECT
+    ZE.spatial_plan AS plan_key,
+    ZEPS.zoning_element_local_id AS containing_plan_object_key,
+    ZEPS.planned_space_local_id AS contained_plan_object_key
+FROM
+    $SCHEMANAME$.zoning_element_planned_space ZEPS
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPS.zoning_element_local_id
+UNION ALL
+SELECT
+    ZE.spatial_plan,
+    ZEPDP.zoning_element_local_id,
+    ZEPDP.planning_detail_point_local_id
+FROM
+    $SCHEMANAME$.zoning_element_plan_detail_point ZEPDP
+JOIN $SCHEMANAME$.zoning_element ZE ON ZE.local_id = ZEPDP.zoning_element_local_id;
+
+
 -- View: $SCHEMANAME$.view_ryhti_plan_decision
 
 -- DROP VIEW IF EXISTS $SCHEMANAME$.view_ryhti_plan_decision;
